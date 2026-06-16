@@ -1,0 +1,110 @@
+{
+  "appPolicies" : {
+    "eula" : "",
+    "policies" : [
+      {
+        "locale" : "en_US",
+        "policyText" : "",
+        "policyURL" : ""
+      }
+    ]
+  },
+  "identifier" : "8370B3C6",
+  "nonRenewingSubscriptions" : [
+
+  ],
+  "products" : [
+    {
+      "displayPrice" : "0.99",
+      "familyShareable" : false,
+      "internalID" : "6768108014",
+      "localizations" : [
+        {
+          "description" : "Il tuo profilo in cima per 24 ore.",
+          "displayName" : "Boost profilo 1 day",
+          "locale" : "it"
+        }
+      ],
+      "productID" : "com.pasqcu.Brindoo.boost.1day",
+      "referenceName" : "Boost 1 Giorno",
+      "type" : "Consumable"
+    },
+    {
+      "displayPrice" : "3.99",
+      "familyShareable" : false,
+      "internalID" : "6768108629",
+      "localizations" : [
+        {
+          "description" : "Il tuo profilo in cima per 7 giorni.",
+          "displayName" : "Boost 1 week",
+          "locale" : "it"
+        }
+      ],
+      "productID" : "com.pasqcu.Brindoo.boost.1week",
+      "referenceName" : "Boost 1 week",
+      "type" : "Consumable"
+    }
+  ],
+  "settings" : {
+    "_applicationInternalID" : "6766494354",
+    "_askToBuyEnabled" : false,
+    "_billingGracePeriodEnabled" : false,
+    "_billingIssuesEnabled" : false,
+    "_developerTeamID" : "92SW3A9F8P",
+    "_disableDialogs" : false,
+    "_failTransactionsEnabled" : false,
+    "_lastSynchronizedDate" : 800136237.880638,
+    "_locale" : "it",
+    "_renewalBillingIssuesEnabled" : false,
+    "_storefront" : "ITA",
+    "_storeKitErrors" : [
+
+    ],
+    "_timeRate" : 0
+  },
+  "subscriptionGroups" : [
+    {
+      "id" : "22079782",
+      "localizations" : [
+
+      ],
+      "name" : "Abbonamenti Brindoo",
+      "subscriptions" : [
+        {
+          "adHocOffers" : [
+
+          ],
+          "codeOffers" : [
+
+          ],
+          "displayPrice" : "3.99",
+          "familyShareable" : false,
+          "groupNumber" : 1,
+          "internalID" : "6768107350",
+          "introductoryOffers" : [
+
+          ],
+          "localizations" : [
+            {
+              "description" : "Profilo evidenziato, statistiche, badge Pro",
+              "displayName" : "Brindoo Pro Mensile",
+              "locale" : "it"
+            }
+          ],
+          "productID" : "com.pasqcu.Brindoo.pro.monthly",
+          "recurringSubscriptionPeriod" : "P1M",
+          "referenceName" : "Brindoo Pro Mensile",
+          "subscriptionGroupID" : "22079782",
+          "type" : "RecurringSubscription",
+          "winbackOffers" : [
+
+          ]
+        }
+      ]
+    }
+  ],
+  "version" : {
+    "major" : 5,
+    "minor" : 0
+  }
+}

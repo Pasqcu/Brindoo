@@ -1,0 +1,697 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 77;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		0E1B10ED2FAA99C70069427E /* Supabase in Frameworks */ = {isa = PBXBuildFile; productRef = 0E1B10EC2FAA99C70069427E /* Supabase */; };
+		0E7553442FB11C2A00242B5A /* BrindooStoreKit.storekit in Resources */ = {isa = PBXBuildFile; fileRef = 0E7553432FB11C2A00242B5A /* BrindooStoreKit.storekit */; };
+		0EF8FF382FC0B7E000E88C75 /* WidgetKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 0EF8FF152FC0B64300E88C75 /* WidgetKit.framework */; };
+		0EF8FF392FC0B7E000E88C75 /* SwiftUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 0EF8FF172FC0B64300E88C75 /* SwiftUI.framework */; };
+		0EF8FF462FC0B7E200E88C75 /* BrindooLiveActivityExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 0EF8FF372FC0B7E000E88C75 /* BrindooLiveActivityExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		0E5DC4712FBB93B70004CF6A /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 0E1B10D52FAA98BC0069427E /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 0E1B10DC2FAA98BC0069427E;
+			remoteInfo = Brindoo;
+		};
+		0EF8FF442FC0B7E200E88C75 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 0E1B10D52FAA98BC0069427E /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 0EF8FF362FC0B7E000E88C75;
+			remoteInfo = BrindooLiveActivityExtension;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		0EF8FF2A2FC0B64500E88C75 /* Embed Foundation Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				0EF8FF462FC0B7E200E88C75 /* BrindooLiveActivityExtension.appex in Embed Foundation Extensions */,
+			);
+			name = "Embed Foundation Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
+/* Begin PBXFileReference section */
+		0E1B10DD2FAA98BC0069427E /* Brindoo.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Brindoo.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		0E5DC46D2FBB93B70004CF6A /* BrindooTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = BrindooTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		0E754B2A2FAD2EDA00242B5A /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		0E7553432FB11C2A00242B5A /* BrindooStoreKit.storekit */ = {isa = PBXFileReference; lastKnownFileType = text; path = BrindooStoreKit.storekit; sourceTree = "<group>"; };
+		0EF8FF152FC0B64300E88C75 /* WidgetKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WidgetKit.framework; path = System/Library/Frameworks/WidgetKit.framework; sourceTree = SDKROOT; };
+		0EF8FF172FC0B64300E88C75 /* SwiftUI.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SwiftUI.framework; path = System/Library/Frameworks/SwiftUI.framework; sourceTree = SDKROOT; };
+		0EF8FF372FC0B7E000E88C75 /* BrindooLiveActivityExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = BrindooLiveActivityExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+/* End PBXFileReference section */
+
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		0EF8FF502FC0B83300E88C75 /* Exceptions for "BrindooLiveActivity" folder in "BrindooLiveActivityExtension" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				BrindooLiveActivityBundle.swift,
+				BrindooNegotiationLiveActivity.swift,
+			);
+			target = 0EF8FF362FC0B7E000E88C75 /* BrindooLiveActivityExtension */;
+		};
+		0EF8FF532FC0B86B00E88C75 /* Exceptions for "Brindoo" folder in "BrindooLiveActivityExtension" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				LiveActivities/NegotiationActivityAttributes.swift,
+			);
+			target = 0EF8FF362FC0B7E000E88C75 /* BrindooLiveActivityExtension */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
+
+/* Begin PBXFileSystemSynchronizedRootGroup section */
+		0E1B10DF2FAA98BC0069427E /* Brindoo */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				0EF8FF532FC0B86B00E88C75 /* Exceptions for "Brindoo" folder in "BrindooLiveActivityExtension" target */,
+			);
+			path = Brindoo;
+			sourceTree = "<group>";
+		};
+		0E5DC46E2FBB93B70004CF6A /* BrindooTests */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = BrindooTests;
+			sourceTree = "<group>";
+		};
+		0EF8FF192FC0B64300E88C75 /* BrindooLiveActivity */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				0EF8FF502FC0B83300E88C75 /* Exceptions for "BrindooLiveActivity" folder in "BrindooLiveActivityExtension" target */,
+			);
+			path = BrindooLiveActivity;
+			sourceTree = "<group>";
+		};
+/* End PBXFileSystemSynchronizedRootGroup section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		0E1B10DA2FAA98BC0069427E /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				0E1B10ED2FAA99C70069427E /* Supabase in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		0E5DC46A2FBB93B70004CF6A /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		0EF8FF342FC0B7E000E88C75 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				0EF8FF392FC0B7E000E88C75 /* SwiftUI.framework in Frameworks */,
+				0EF8FF382FC0B7E000E88C75 /* WidgetKit.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		0E1B10D42FAA98BC0069427E = {
+			isa = PBXGroup;
+			children = (
+				0E754B2A2FAD2EDA00242B5A /* Info.plist */,
+				0E7553432FB11C2A00242B5A /* BrindooStoreKit.storekit */,
+				0E1B10DF2FAA98BC0069427E /* Brindoo */,
+				0E5DC46E2FBB93B70004CF6A /* BrindooTests */,
+				0EF8FF192FC0B64300E88C75 /* BrindooLiveActivity */,
+				0EF8FF142FC0B64300E88C75 /* Frameworks */,
+				0E1B10DE2FAA98BC0069427E /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		0E1B10DE2FAA98BC0069427E /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				0E1B10DD2FAA98BC0069427E /* Brindoo.app */,
+				0E5DC46D2FBB93B70004CF6A /* BrindooTests.xctest */,
+				0EF8FF372FC0B7E000E88C75 /* BrindooLiveActivityExtension.appex */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		0EF8FF142FC0B64300E88C75 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				0EF8FF152FC0B64300E88C75 /* WidgetKit.framework */,
+				0EF8FF172FC0B64300E88C75 /* SwiftUI.framework */,
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		0E1B10DC2FAA98BC0069427E /* Brindoo */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 0E1B10E82FAA98BE0069427E /* Build configuration list for PBXNativeTarget "Brindoo" */;
+			buildPhases = (
+				0E1B10D92FAA98BC0069427E /* Sources */,
+				0E1B10DA2FAA98BC0069427E /* Frameworks */,
+				0E1B10DB2FAA98BC0069427E /* Resources */,
+				0EF8FF2A2FC0B64500E88C75 /* Embed Foundation Extensions */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				0EF8FF452FC0B7E200E88C75 /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				0E1B10DF2FAA98BC0069427E /* Brindoo */,
+			);
+			name = Brindoo;
+			packageProductDependencies = (
+				0E1B10EC2FAA99C70069427E /* Supabase */,
+			);
+			productName = Brindoo;
+			productReference = 0E1B10DD2FAA98BC0069427E /* Brindoo.app */;
+			productType = "com.apple.product-type.application";
+		};
+		0E5DC46C2FBB93B70004CF6A /* BrindooTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 0E5DC4752FBB93B70004CF6A /* Build configuration list for PBXNativeTarget "BrindooTests" */;
+			buildPhases = (
+				0E5DC4692FBB93B70004CF6A /* Sources */,
+				0E5DC46A2FBB93B70004CF6A /* Frameworks */,
+				0E5DC46B2FBB93B70004CF6A /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				0E5DC4722FBB93B70004CF6A /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				0E5DC46E2FBB93B70004CF6A /* BrindooTests */,
+			);
+			name = BrindooTests;
+			packageProductDependencies = (
+			);
+			productName = BrindooTests;
+			productReference = 0E5DC46D2FBB93B70004CF6A /* BrindooTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
+		0EF8FF362FC0B7E000E88C75 /* BrindooLiveActivityExtension */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 0EF8FF482FC0B7E200E88C75 /* Build configuration list for PBXNativeTarget "BrindooLiveActivityExtension" */;
+			buildPhases = (
+				0EF8FF332FC0B7E000E88C75 /* Sources */,
+				0EF8FF342FC0B7E000E88C75 /* Frameworks */,
+				0EF8FF352FC0B7E000E88C75 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = BrindooLiveActivityExtension;
+			packageProductDependencies = (
+			);
+			productName = BrindooLiveActivityExtension;
+			productReference = 0EF8FF372FC0B7E000E88C75 /* BrindooLiveActivityExtension.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		0E1B10D52FAA98BC0069427E /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = 1;
+				LastSwiftUpdateCheck = 2640;
+				LastUpgradeCheck = 2640;
+				TargetAttributes = {
+					0E1B10DC2FAA98BC0069427E = {
+						CreatedOnToolsVersion = 26.4.1;
+					};
+					0E5DC46C2FBB93B70004CF6A = {
+						CreatedOnToolsVersion = 26.4.1;
+						TestTargetID = 0E1B10DC2FAA98BC0069427E;
+					};
+					0EF8FF362FC0B7E000E88C75 = {
+						CreatedOnToolsVersion = 26.4.1;
+					};
+				};
+			};
+			buildConfigurationList = 0E1B10D82FAA98BC0069427E /* Build configuration list for PBXProject "Brindoo" */;
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = 0E1B10D42FAA98BC0069427E;
+			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				0E1B10EB2FAA99C70069427E /* XCRemoteSwiftPackageReference "supabase-swift" */,
+			);
+			preferredProjectObjectVersion = 77;
+			productRefGroup = 0E1B10DE2FAA98BC0069427E /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				0E1B10DC2FAA98BC0069427E /* Brindoo */,
+				0E5DC46C2FBB93B70004CF6A /* BrindooTests */,
+				0EF8FF362FC0B7E000E88C75 /* BrindooLiveActivityExtension */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		0E1B10DB2FAA98BC0069427E /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				0E7553442FB11C2A00242B5A /* BrindooStoreKit.storekit in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		0E5DC46B2FBB93B70004CF6A /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		0EF8FF352FC0B7E000E88C75 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		0E1B10D92FAA98BC0069427E /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		0E5DC4692FBB93B70004CF6A /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		0EF8FF332FC0B7E000E88C75 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		0E5DC4722FBB93B70004CF6A /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 0E1B10DC2FAA98BC0069427E /* Brindoo */;
+			targetProxy = 0E5DC4712FBB93B70004CF6A /* PBXContainerItemProxy */;
+		};
+		0EF8FF452FC0B7E200E88C75 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 0EF8FF362FC0B7E000E88C75 /* BrindooLiveActivityExtension */;
+			targetProxy = 0EF8FF442FC0B7E200E88C75 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin XCBuildConfiguration section */
+		0E1B10E62FAA98BE0069427E /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				DEVELOPMENT_TEAM = 92SW3A9F8P;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = iphoneos;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+			};
+			name = Debug;
+		};
+		0E1B10E72FAA98BE0069427E /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				DEVELOPMENT_TEAM = 92SW3A9F8P;
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				SDKROOT = iphoneos;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
+		0E1B10E92FAA98BE0069427E /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = Brindoo/Brindoo.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 92SW3A9F8P;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = Brindoo;
+				IPHONEOS_DEPLOYMENT_TARGET = 17;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.pasqcu.Brindoo;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Debug;
+		};
+		0E1B10EA2FAA98BE0069427E /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = Brindoo/Brindoo.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 92SW3A9F8P;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = Brindoo;
+				IPHONEOS_DEPLOYMENT_TARGET = 17;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.pasqcu.Brindoo;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Release;
+		};
+		0E5DC4732FBB93B70004CF6A /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 92SW3A9F8P;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.4;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.pasqcu.BrindooTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				STRING_CATALOG_GENERATE_SYMBOLS = NO;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Brindoo.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/Brindoo";
+			};
+			name = Debug;
+		};
+		0E5DC4742FBB93B70004CF6A /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 92SW3A9F8P;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.4;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.pasqcu.BrindooTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				STRING_CATALOG_GENERATE_SYMBOLS = NO;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Brindoo.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/Brindoo";
+			};
+			name = Release;
+		};
+		0EF8FF492FC0B7E200E88C75 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = WidgetBackground;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 92SW3A9F8P;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = BrindooLiveActivity/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = BrindooLiveActivity;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				IPHONEOS_DEPLOYMENT_TARGET = 16.6;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.pasqcu.Brindoo.BrindooLiveActivity;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		0EF8FF4A2FC0B7E200E88C75 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = WidgetBackground;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 92SW3A9F8P;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = BrindooLiveActivity/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = BrindooLiveActivity;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				IPHONEOS_DEPLOYMENT_TARGET = 16.6;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.pasqcu.Brindoo.BrindooLiveActivity;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		0E1B10D82FAA98BC0069427E /* Build configuration list for PBXProject "Brindoo" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				0E1B10E62FAA98BE0069427E /* Debug */,
+				0E1B10E72FAA98BE0069427E /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		0E1B10E82FAA98BE0069427E /* Build configuration list for PBXNativeTarget "Brindoo" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				0E1B10E92FAA98BE0069427E /* Debug */,
+				0E1B10EA2FAA98BE0069427E /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		0E5DC4752FBB93B70004CF6A /* Build configuration list for PBXNativeTarget "BrindooTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				0E5DC4732FBB93B70004CF6A /* Debug */,
+				0E5DC4742FBB93B70004CF6A /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		0EF8FF482FC0B7E200E88C75 /* Build configuration list for PBXNativeTarget "BrindooLiveActivityExtension" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				0EF8FF492FC0B7E200E88C75 /* Debug */,
+				0EF8FF4A2FC0B7E200E88C75 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		0E1B10EB2FAA99C70069427E /* XCRemoteSwiftPackageReference "supabase-swift" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/supabase/supabase-swift";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 2.0.0;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		0E1B10EC2FAA99C70069427E /* Supabase */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 0E1B10EB2FAA99C70069427E /* XCRemoteSwiftPackageReference "supabase-swift" */;
+			productName = Supabase;
+		};
+/* End XCSwiftPackageProductDependency section */
+	};
+	rootObject = 0E1B10D52FAA98BC0069427E /* Project object */;
+}

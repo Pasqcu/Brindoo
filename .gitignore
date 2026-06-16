@@ -1,0 +1,28 @@
+# macOS
+.DS_Store
+
+# Xcode
+build/
+DerivedData/
+*.xcuserstate
+*.xcuserdatad/
+xcuserdata/
+*.moved-aside
+*.hmap
+*.ipa
+*.dSYM.zip
+*.dSYM
+
+# Swift Package Manager
+.swiftpm/
+.build/
+
+# Supabase (stato locale CLI)
+supabase/.temp/
+supabase/.branches/
+
+# Claude / strumenti locali
+.claude/settings.local.json
+
+# VSCode
+.vscode/

@@ -1,0 +1,135 @@
+//
+//  OfferProposal.swift
+//  Brindoo
+//
+//  Modelli per la trattativa stile Vinted tra cliente e organizzatore
+//  su un'offerta di servizio (service_offer).
+//
+
+import Foundation
+
+/// Stato di una trattativa.
+enum OfferProposalStatus: String, Codable, CaseIterable {
+    case pending     // in attesa di risposta dell'altra parte
+    case accepted    // accettata dall'altra parte (deal chiuso)
+    case rejected    // rifiutata
+    case withdrawn   // ritirata dal cliente
+
+    var displayName: String {
+        switch self {
+        case .pending:   return "In attesa"
+        case .accepted:  return "Accettata"
+        case .rejected:  return "Rifiutata"
+        case .withdrawn: return "Ritirata"
+        }
+    }
+
+    var iconName: String {
+        switch self {
+        case .pending:   return "clock.fill"
+        case .accepted:  return "checkmark.circle.fill"
+        case .rejected:  return "xmark.circle.fill"
+        case .withdrawn: return "arrow.uturn.backward.circle.fill"
+        }
+    }
+}
+
+/// Ruolo che ha emesso l'ultima proposta della trattativa.
+enum ProposerRole: String, Codable {
+    case client
+    case organizer
+}
+
+/// Trattativa attiva (una per coppia offerta + cliente, attiva).
+struct OfferProposal: Identifiable, Codable, Hashable, Equatable {
+    let id: UUID
+    let offerId: UUID
+    let clientId: UUID
+    let organizerId: UUID
+    let currentPrice: Double
+    let lastProposer: ProposerRole
+    let lastMessage: String?
+    let status: OfferProposalStatus
+    /// Data dell'evento concordata (facoltativa), formato "yyyy-MM-dd".
+    let eventDate: String?
+    let createdAt: Date
+    let updatedAt: Date
+
+    enum CodingKeys: String, CodingKey {
+        case id
+        case offerId = "offer_id"
+        case clientId = "client_id"
+        case organizerId = "organizer_id"
+        case currentPrice = "current_price"
+        case lastProposer = "last_proposer"
+        case lastMessage = "last_message"
+        case status
+        case eventDate = "event_date"
+        case createdAt = "created_at"
+        case updatedAt = "updated_at"
+    }
+
+    /// "21 maggio 2026" oppure nil se non impostata.
+    var eventDateDisplay: String? {
+        guard let eventDate, !eventDate.isEmpty else { return nil }
+        let parser = DateFormatter()
+        parser.dateFormat = "yyyy-MM-dd"
+        parser.timeZone = TimeZone(identifier: "UTC")
+        guard let date = parser.date(from: eventDate) else { return nil }
+        let out = DateFormatter()
+        out.locale = Locale(identifier: "it_IT")
+        out.dateFormat = "d MMMM yyyy"
+        return out.string(from: date)
+    }
+
+    var currentPriceDisplay: String {
+        let f = NumberFormatter()
+        f.numberStyle = .currency
+        f.currencyCode = "EUR"
+        f.maximumFractionDigits = 0
+        return f.string(from: NSNumber(value: currentPrice)) ?? "€\(Int(currentPrice))"
+    }
+
+    var updatedAtDisplay: String {
+        let f = RelativeDateTimeFormatter()
+        f.locale = Locale(identifier: "it_IT")
+        f.unitsStyle = .abbreviated
+        return f.localizedString(for: updatedAt, relativeTo: Date())
+    }
+
+    /// True se l'utente passato deve rispondere (la palla è dalla sua parte).
+    func awaitingAction(by userId: UUID) -> Bool {
+        guard status == .pending else { return false }
+        switch lastProposer {
+        case .client:    return userId == organizerId
+        case .organizer: return userId == clientId
+        }
+    }
+}
+
+/// Round della trattativa: ogni controproposta o proposta iniziale è un round.
+struct OfferProposalRound: Identifiable, Codable, Hashable, Equatable {
+    let id: UUID
+    let proposalId: UUID
+    let proposerRole: ProposerRole
+    let price: Double
+    let message: String?
+    let createdAt: Date
+
+    enum CodingKeys: String, CodingKey {
+        case id
+        case proposalId = "proposal_id"
+        case proposerRole = "proposer_role"
+        case price
+        case message
+        case createdAt = "created_at"
+    }
+
+    var priceDisplay: String {
+        let f = NumberFormatter()
+        f.numberStyle = .currency
+        f.currencyCode = "EUR"
+        f.maximumFractionDigits = 0
+        return f.string(from: NSNumber(value: price)) ?? "€\(Int(price))"
+    }
+}
