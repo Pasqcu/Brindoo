@@ -197,14 +197,10 @@ struct ProfileSetupView: View {
                     isDisabled: isLoading
                 )
 
-                BrindooTextField(
-                    title: "Città",
-                    placeholder: "Es. Roma, Tivoli, Latina…",
-                    text: $city,
-                    icon: "mappin.and.ellipse",
-                    textContentType: .addressCity,
-                    autocapitalization: .words,
-                    errorMessage: cityError,
+                ComuneField(
+                    city: $city,
+                    province: $selectedProvince,
+                    error: cityError,
                     isDisabled: isLoading
                 )
 

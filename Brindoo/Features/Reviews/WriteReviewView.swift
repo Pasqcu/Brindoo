@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import StoreKit
 
 struct WriteReviewView: View {
     
@@ -16,7 +17,8 @@ struct WriteReviewView: View {
     let onSuccess: () -> Void
     
     @Environment(\.dismiss) private var dismiss
-    
+    @Environment(\.requestReview) private var requestReview
+
     @State private var rating: Int = 0
     @State private var comment: String = ""
     
@@ -233,6 +235,8 @@ struct WriteReviewView: View {
                     rating: rating,
                     comment: comment
                 )
+                // Dopo una recensione positiva, proponi la valutazione dell'app.
+                if rating >= 4 { requestReview() }
             }
             onSuccess()
             dismiss()

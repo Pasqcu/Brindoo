@@ -93,6 +93,20 @@ struct BoardView: View {
         !selectedCategoryIds.isEmpty || !selectedAreaSlugs.isEmpty || !searchText.isEmpty
     }
 
+    /// Filtri "di contenuto" (categoria/ricerca): l'area provincia non conta,
+    /// così la vetrina e l'intestazione restano visibili anche con una provincia scelta.
+    private var hasContentFilters: Bool {
+        !selectedCategoryIds.isEmpty || !searchText.isEmpty
+    }
+
+    private var boostedOrganizers: [Profile] {
+        organizers.filter { $0.isBoosted }
+    }
+
+    private let lazioProvinces = LazioProvince.allCases
+
+    private func provinceSlug(_ p: LazioProvince) -> String { "prov_\(p.rawValue.lowercased())" }
+
     private var areaFilterTitle: String {
         if selectedAreaSlugs.isEmpty { return "Area" }
         return LazioArea.displayLabel(forSlugs: Array(selectedAreaSlugs))
@@ -315,6 +329,8 @@ struct BoardView: View {
                 .padding(.horizontal, BrindooSpacing.md)
                 .padding(.top, BrindooSpacing.xs)
 
+            provinceChipsBar
+
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: BrindooSpacing.xs) {
                     areaFilterButton
@@ -367,6 +383,41 @@ struct BoardView: View {
             }
         }
         .padding(.bottom, BrindooSpacing.sm)
+    }
+
+    @ViewBuilder
+    private var provinceChipsBar: some View {
+        ScrollView(.horizontal, showsIndicators: false) {
+            HStack(spacing: BrindooSpacing.xs) {
+                provinceChip(title: "Tutto il Lazio", isOn: selectedAreaSlugs.isEmpty) {
+                    selectedAreaSlugs.removeAll()
+                    Task { await loadOrganizers() }
+                }
+                ForEach(lazioProvinces) { p in
+                    let slug = provinceSlug(p)
+                    provinceChip(title: p.displayName, isOn: selectedAreaSlugs == [slug]) {
+                        selectedAreaSlugs = [slug]
+                        Task { await loadOrganizers() }
+                    }
+                }
+            }
+            .padding(.horizontal, BrindooSpacing.md)
+        }
+    }
+
+    @ViewBuilder
+    private func provinceChip(title: String, isOn: Bool, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            Text(title)
+                .font(BrindooFont.bodySmall.weight(.semibold))
+                .foregroundStyle(isOn ? .white : Color.brindooTextSecondary)
+                .padding(.horizontal, BrindooSpacing.md)
+                .padding(.vertical, BrindooSpacing.xs)
+                .background(isOn ? Color.brindooCoral : Color.brindooSurface)
+                .clipShape(Capsule())
+                .overlay(Capsule().strokeBorder(Color.brindooBorder, lineWidth: isOn ? 0 : 1))
+        }
+        .buttonStyle(.plain)
     }
 
     private var activeFiltersSummary: String {
@@ -446,6 +497,8 @@ struct BoardView: View {
         } else {
             ScrollView {
                 LazyVStack(spacing: BrindooSpacing.md) {
+                    featuredCarousel
+
                     discoveryHeader
 
                     ForEach(sortedOrganizers) { organizer in
@@ -471,10 +524,45 @@ struct BoardView: View {
         }
     }
 
-    /// Intestazione di scoperta mostrata in cima alla bacheca quando non ci sono filtri.
+    /// Vetrina "In evidenza": professionisti con Boost attivo.
+    @ViewBuilder
+    private var featuredCarousel: some View {
+        if !hasContentFilters && !boostedOrganizers.isEmpty {
+            VStack(alignment: .leading, spacing: BrindooSpacing.xs) {
+                HStack(spacing: 6) {
+                    Image(systemName: "star.fill")
+                        .font(.system(size: 13))
+                    Text("In evidenza")
+                        .font(BrindooFont.titleSmall)
+                }
+                .foregroundStyle(Color.brindooCoral)
+
+                ScrollView(.horizontal, showsIndicators: false) {
+                    HStack(spacing: BrindooSpacing.md) {
+                        ForEach(boostedOrganizers) { org in
+                            NavigationLink {
+                                OrganizerDetailView(organizer: org)
+                            } label: {
+                                FeaturedOrganizerCard(
+                                    organizer: org,
+                                    rating: organizerRatings[org.id],
+                                    coverImageUrl: organizerOffersMap[org.id]?.first(where: { $0.imageUrl?.isEmpty == false })?.imageUrl
+                                )
+                            }
+                            .buttonStyle(BrindooPressStyle())
+                        }
+                    }
+                    .padding(.vertical, 2)
+                }
+            }
+            .padding(.top, BrindooSpacing.xs)
+        }
+    }
+
+    /// Intestazione di scoperta mostrata in cima alla bacheca quando non ci sono filtri di contenuto.
     @ViewBuilder
     private var discoveryHeader: some View {
-        if !hasActiveFilters {
+        if !hasContentFilters {
             HStack(spacing: BrindooSpacing.xs) {
                 Image(systemName: "sparkles")
                     .font(.system(size: 14, weight: .semibold))
@@ -601,20 +689,28 @@ struct BoardView: View {
             if showClear {
                 BrindooButton("Rimuovi filtri", style: .secondary) {
                     selectedCategoryIds.removeAll()
+                    selectedAreaSlugs.removeAll()
                     searchText = ""
                     Task { await loadOrganizers() }
                 }
                 .frame(maxWidth: 200)
-            } else {
-                ShareLink(item: Self.inviteMessage) {
-                    Label("Invita un professionista", systemImage: "person.badge.plus")
-                        .font(BrindooFont.button)
-                        .foregroundStyle(.white)
-                        .frame(maxWidth: 260)
-                        .padding(.vertical, BrindooSpacing.sm)
-                        .background(Color.brindooCoral)
-                        .clipShape(RoundedRectangle(cornerRadius: BrindooRadius.md))
-                }
+            }
+
+            Text("Brindoo sta arrivando in tutto il Lazio. Aiutaci a crescere!")
+                .font(BrindooFont.caption)
+                .foregroundStyle(Color.brindooTextSecondary)
+                .multilineTextAlignment(.center)
+                .padding(.horizontal, BrindooSpacing.xl)
+                .padding(.top, BrindooSpacing.xs)
+
+            ShareLink(item: Self.inviteMessage) {
+                Label("Invita un professionista", systemImage: "person.badge.plus")
+                    .font(BrindooFont.button)
+                    .foregroundStyle(.white)
+                    .frame(maxWidth: 260)
+                    .padding(.vertical, BrindooSpacing.sm)
+                    .background(Color.brindooCoral)
+                    .clipShape(RoundedRectangle(cornerRadius: BrindooRadius.md))
             }
             Spacer()
         }
@@ -650,6 +746,13 @@ struct BoardView: View {
         } catch { print("❌ \(error)") }
         await BlockService.shared.loadBlocks()
         await checkOrganizerCategoriesIfNeeded()
+
+        // Parti già "vicino a casa": filtra sulla provincia dell'utente.
+        if isClient && !clientPreview, selectedAreaSlugs.isEmpty,
+           let prov = session.currentProfile?.province {
+            selectedAreaSlugs = [provinceSlug(prov)]
+        }
+
         await reload()
 
         // Primo passo guidato per il cliente (una sola volta).
@@ -939,6 +1042,79 @@ struct OrganizerWithOffersCard: View {
                 .font(BrindooFont.bodySmall.weight(.semibold))
                 .foregroundStyle(Color.brindooCoral)
         }
+    }
+}
+
+// MARK: - Card "In evidenza" (vetrina boost)
+
+struct FeaturedOrganizerCard: View {
+    let organizer: Profile
+    var rating: OrganizerRating?
+    var coverImageUrl: String?
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            ZStack(alignment: .topLeading) {
+                if let cover = coverImageUrl, let url = URL(string: cover) {
+                    AsyncImage(url: url) { phase in
+                        switch phase {
+                        case .success(let image): image.resizable().scaledToFill()
+                        case .empty: BrindooSkeleton(cornerRadius: 0)
+                        default: BrindooGradient.coralSoft
+                        }
+                    }
+                } else {
+                    BrindooGradient.coralSoft
+                }
+
+                HStack(spacing: 3) {
+                    Image(systemName: "star.fill").font(.system(size: 9))
+                    Text("In evidenza").font(.system(size: 10, weight: .bold))
+                }
+                .foregroundStyle(.white)
+                .padding(.horizontal, 8)
+                .padding(.vertical, 4)
+                .background(.ultraThinMaterial)
+                .clipShape(Capsule())
+                .padding(BrindooSpacing.xs)
+            }
+            .frame(width: 240, height: 130)
+            .clipped()
+
+            VStack(alignment: .leading, spacing: 2) {
+                HStack(spacing: 4) {
+                    Text(organizer.fullName ?? "Professionista")
+                        .font(BrindooFont.bodyMedium.weight(.semibold))
+                        .lineLimit(1)
+                    if organizer.isPro { ProBadge() }
+                }
+                HStack(spacing: BrindooSpacing.xs) {
+                    if let city = organizer.city, !city.isEmpty {
+                        HStack(spacing: 3) {
+                            Image(systemName: "mappin.and.ellipse").font(.system(size: 10))
+                            Text(city).font(BrindooFont.caption).lineLimit(1)
+                        }
+                        .foregroundStyle(Color.brindooTextSecondary)
+                    }
+                    if let rating, rating.reviewCount > 0 {
+                        HStack(spacing: 2) {
+                            Image(systemName: "star.fill").font(.system(size: 9))
+                            Text(String(format: "%.1f", rating.avgRating)).font(.system(size: 11, weight: .bold))
+                        }
+                        .foregroundStyle(Color.brindooWarning)
+                    }
+                }
+            }
+            .padding(BrindooSpacing.sm)
+        }
+        .frame(width: 240)
+        .background(Color.brindooSurface)
+        .clipShape(RoundedRectangle(cornerRadius: BrindooRadius.lg))
+        .overlay(
+            RoundedRectangle(cornerRadius: BrindooRadius.lg)
+                .strokeBorder(Color.brindooCoral.opacity(0.35), lineWidth: 1)
+        )
+        .brindooCardShadow()
     }
 }
 

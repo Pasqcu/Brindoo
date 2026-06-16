@@ -150,6 +150,36 @@ struct SettingsView: View {
                         .clipShape(RoundedRectangle(cornerRadius: BrindooRadius.md))
                     }
 
+                    // MARK: - Assistenza
+                    section(title: "Assistenza") {
+                        VStack(spacing: 0) {
+                            NavigationLink {
+                                HelpView()
+                            } label: {
+                                row(icon: "questionmark.circle", iconColor: .brindooCoral, title: "Aiuto e domande frequenti", subtitle: "Come funziona Brindoo")
+                            }
+                            .buttonStyle(.plain)
+
+                            Divider().padding(.leading, 56)
+
+                            if let url = URL(string: "mailto:supporto@brindoo.app?subject=Assistenza%20Brindoo") {
+                                Link(destination: url) {
+                                    row(icon: "envelope", iconColor: .brindooCoral, title: "Contattaci", subtitle: "supporto@brindoo.app")
+                                }
+                            }
+
+                            Divider().padding(.leading, 56)
+
+                            if let url = URL(string: "mailto:supporto@brindoo.app?subject=Segnalazione%20problema%20Brindoo") {
+                                Link(destination: url) {
+                                    row(icon: "exclamationmark.bubble", iconColor: .brindooCoral, title: "Segnala un problema", subtitle: nil)
+                                }
+                            }
+                        }
+                        .background(Color.brindooSurface)
+                        .clipShape(RoundedRectangle(cornerRadius: BrindooRadius.md))
+                    }
+
                     // MARK: - Info & Supporto
                     section(title: "Info") {
                         VStack(spacing: 0) {

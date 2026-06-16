@@ -15,11 +15,13 @@
 //
 
 import SwiftUI
+import StoreKit
 
 struct OfferDetailView: View {
 
     @Environment(\.dismiss) private var dismiss
     @Environment(SessionStore.self) private var session
+    @Environment(\.requestReview) private var requestReview
 
     let offer: ServiceOffer
 
@@ -865,6 +867,11 @@ struct OfferDetailView: View {
             }
             BrindooHaptics.notify(status == .completed ? .success : .warning)
             await loadData()
+            // Momento positivo: chiedi una valutazione su App Store.
+            if status == .completed {
+                try? await Task.sleep(nanoseconds: 800_000_000)
+                requestReview()
+            }
         } catch {
             actionError = "Impossibile aggiornare l'appuntamento."
             print("❌ \(error)")
