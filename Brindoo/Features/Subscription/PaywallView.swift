@@ -28,17 +28,12 @@ struct PaywallView: View {
                     VStack(spacing: BrindooSpacing.md) {
                         ZStack {
                             Circle()
-                                .fill(
-                                    LinearGradient(
-                                        colors: [Color.brindooCoral, Color.brindooCoralDark],
-                                        startPoint: .topLeading,
-                                        endPoint: .bottomTrailing
-                                    )
-                                )
+                                .fill(BrindooGradient.pro)
                                 .frame(width: 80, height: 80)
-                            
-                            Image(systemName: "checkmark.seal.fill")
-                                .font(.system(size: 36, weight: .bold))
+                                .shadow(color: Color(red: 0.93, green: 0.50, blue: 0.20).opacity(0.4), radius: 10, x: 0, y: 4)
+
+                            Image(systemName: "crown.fill")
+                                .font(.system(size: 34, weight: .bold))
                                 .foregroundStyle(.white)
                         }
                         

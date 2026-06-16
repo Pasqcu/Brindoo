@@ -36,19 +36,36 @@ struct OfferCard: View {
         VStack(alignment: .leading, spacing: BrindooSpacing.sm) {
 
             if let imageUrl = offer.imageUrl, let url = URL(string: imageUrl) {
-                AsyncImage(url: url) { phase in
-                    switch phase {
-                    case .success(let image):
-                        image.resizable().scaledToFill()
-                    case .empty:
-                        BrindooSkeleton(cornerRadius: BrindooRadius.sm)
-                    default:
-                        Color.brindooSurface
+                ZStack(alignment: .bottomTrailing) {
+                    AsyncImage(url: url) { phase in
+                        switch phase {
+                        case .success(let image):
+                            image.resizable().scaledToFill()
+                        case .empty:
+                            BrindooSkeleton(cornerRadius: BrindooRadius.sm)
+                        default:
+                            Color.brindooSurface
+                        }
                     }
+                    .frame(maxWidth: .infinity)
+                    .frame(height: 150)
+                    .clipped()
+
+                    BrindooGradient.glassOverlay
+                        .frame(height: 60)
+                        .frame(maxHeight: .infinity, alignment: .bottom)
+                        .allowsHitTesting(false)
+
+                    Text(offer.priceDisplay)
+                        .font(BrindooFont.bodyMedium.weight(.bold))
+                        .foregroundStyle(.white)
+                        .padding(.horizontal, BrindooSpacing.sm)
+                        .padding(.vertical, 4)
+                        .background(.ultraThinMaterial)
+                        .clipShape(Capsule())
+                        .padding(BrindooSpacing.xs)
                 }
-                .frame(maxWidth: .infinity)
                 .frame(height: 150)
-                .clipped()
                 .clipShape(RoundedRectangle(cornerRadius: BrindooRadius.sm))
             }
 

@@ -22,6 +22,7 @@ struct NegotiationsView: View {
     @State private var profileMap: [UUID: Profile] = [:]
     @State private var isLoading: Bool = true
     @State private var chatTarget: ChatTarget?
+    @State private var reviewTarget: Profile?
 
     /// Destinazione chat raggiungibile da una trattativa conclusa.
     private struct ChatTarget: Identifiable, Hashable {
@@ -95,6 +96,11 @@ struct NegotiationsView: View {
         .navigationDestination(item: $chatTarget) { target in
             ChatView(conversation: target.conversation, otherUser: target.other)
         }
+        .sheet(item: $reviewTarget) { organizer in
+            WriteReviewView(organizer: organizer, existingReview: nil) {
+                Task { await loadData() }
+            }
+        }
     }
 
     @ViewBuilder
@@ -163,6 +169,22 @@ struct NegotiationsView: View {
                 .buttonStyle(.plain)
 
                 if proposal.status == .accepted {
+                    if canReview(proposal) {
+                        Button {
+                            let otherId = (currentUserId == proposal.clientId) ? proposal.organizerId : proposal.clientId
+                            reviewTarget = profileMap[otherId]
+                        } label: {
+                            Image(systemName: "star.fill")
+                                .font(.system(size: 16, weight: .semibold))
+                                .foregroundStyle(.white)
+                                .frame(width: 44, height: 44)
+                                .background(BrindooGradient.pro)
+                                .clipShape(RoundedRectangle(cornerRadius: BrindooRadius.md))
+                        }
+                        .buttonStyle(.plain)
+                        .accessibilityLabel("Lascia una recensione")
+                    }
+
                     Button {
                         Task { await openChat(for: proposal) }
                     } label: {
@@ -178,6 +200,12 @@ struct NegotiationsView: View {
                 }
             }
         }
+    }
+
+    /// Il cliente può recensire quando l'evento è svolto o la data è passata.
+    private func canReview(_ proposal: OfferProposal) -> Bool {
+        guard currentUserId == proposal.clientId else { return false }
+        return proposal.effectiveBooking == .completed || proposal.isEventPast
     }
 
     private func openChat(for proposal: OfferProposal) async {
@@ -223,6 +251,15 @@ struct NegotiationsView: View {
                             .font(BrindooFont.caption.weight(.medium))
                     }
                     .foregroundStyle(Color.brindooCoral)
+                }
+                if proposal.status == .accepted, proposal.bookingStatus != nil {
+                    HStack(spacing: 3) {
+                        Image(systemName: proposal.effectiveBooking.iconName)
+                            .font(.system(size: 10))
+                        Text(proposal.effectiveBooking.displayName)
+                            .font(BrindooFont.caption.weight(.semibold))
+                    }
+                    .foregroundStyle(proposal.effectiveBooking == .cancelled ? Color.brindooError : Color.brindooSuccess)
                 }
                 Text(proposal.updatedAtDisplay)
                     .font(BrindooFont.caption)

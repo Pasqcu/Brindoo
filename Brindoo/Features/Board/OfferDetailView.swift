@@ -48,6 +48,9 @@ struct OfferDetailView: View {
     // Preferiti
     @State private var isFavorite: Bool = false
 
+    // Recensione post-evento
+    @State private var showWriteReview: Bool = false
+
     /// Callback chiamato quando l'offerta viene modificata o cancellata.
     var onChange: (() -> Void)?
 
@@ -415,8 +418,25 @@ struct OfferDetailView: View {
     @ViewBuilder
     private func clientProposalActions(_ proposal: OfferProposal) -> some View {
         if proposal.status == .accepted, let org = organizerProfile {
-            BrindooButton("Apri chat", style: .primary, size: .medium, icon: "bubble.left.and.bubble.right.fill") {
-                Task { await openChat(with: org) }
+            VStack(spacing: BrindooSpacing.sm) {
+                bookingStatusRow(proposal)
+
+                BrindooButton("Apri chat", style: .primary, size: .medium, icon: "bubble.left.and.bubble.right.fill") {
+                    Task { await openChat(with: org) }
+                }
+
+                if proposal.effectiveBooking == .completed {
+                    BrindooButton("Lascia una recensione", style: .secondary, size: .medium, icon: "star.fill") {
+                        showWriteReview = true
+                    }
+                }
+
+                bookingActionButtons(proposal)
+            }
+            .sheet(isPresented: $showWriteReview) {
+                WriteReviewView(organizer: org, existingReview: nil) {
+                    Task { await loadData() }
+                }
             }
         } else if proposal.status == .pending {
             if proposal.lastProposer == .organizer {
@@ -580,8 +600,12 @@ struct OfferDetailView: View {
     @ViewBuilder
     private func organizerProposalActions(_ proposal: OfferProposal, client: Profile?) -> some View {
         if proposal.status == .accepted, let client {
-            BrindooButton("Apri chat", style: .primary, size: .medium, icon: "bubble.left.and.bubble.right.fill") {
-                Task { await openChat(with: client) }
+            VStack(spacing: BrindooSpacing.sm) {
+                bookingStatusRow(proposal)
+                BrindooButton("Apri chat", style: .primary, size: .medium, icon: "bubble.left.and.bubble.right.fill") {
+                    Task { await openChat(with: client) }
+                }
+                bookingActionButtons(proposal)
             }
         } else if proposal.status == .pending, proposal.lastProposer == .client {
             VStack(spacing: BrindooSpacing.sm) {
@@ -621,6 +645,60 @@ struct OfferDetailView: View {
             Text("In attesa di risposta dal cliente.")
                 .font(BrindooFont.bodySmall)
                 .foregroundStyle(Color.brindooTextSecondary)
+        }
+    }
+
+    @ViewBuilder
+    private func bookingStatusRow(_ proposal: OfferProposal) -> some View {
+        let booking = proposal.effectiveBooking
+        let color: Color = {
+            switch booking {
+            case .confirmed: return .brindooSuccess
+            case .completed: return .brindooCoral
+            case .cancelled: return .brindooError
+            }
+        }()
+        HStack(spacing: BrindooSpacing.xs) {
+            Image(systemName: booking.iconName)
+                .font(.system(size: 13, weight: .semibold))
+            Text("Appuntamento: \(booking.displayName)")
+                .font(BrindooFont.bodySmall.weight(.semibold))
+            Spacer()
+        }
+        .foregroundStyle(color)
+        .padding(.vertical, BrindooSpacing.xxs)
+        .padding(.horizontal, BrindooSpacing.sm)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(color.opacity(0.10))
+        .clipShape(RoundedRectangle(cornerRadius: BrindooRadius.sm))
+    }
+
+    @ViewBuilder
+    private func bookingActionButtons(_ proposal: OfferProposal) -> some View {
+        if proposal.effectiveBooking == .confirmed {
+            HStack(spacing: BrindooSpacing.sm) {
+                Button { Task { await markBooking(proposal, .completed) } } label: {
+                    Label("Segna svolto", systemImage: "checkmark.seal")
+                        .font(BrindooFont.bodySmall.weight(.semibold))
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 10)
+                        .foregroundStyle(Color.brindooSuccess)
+                        .background(Color.brindooSuccess.opacity(0.1))
+                        .clipShape(RoundedRectangle(cornerRadius: BrindooRadius.sm))
+                }
+                .buttonStyle(.plain)
+
+                Button { Task { await markBooking(proposal, .cancelled) } } label: {
+                    Label("Annulla", systemImage: "calendar.badge.minus")
+                        .font(BrindooFont.bodySmall.weight(.semibold))
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 10)
+                        .foregroundStyle(Color.brindooError)
+                        .background(Color.brindooError.opacity(0.1))
+                        .clipShape(RoundedRectangle(cornerRadius: BrindooRadius.sm))
+                }
+                .buttonStyle(.plain)
+            }
         }
     }
 
@@ -751,6 +829,7 @@ struct OfferDetailView: View {
         actionError = nil
         do {
             let conv = try await OfferProposalService.shared.accept(proposal: proposal)
+            BrindooHaptics.notify(.success)
             await loadData()
             if let conv {
                 // Per il cliente l'altro è l'organizzatore, per l'organizzatore è il cliente.
@@ -763,6 +842,21 @@ struct OfferDetailView: View {
             }
         } catch {
             actionError = "Impossibile accettare."
+            print("❌ \(error)")
+        }
+    }
+
+    private func markBooking(_ proposal: OfferProposal, _ status: BookingStatus) async {
+        actionError = nil
+        do {
+            try await OfferProposalService.shared.updateBookingStatus(proposalId: proposal.id, booking: status)
+            if status == .cancelled {
+                LocalReminderService.cancelReminder(proposalId: proposal.id)
+            }
+            BrindooHaptics.notify(status == .completed ? .success : .warning)
+            await loadData()
+        } catch {
+            actionError = "Impossibile aggiornare l'appuntamento."
             print("❌ \(error)")
         }
     }

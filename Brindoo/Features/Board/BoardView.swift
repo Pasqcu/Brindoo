@@ -9,6 +9,18 @@
 
 import SwiftUI
 
+enum BoardSortMode: String, CaseIterable, Identifiable {
+    case recommended, recent, nameAsc
+    var id: String { rawValue }
+    var label: String {
+        switch self {
+        case .recommended: return "Consigliati"
+        case .recent:      return "Più recenti"
+        case .nameAsc:     return "Nome (A-Z)"
+        }
+    }
+}
+
 struct BoardView: View {
 
     @Environment(SessionStore.self) private var session
@@ -38,6 +50,18 @@ struct BoardView: View {
     @State private var showCreateOffer: Bool = false
     @State private var showCompleteProfile: Bool = false
     @State private var hasOrganizerCategories: Bool = true
+
+    @AppStorage("brindoo.client.welcomeSeen") private var welcomeSeen: Bool = false
+    @State private var showWelcome: Bool = false
+    @State private var sortMode: BoardSortMode = .recommended
+
+    private var sortedOrganizers: [Profile] {
+        switch sortMode {
+        case .recommended: return organizers
+        case .recent:      return organizers.sorted { $0.createdAt > $1.createdAt }
+        case .nameAsc:     return organizers.sorted { ($0.fullName ?? "").localizedCaseInsensitiveCompare($1.fullName ?? "") == .orderedAscending }
+        }
+    }
 
     private var isClient: Bool {
         clientPreview || session.currentProfile?.role == .client
@@ -94,6 +118,21 @@ struct BoardView: View {
                     }
                 }
             }
+            if isClient {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Menu {
+                        Picker("Ordina", selection: $sortMode) {
+                            ForEach(BoardSortMode.allCases) { mode in
+                                Text(mode.label).tag(mode)
+                            }
+                        }
+                    } label: {
+                        Image(systemName: "arrow.up.arrow.down")
+                            .font(.system(size: 17, weight: .semibold))
+                            .foregroundStyle(Color.brindooCoral)
+                    }
+                }
+            }
             if clientPreview {
                 ToolbarItem(placement: .topBarTrailing) {
                     Button("Chiudi") { dismiss() }
@@ -118,6 +157,18 @@ struct BoardView: View {
                 Task { await checkOrganizerCategoriesIfNeeded() }
             }) {
                 EditProfileView()
+            }
+            .sheet(isPresented: $showWelcome) {
+                ClientWelcomeSheet(categories: categories) { chosen in
+                    welcomeSeen = true
+                    if !chosen.isEmpty {
+                        selectedCategoryIds = chosen
+                        Task { await loadOrganizers() }
+                    }
+                } onSkip: {
+                    welcomeSeen = true
+                }
+                .presentationDetents([.medium, .large])
             }
             .task { await loadInitial() }
             .refreshable { await reload() }
@@ -358,7 +409,7 @@ struct BoardView: View {
                 LazyVStack(spacing: BrindooSpacing.md) {
                     discoveryHeader
 
-                    ForEach(organizers) { organizer in
+                    ForEach(sortedOrganizers) { organizer in
                         NavigationLink {
                             OrganizerDetailView(organizer: organizer)
                         } label: {
@@ -368,7 +419,7 @@ struct BoardView: View {
                                 offers: organizerOffersMap[organizer.id] ?? []
                             )
                         }
-                        .buttonStyle(.plain)
+                        .buttonStyle(BrindooPressStyle())
                     }
 
                     inviteCard
@@ -475,7 +526,7 @@ struct BoardView: View {
                                 showOrganizer: false
                             )
                         }
-                        .buttonStyle(.plain)
+                        .buttonStyle(BrindooPressStyle())
                     }
                 }
                 .padding(.horizontal, BrindooSpacing.md)
@@ -492,7 +543,7 @@ struct BoardView: View {
             Spacer()
             ZStack {
                 Circle()
-                    .fill(Color.brindooCoral.opacity(0.1))
+                    .fill(BrindooGradient.coralSoft.opacity(0.18))
                     .frame(width: 100, height: 100)
                 Image(systemName: icon)
                     .font(.system(size: 44))
@@ -558,6 +609,11 @@ struct BoardView: View {
         await BlockService.shared.loadBlocks()
         await checkOrganizerCategoriesIfNeeded()
         await reload()
+
+        // Primo passo guidato per il cliente (una sola volta).
+        if isClient && !clientPreview && !welcomeSeen && !categories.isEmpty {
+            showWelcome = true
+        }
     }
 
     /// Verifica se l'organizer ha almeno una categoria. Se l'utente non è
@@ -665,8 +721,58 @@ struct OrganizerWithOffersCard: View {
 
     private let previewCount = 2
 
+    private var coverImageUrl: String? {
+        offers.first(where: { ($0.imageUrl?.isEmpty == false) })?.imageUrl
+    }
+
+    private var minPrice: Double? {
+        offers.map(\.price).min()
+    }
+
+    private var minPriceDisplay: String? {
+        guard let minPrice else { return nil }
+        let f = NumberFormatter()
+        f.numberStyle = .currency
+        f.currencyCode = "EUR"
+        f.maximumFractionDigits = 0
+        return f.string(from: NSNumber(value: minPrice))
+    }
+
     var body: some View {
         VStack(alignment: .leading, spacing: BrindooSpacing.sm) {
+            if let cover = coverImageUrl, let url = URL(string: cover) {
+                ZStack(alignment: .bottomLeading) {
+                    AsyncImage(url: url) { phase in
+                        switch phase {
+                        case .success(let image): image.resizable().scaledToFill()
+                        case .empty: BrindooSkeleton(cornerRadius: BrindooRadius.sm)
+                        default: Color.brindooSurface
+                        }
+                    }
+                    .frame(maxWidth: .infinity)
+                    .frame(height: 150)
+                    .clipped()
+
+                    BrindooGradient.glassOverlay
+                        .frame(height: 70)
+                        .frame(maxHeight: .infinity, alignment: .bottom)
+                        .allowsHitTesting(false)
+
+                    if let price = minPriceDisplay {
+                        Text("da \(price)")
+                            .font(BrindooFont.bodyMedium.weight(.bold))
+                            .foregroundStyle(.white)
+                            .padding(.horizontal, BrindooSpacing.sm)
+                            .padding(.vertical, 4)
+                            .background(.ultraThinMaterial)
+                            .clipShape(Capsule())
+                            .padding(BrindooSpacing.xs)
+                    }
+                }
+                .frame(height: 150)
+                .clipShape(RoundedRectangle(cornerRadius: BrindooRadius.sm))
+            }
+
             HStack(spacing: BrindooSpacing.sm) {
                 AvatarView(url: organizer.avatarUrl, name: organizer.fullName, size: 56)
 
@@ -890,5 +996,75 @@ struct AreaPickerSheet: View {
             .clipShape(RoundedRectangle(cornerRadius: BrindooRadius.sm))
         }
         .buttonStyle(.plain)
+    }
+}
+
+// MARK: - Primo passo guidato (cliente)
+
+struct ClientWelcomeSheet: View {
+
+    let categories: [ServiceCategory]
+    let onApply: (Set<UUID>) -> Void
+    let onSkip: () -> Void
+
+    @Environment(\.dismiss) private var dismiss
+    @State private var selected: Set<UUID> = []
+
+    var body: some View {
+        NavigationStack {
+            ScrollView {
+                VStack(alignment: .leading, spacing: BrindooSpacing.lg) {
+                    VStack(alignment: .leading, spacing: BrindooSpacing.xs) {
+                        Text("Che tipo di evento organizzi?")
+                            .font(BrindooFont.titleLarge)
+                        Text("Scegli uno o più servizi: ti mostriamo subito i professionisti giusti.")
+                            .font(BrindooFont.bodyMedium)
+                            .foregroundStyle(Color.brindooTextSecondary)
+                    }
+
+                    FlowLayoutView(spacing: BrindooSpacing.xs) {
+                        ForEach(categories) { cat in
+                            let isOn = selected.contains(cat.id)
+                            Button {
+                                if isOn { selected.remove(cat.id) } else { selected.insert(cat.id) }
+                            } label: {
+                                HStack(spacing: 4) {
+                                    Image(systemName: cat.icon).font(.system(size: 13, weight: .medium))
+                                    Text(cat.name).font(BrindooFont.bodySmall.weight(.medium))
+                                }
+                                .padding(.horizontal, BrindooSpacing.md)
+                                .padding(.vertical, BrindooSpacing.xs)
+                                .foregroundStyle(isOn ? .white : cat.tint)
+                                .background(isOn ? cat.tint : cat.tint.opacity(0.12))
+                                .clipShape(Capsule())
+                            }
+                        }
+                    }
+                }
+                .padding(BrindooSpacing.lg)
+            }
+            .background(Color.brindooBackground)
+            .navigationTitle("Benvenuto 🎉")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button("Salta") { onSkip(); dismiss() }
+                        .foregroundStyle(Color.brindooTextSecondary)
+                }
+            }
+            .safeAreaInset(edge: .bottom) {
+                BrindooButton(
+                    selected.isEmpty ? "Mostra tutti i professionisti" : "Mostra professionisti",
+                    style: .primary,
+                    size: .large
+                ) {
+                    onApply(selected)
+                    dismiss()
+                }
+                .padding(.horizontal, BrindooSpacing.lg)
+                .padding(.vertical, BrindooSpacing.sm)
+                .background(Color.brindooBackground)
+            }
+        }
     }
 }

@@ -263,6 +263,14 @@ final class OfferProposalService {
             lastProposer: proposal.lastProposer == .client ? .client : .organizer
         )
 
+        // Promemoria locale dell'evento (se è stata concordata una data).
+        let offerTitleForReminder = (try? await ServiceOfferService.shared.fetchOffer(id: proposal.offerId))?.title ?? "Evento"
+        await LocalReminderService.scheduleEventReminder(
+            proposalId: proposal.id,
+            eventDate: proposal.eventDate,
+            offerTitle: offerTitleForReminder
+        )
+
         // Crea/recupera la conversation tra cliente e organizzatore.
         guard let userId = SupabaseManager.shared.currentUserID else { return nil }
         if userId == proposal.clientId {
@@ -301,6 +309,16 @@ final class OfferProposalService {
         try await client
             .from("offer_proposals")
             .update(U(status: status.rawValue))
+            .eq("id", value: proposalId)
+            .execute()
+    }
+
+    /// Aggiorna lo stato dell'appuntamento (svolto / annullato) di una trattativa accettata.
+    func updateBookingStatus(proposalId: UUID, booking: BookingStatus) async throws {
+        struct U: Encodable { let booking_status: String }
+        try await client
+            .from("offer_proposals")
+            .update(U(booking_status: booking.rawValue))
             .eq("id", value: proposalId)
             .execute()
     }

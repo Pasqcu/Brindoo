@@ -153,17 +153,40 @@ struct OrganizerDetailView: View {
     @ViewBuilder
     private var heroSection: some View {
         ZStack(alignment: .bottom) {
-            LinearGradient(
-                stops: [
-                    .init(color: Color.brindooCoral.opacity(0.35), location: 0.0),
-                    .init(color: Color.brindooCoral.opacity(0.20), location: 0.4),
-                    .init(color: Color.brindooCoral.opacity(0.08), location: 0.75),
-                    .init(color: Color.brindooBackground, location: 1.0)
-                ],
-                startPoint: .top,
-                endPoint: .bottom
-            )
-            .frame(height: 220)
+            if let banner = portfolioItems.first?.imageUrl, let url = URL(string: banner) {
+                ZStack(alignment: .bottom) {
+                    AsyncImage(url: url) { image in
+                        image.resizable().scaledToFill()
+                    } placeholder: {
+                        BrindooGradient.coralSoft
+                    }
+                    .frame(height: 220)
+                    .clipped()
+
+                    LinearGradient(
+                        stops: [
+                            .init(color: .clear, location: 0.0),
+                            .init(color: Color.brindooBackground.opacity(0.6), location: 0.7),
+                            .init(color: Color.brindooBackground, location: 1.0)
+                        ],
+                        startPoint: .top,
+                        endPoint: .bottom
+                    )
+                    .frame(height: 220)
+                }
+            } else {
+                LinearGradient(
+                    stops: [
+                        .init(color: Color.brindooCoral.opacity(0.35), location: 0.0),
+                        .init(color: Color.brindooCoral.opacity(0.20), location: 0.4),
+                        .init(color: Color.brindooCoral.opacity(0.08), location: 0.75),
+                        .init(color: Color.brindooBackground, location: 1.0)
+                    ],
+                    startPoint: .top,
+                    endPoint: .bottom
+                )
+                .frame(height: 220)
+            }
 
             Button {
                 if organizer.avatarUrl?.isEmpty == false {
@@ -202,8 +225,23 @@ struct OrganizerDetailView: View {
                 }
                 .foregroundStyle(Color.brindooTextSecondary)
             }
+
+            HStack(spacing: 4) {
+                Image(systemName: "checkmark.shield.fill").font(.system(size: 11))
+                Text("Su Brindoo dal \(memberSinceYear)")
+                    .font(BrindooFont.caption)
+            }
+            .foregroundStyle(Color.brindooSuccess)
+            .padding(.top, 2)
         }
         .frame(maxWidth: .infinity)
+    }
+
+    private var memberSinceYear: String {
+        let f = DateFormatter()
+        f.locale = Locale(identifier: "it_IT")
+        f.dateFormat = "yyyy"
+        return f.string(from: organizer.createdAt)
     }
 
     @ViewBuilder

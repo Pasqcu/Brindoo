@@ -222,6 +222,7 @@ struct NegotiateOfferView: View {
                     message: messageVal
                 )
             }
+            BrindooHaptics.notify(.success)
             onDone()
             dismiss()
         } catch {

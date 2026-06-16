@@ -16,7 +16,7 @@
             buildForAnalyzing = "YES">
             <BuildableReference
                BuildableIdentifier = "primary"
-               BlueprintIdentifier = "0EF8FF122FC0B64300E88C75"
+               BlueprintIdentifier = "0EF8FF362FC0B7E000E88C75"
                BuildableName = "BrindooLiveActivityExtension.appex"
                BlueprintName = "BrindooLiveActivityExtension"
                ReferencedContainer = "container:Brindoo.xcodeproj">

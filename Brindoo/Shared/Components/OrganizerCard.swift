@@ -95,18 +95,17 @@ struct OrganizerCard: View {
 
 struct ProBadge: View {
     var body: some View {
-        Text("PRO")
-            .font(.system(size: 10, weight: .bold, design: .rounded))
-            .foregroundStyle(.white)
-            .padding(.horizontal, 6)
-            .padding(.vertical, 2)
-            .background(
-                LinearGradient(
-                    colors: [Color.brindooCoral, Color.brindooCoralDark],
-                    startPoint: .leading,
-                    endPoint: .trailing
-                )
-            )
-            .clipShape(Capsule())
+        HStack(spacing: 2) {
+            Image(systemName: "crown.fill")
+                .font(.system(size: 8, weight: .bold))
+            Text("PRO")
+                .font(.system(size: 10, weight: .bold, design: .rounded))
+        }
+        .foregroundStyle(.white)
+        .padding(.horizontal, 6)
+        .padding(.vertical, 2)
+        .background(BrindooGradient.pro)
+        .clipShape(Capsule())
+        .shadow(color: Color(red: 0.93, green: 0.50, blue: 0.20).opacity(0.4), radius: 3, x: 0, y: 1)
     }
 }

@@ -68,6 +68,16 @@ struct BrindooCard<Content: View>: View {
     }
 }
 
+/// Stile per elementi tappabili (card): leggera riduzione + opacità alla pressione.
+struct BrindooPressStyle: ButtonStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .scaleEffect(configuration.isPressed ? 0.97 : 1.0)
+            .opacity(configuration.isPressed ? 0.92 : 1.0)
+            .animation(.easeOut(duration: 0.15), value: configuration.isPressed)
+    }
+}
+
 private struct ConditionalShadow: ViewModifier {
     let enabled: Bool
     func body(content: Content) -> some View {

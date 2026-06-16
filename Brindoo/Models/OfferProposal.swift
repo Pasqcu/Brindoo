@@ -40,6 +40,29 @@ enum ProposerRole: String, Codable {
     case organizer
 }
 
+/// Stato dell'appuntamento dopo che la trattativa è stata accettata.
+enum BookingStatus: String, Codable, CaseIterable {
+    case confirmed   // accordo confermato, evento da svolgere
+    case completed   // evento svolto
+    case cancelled   // appuntamento annullato
+
+    var displayName: String {
+        switch self {
+        case .confirmed: return "Confermato"
+        case .completed: return "Svolto"
+        case .cancelled: return "Annullato"
+        }
+    }
+
+    var iconName: String {
+        switch self {
+        case .confirmed: return "calendar.badge.checkmark"
+        case .completed: return "checkmark.seal.fill"
+        case .cancelled: return "xmark.circle.fill"
+        }
+    }
+}
+
 /// Trattativa attiva (una per coppia offerta + cliente, attiva).
 struct OfferProposal: Identifiable, Codable, Hashable, Equatable {
     let id: UUID
@@ -52,6 +75,8 @@ struct OfferProposal: Identifiable, Codable, Hashable, Equatable {
     let status: OfferProposalStatus
     /// Data dell'evento concordata (facoltativa), formato "yyyy-MM-dd".
     let eventDate: String?
+    /// Stato dell'appuntamento dopo l'accettazione (facoltativo).
+    let bookingStatus: BookingStatus?
     let createdAt: Date
     let updatedAt: Date
 
@@ -65,8 +90,24 @@ struct OfferProposal: Identifiable, Codable, Hashable, Equatable {
         case lastMessage = "last_message"
         case status
         case eventDate = "event_date"
+        case bookingStatus = "booking_status"
         case createdAt = "created_at"
         case updatedAt = "updated_at"
+    }
+
+    /// Stato effettivo dell'appuntamento (default: confermato se accettata).
+    var effectiveBooking: BookingStatus {
+        bookingStatus ?? (status == .accepted ? .confirmed : .confirmed)
+    }
+
+    /// True se l'evento ha una data già passata.
+    var isEventPast: Bool {
+        guard let eventDate, !eventDate.isEmpty else { return false }
+        let f = DateFormatter()
+        f.dateFormat = "yyyy-MM-dd"
+        f.timeZone = TimeZone(identifier: "UTC")
+        guard let d = f.date(from: eventDate) else { return false }
+        return d < Calendar.current.startOfDay(for: Date())
     }
 
     /// "21 maggio 2026" oppure nil se non impostata.

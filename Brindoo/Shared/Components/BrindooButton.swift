@@ -103,7 +103,7 @@ struct BrindooButton: View {
             .frame(maxWidth: .infinity)
             .frame(height: size.height)
             .padding(.horizontal, size.horizontalPadding)
-            .background(backgroundColor)
+            .background(backgroundView)
             .overlay(
                 RoundedRectangle(cornerRadius: BrindooRadius.md)
                     .strokeBorder(borderColor, lineWidth: borderWidth)
@@ -115,14 +115,16 @@ struct BrindooButton: View {
     }
     
     // MARK: - Stili dinamici
-    
-    private var backgroundColor: Color {
+
+    /// Sfondo: gradiente per l'azione primaria (più profondità), tinta piatta per le altre.
+    @ViewBuilder
+    private var backgroundView: some View {
         switch style {
-        case .primary: return Color.brindooCoral
-        case .secondary: return .clear
-        case .tertiary: return .clear
-        case .white: return .white
-        case .destructive: return Color.brindooError
+        case .primary:     BrindooGradient.coral
+        case .secondary:   Color.clear
+        case .tertiary:    Color.clear
+        case .white:       Color.white
+        case .destructive: Color.brindooError
         }
     }
     
