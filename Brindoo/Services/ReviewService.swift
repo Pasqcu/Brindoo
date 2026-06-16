@@ -66,6 +66,20 @@ final class ReviewService {
         }
     }
 
+    /// Rating aggregati per più organizzatori in una sola query.
+    func fetchRatings(organizerIds: [UUID]) async throws -> [UUID: OrganizerRating] {
+        guard !organizerIds.isEmpty else { return [:] }
+        let ratings: [OrganizerRating] = try await client
+            .from("organizer_ratings")
+            .select()
+            .in("organizer_id", values: organizerIds.map { $0.uuidString })
+            .execute()
+            .value
+        var out: [UUID: OrganizerRating] = [:]
+        for r in ratings { out[r.organizerId] = r }
+        return out
+    }
+
     /// Restituisce il summary di rating, oppure `nil` se non ci sono recensioni.
     func fetchSummary(organizerId: UUID) async throws -> ReviewSummary? {
         let summary = try await fetchRating(organizerId: organizerId)
@@ -208,6 +222,27 @@ final class ReviewService {
             print("❌ Errore update recensione: \(error)")
             throw error
         }
+    }
+
+    // MARK: - Risposta dell'organizzatore
+
+    /// L'organizzatore risponde a una recensione ricevuta.
+    @discardableResult
+    func replyToReview(reviewId: UUID, reply: String) async throws -> Review {
+        let trimmed = reply.trimmingCharacters(in: .whitespacesAndNewlines)
+        struct U: Encodable { let reply: String?; let reply_at: String? }
+        let payload = U(
+            reply: trimmed.isEmpty ? nil : trimmed,
+            reply_at: trimmed.isEmpty ? nil : ISO8601DateFormatter().string(from: Date())
+        )
+        return try await client
+            .from("reviews")
+            .update(payload)
+            .eq("id", value: reviewId)
+            .select()
+            .single()
+            .execute()
+            .value
     }
 
     // MARK: - Cancella recensione

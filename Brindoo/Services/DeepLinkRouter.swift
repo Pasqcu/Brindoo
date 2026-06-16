@@ -56,6 +56,9 @@ final class DeepLinkRouter {
     /// Offerta da aprire (bacheca → dettaglio o trattative)
     var pendingOfferId: UUID?
 
+    /// Profilo professionista da aprire (da link condiviso)
+    var pendingProfileId: UUID?
+
     /// Recensione → naviga al profilo dell'organizzatore (id non disponibile dal payload,
     /// la View decide cosa fare)
     var pendingReviewId: UUID?
@@ -86,6 +89,27 @@ final class DeepLinkRouter {
 
     func clearPendingOffer() {
         pendingOfferId = nil
+    }
+
+    func clearPendingProfile() {
+        pendingProfileId = nil
+    }
+
+    /// Gestisce un link "https://brindoo.app/p/<id>" o "/o/<id>".
+    /// Restituisce true se è stato riconosciuto.
+    @discardableResult
+    func handleShareLink(_ url: URL) -> Bool {
+        let parts = url.pathComponents.filter { $0 != "/" }
+        guard parts.count >= 2 else { return false }
+        switch parts[0] {
+        case "p":
+            if let id = UUID(uuidString: parts[1]) { pendingProfileId = id; return true }
+        case "o":
+            if let id = UUID(uuidString: parts[1]) { pendingOfferId = id; return true }
+        default:
+            break
+        }
+        return false
     }
 
     func clearPendingReview() {

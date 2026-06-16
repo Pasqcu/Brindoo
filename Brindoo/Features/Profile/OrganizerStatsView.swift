@@ -21,8 +21,13 @@ struct OrganizerStatsView: View {
         ScrollView {
             VStack(spacing: BrindooSpacing.lg) {
                 if isLoading {
-                    ProgressView().tint(.brindooCoral)
-                        .padding(.vertical, BrindooSpacing.xl)
+                    LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: BrindooSpacing.md) {
+                        ForEach(0..<4, id: \.self) { _ in
+                            BrindooSkeleton(cornerRadius: BrindooRadius.md)
+                                .frame(height: 96)
+                        }
+                    }
+                    .disabled(true)
                 } else if let stats {
                     grid(stats)
                     responseTimeCard(stats)

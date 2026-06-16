@@ -32,15 +32,10 @@ struct LoginView: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: BrindooSpacing.lg) {
-                
-                VStack(alignment: .leading, spacing: BrindooSpacing.xs) {
-                    Text("Bentornato")
-                        .font(BrindooFont.displayMedium)
-                    Text("Accedi al tuo account Brindoo")
-                        .font(BrindooFont.bodyLarge)
-                        .foregroundStyle(Color.brindooTextSecondary)
-                }
-                .padding(.top, BrindooSpacing.lg)
+
+                BrindooAuthHero(subtitle: "Bentornato! Accedi al tuo account")
+                    .frame(maxWidth: .infinity)
+                    .padding(.top, BrindooSpacing.md)
                 
                 if !hasAcceptedTerms {
                     consentCheckbox

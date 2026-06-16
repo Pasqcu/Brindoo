@@ -21,17 +21,24 @@ struct ReviewsListView: View {
     @State private var isLoading: Bool = true
     @State private var showWriteReview: Bool = false
     @State private var reviewToReport: Review?
+    @State private var reviewToReply: Review?
+
+    private var isOrganizerOwner: Bool {
+        session.userID == organizer.id
+    }
     /// True se il cliente ha una trattativa conclusa con questo organizzatore.
     @State private var hasAcceptedDeal: Bool = false
     
     var body: some View {
         Group {
             if isLoading {
-                VStack {
-                    Spacer()
-                    ProgressView().tint(.brindooCoral)
-                    Spacer()
+                ScrollView {
+                    LazyVStack(spacing: BrindooSpacing.md) {
+                        ForEach(0..<5, id: \.self) { _ in BrindooSkeletonCard() }
+                    }
+                    .padding(BrindooSpacing.lg)
                 }
+                .disabled(true)
             } else {
                 content
             }
@@ -59,6 +66,11 @@ struct ReviewsListView: View {
                 targetId: review.id,
                 targetLabel: "questa recensione"
             )
+        }
+        .sheet(item: $reviewToReply) { review in
+            ReplyToReviewSheet(review: review) {
+                Task { await loadAllData() }
+            }
         }
     }
     
@@ -279,6 +291,37 @@ struct ReviewsListView: View {
                     .lineLimit(nil)
                     .fixedSize(horizontal: false, vertical: true)
             }
+
+            // Risposta dell'organizzatore
+            if let reply = review.reply, !reply.isEmpty {
+                HStack(alignment: .top, spacing: BrindooSpacing.xs) {
+                    Image(systemName: "arrowshape.turn.up.left.fill")
+                        .font(.system(size: 11))
+                        .foregroundStyle(Color.brindooCoral)
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("Risposta di \(organizer.fullName ?? "organizzatore")")
+                            .font(BrindooFont.caption.weight(.semibold))
+                            .foregroundStyle(Color.brindooCoral)
+                        Text(reply)
+                            .font(BrindooFont.bodySmall)
+                            .foregroundStyle(Color.brindooTextPrimary)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                }
+                .padding(BrindooSpacing.sm)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .background(Color.brindooCoral.opacity(0.07))
+                .clipShape(RoundedRectangle(cornerRadius: BrindooRadius.sm))
+            } else if isOrganizerOwner {
+                Button {
+                    reviewToReply = review
+                } label: {
+                    Label("Rispondi", systemImage: "arrowshape.turn.up.left")
+                        .font(BrindooFont.bodySmall.weight(.semibold))
+                        .foregroundStyle(Color.brindooCoral)
+                }
+                .buttonStyle(.plain)
+            }
         }
         .padding(BrindooSpacing.md)
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -347,6 +390,81 @@ struct ReviewsListView: View {
             for await (id, profile) in group {
                 if let profile { clientsMap[id] = profile }
             }
+        }
+    }
+}
+
+// MARK: - Sheet risposta recensione
+
+struct ReplyToReviewSheet: View {
+    let review: Review
+    let onSuccess: () -> Void
+
+    @Environment(\.dismiss) private var dismiss
+    @State private var text: String = ""
+    @State private var isLoading = false
+    @State private var error: String?
+
+    var body: some View {
+        NavigationStack {
+            ScrollView {
+                VStack(alignment: .leading, spacing: BrindooSpacing.md) {
+                    Text("Rispondi pubblicamente a questa recensione. La tua risposta sarà visibile a tutti.")
+                        .font(BrindooFont.bodySmall)
+                        .foregroundStyle(Color.brindooTextSecondary)
+
+                    TextField("Scrivi la tua risposta…", text: $text, axis: .vertical)
+                        .lineLimit(4...10)
+                        .font(BrindooFont.bodyLarge)
+                        .padding(BrindooSpacing.md)
+                        .background(Color.brindooSurface)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: BrindooRadius.md)
+                                .strokeBorder(Color.brindooBorder, lineWidth: 1)
+                        )
+                        .clipShape(RoundedRectangle(cornerRadius: BrindooRadius.md))
+                        .disabled(isLoading)
+
+                    if let error {
+                        Text(error)
+                            .font(BrindooFont.bodySmall)
+                            .foregroundStyle(Color.brindooError)
+                    }
+                }
+                .padding(BrindooSpacing.lg)
+            }
+            .background(Color.brindooBackground)
+            .navigationTitle("Rispondi")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .topBarLeading) {
+                    Button("Annulla") { dismiss() }.disabled(isLoading)
+                }
+            }
+            .safeAreaInset(edge: .bottom) {
+                BrindooButton("Pubblica risposta", style: .primary, size: .large, isLoading: isLoading,
+                              isDisabled: text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty) {
+                    Task { await submit() }
+                }
+                .padding(.horizontal, BrindooSpacing.lg)
+                .padding(.vertical, BrindooSpacing.sm)
+                .background(Color.brindooBackground)
+            }
+            .onAppear { text = review.reply ?? "" }
+        }
+    }
+
+    private func submit() async {
+        isLoading = true
+        defer { isLoading = false }
+        do {
+            _ = try await ReviewService.shared.replyToReview(reviewId: review.id, reply: text)
+            BrindooHaptics.notify(.success)
+            onSuccess()
+            dismiss()
+        } catch {
+            self.error = "Impossibile pubblicare la risposta. Riprova."
+            print("❌ \(error)")
         }
     }
 }

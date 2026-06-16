@@ -13,6 +13,7 @@ struct ProfileView: View {
     @State private var showPublicPreview: Bool = false
     @State private var showBoardPreview: Bool = false
     @State private var showPortfolio: Bool = false
+    @State private var showAvailability: Bool = false
     @State private var showAvatarFullScreen: Bool = false
     @State private var organizerCategories: [OrganizerCategoryDetail] = []
     @State private var reviewSummary: ReviewSummary?
@@ -32,6 +33,8 @@ struct ProfileView: View {
                         if let bio = profile.bio, !bio.isEmpty {
                             bioSection(bio)
                         }
+
+                        activityLink
 
                         negotiationsLink
 
@@ -71,6 +74,8 @@ struct ProfileView: View {
                                     showPublicPreview = true
                                 }
                             }
+
+                            availabilityLink
 
                             boardPreviewLink
                         }
@@ -112,6 +117,7 @@ struct ProfileView: View {
                             .font(.system(size: 20))
                             .foregroundStyle(Color.brindooCoral)
                     }
+                    .accessibilityLabel("Impostazioni")
                 }
             }
             .task { await loadData() }
@@ -141,6 +147,9 @@ struct ProfileView: View {
                         PortfolioGalleryView(organizerId: userId, isOwner: true)
                     }
                 }
+            }
+            .sheet(isPresented: $showAvailability) {
+                AvailabilityView()
             }
             .fullScreenCover(isPresented: $showAvatarFullScreen) {
                 AvatarFullScreenView(
@@ -263,6 +272,21 @@ struct ProfileView: View {
     }
 
     @ViewBuilder
+    private var availabilityLink: some View {
+        Button {
+            showAvailability = true
+        } label: {
+            navLinkRow(
+                icon: "calendar",
+                background: Color.brindooWarning,
+                title: "Disponibilità",
+                subtitle: "Segna i giorni in cui non sei disponibile"
+            )
+        }
+        .buttonStyle(.plain)
+    }
+
+    @ViewBuilder
     private var boardPreviewLink: some View {
         Button {
             showBoardPreview = true
@@ -272,6 +296,21 @@ struct ProfileView: View {
                 background: Color.blue,
                 title: "Anteprima bacheca",
                 subtitle: "Vedi come ti vedono i clienti che cercano"
+            )
+        }
+        .buttonStyle(.plain)
+    }
+
+    @ViewBuilder
+    private var activityLink: some View {
+        NavigationLink {
+            ActivityView()
+        } label: {
+            navLinkRow(
+                icon: "bell.badge.fill",
+                background: Color.brindooSuccess,
+                title: "Attività",
+                subtitle: "Novità, eventi in arrivo e cose da gestire"
             )
         }
         .buttonStyle(.plain)

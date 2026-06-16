@@ -120,11 +120,19 @@ struct OfferDetailView: View {
                 }
             }
             .padding(BrindooSpacing.md)
+            .brindooReadableWidth()
         }
         .background(Color.brindooBackground)
         .navigationTitle("Offerta")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
+            ToolbarItem(placement: .topBarTrailing) {
+                ShareLink(item: URL(string: "https://brindoo.app/o/\(offer.id.uuidString)")!) {
+                    Image(systemName: "square.and.arrow.up")
+                        .foregroundStyle(Color.brindooCoral)
+                }
+                .accessibilityLabel("Condividi offerta")
+            }
             if isClient && !isOwnOffer {
                 ToolbarItem(placement: .topBarTrailing) {
                     HStack(spacing: BrindooSpacing.sm) {
@@ -134,6 +142,7 @@ struct OfferDetailView: View {
                             Image(systemName: isFavorite ? "heart.fill" : "heart")
                                 .foregroundStyle(isFavorite ? Color.brindooCoral : Color.brindooTextSecondary)
                         }
+                        .accessibilityLabel(isFavorite ? "Rimuovi dai preferiti" : "Salva nei preferiti")
 
                         Menu {
                             Button(role: .destructive) {
@@ -145,6 +154,7 @@ struct OfferDetailView: View {
                             Image(systemName: "ellipsis")
                                 .foregroundStyle(Color.brindooTextSecondary)
                         }
+                        .accessibilityLabel("Altre opzioni")
                     }
                 }
             }

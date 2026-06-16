@@ -28,6 +28,7 @@ struct NegotiateOfferView: View {
 
     @State private var includeEventDate: Bool = false
     @State private var eventDate: Date = Calendar.current.date(byAdding: .day, value: 14, to: Date()) ?? Date()
+    @State private var unavailableDays: Set<String> = []
 
     @State private var priceError: String?
     @State private var generalError: String?
@@ -136,6 +137,15 @@ struct NegotiateOfferView: View {
                                 .datePickerStyle(.compact)
                                 .environment(\.locale, Locale(identifier: "it_IT"))
                                 .disabled(isLoading)
+
+                                if isDateUnavailable(eventDate) {
+                                    HStack(spacing: BrindooSpacing.xxs) {
+                                        Image(systemName: "exclamationmark.triangle.fill")
+                                        Text("Il professionista non è disponibile in questa data")
+                                            .font(BrindooFont.caption)
+                                    }
+                                    .foregroundStyle(Color.brindooWarning)
+                                }
                             }
                         }
                         .padding(BrindooSpacing.md)
@@ -179,7 +189,24 @@ struct NegotiateOfferView: View {
                         .shadow(color: .black.opacity(0.08), radius: 8, x: 0, y: -2)
                 )
             }
+            .task {
+                if isOpening {
+                    unavailableDays = (try? await AvailabilityService.shared
+                        .fetchUnavailableDays(organizerId: contextOffer.organizerId)) ?? []
+                }
+            }
         }
+    }
+
+    private func dayString(_ date: Date) -> String {
+        let f = DateFormatter()
+        f.dateFormat = "yyyy-MM-dd"
+        f.timeZone = TimeZone(identifier: "UTC")
+        return f.string(from: date)
+    }
+
+    private func isDateUnavailable(_ date: Date) -> Bool {
+        unavailableDays.contains(dayString(date))
     }
 
     private func submit() async {
@@ -199,10 +226,11 @@ struct NegotiateOfferView: View {
 
         var eventDateString: String? = nil
         if includeEventDate {
-            let f = DateFormatter()
-            f.dateFormat = "yyyy-MM-dd"
-            f.timeZone = TimeZone(identifier: "UTC")
-            eventDateString = f.string(from: eventDate)
+            if isDateUnavailable(eventDate) {
+                generalError = "Il professionista non è disponibile nella data scelta. Scegli un altro giorno."
+                return
+            }
+            eventDateString = dayString(eventDate)
         }
 
         do {

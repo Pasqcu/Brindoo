@@ -134,6 +134,7 @@ struct PaywallView: View {
                             .font(.system(size: 16, weight: .semibold))
                             .foregroundStyle(Color.brindooTextPrimary)
                     }
+                    .accessibilityLabel("Chiudi")
                 }
                 
                 ToolbarItem(placement: .topBarTrailing) {

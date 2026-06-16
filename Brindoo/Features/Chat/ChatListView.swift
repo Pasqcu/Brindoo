@@ -77,7 +77,13 @@ struct ChatListView: View {
     @ViewBuilder
     private var content: some View {
         if isLoading && conversations.isEmpty {
-            VStack { Spacer(); ProgressView().tint(.brindooCoral); Spacer() }
+            ScrollView {
+                LazyVStack(spacing: BrindooSpacing.sm) {
+                    ForEach(0..<7, id: \.self) { _ in BrindooSkeletonCard() }
+                }
+                .padding(BrindooSpacing.md)
+            }
+            .disabled(true)
         } else if let errorMessage, conversations.isEmpty {
             VStack(spacing: BrindooSpacing.md) {
                 Spacer()

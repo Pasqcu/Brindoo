@@ -53,7 +53,13 @@ struct NegotiationsView: View {
     var body: some View {
         Group {
             if isLoading {
-                VStack { Spacer(); ProgressView().tint(.brindooCoral); Spacer() }
+                ScrollView {
+                    LazyVStack(spacing: BrindooSpacing.sm) {
+                        ForEach(0..<6, id: \.self) { _ in BrindooSkeletonCard() }
+                    }
+                    .padding(BrindooSpacing.md)
+                }
+                .disabled(true)
             } else if proposals.isEmpty {
                 emptyView
             } else {
@@ -85,6 +91,7 @@ struct NegotiationsView: View {
                         }
                     }
                     .padding(BrindooSpacing.md)
+                    .brindooReadableWidth()
                 }
             }
         }

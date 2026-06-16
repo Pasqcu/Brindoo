@@ -136,6 +136,7 @@ struct ChatView: View {
                     Image(systemName: "ellipsis")
                         .foregroundStyle(Color.brindooTextPrimary)
                 }
+                .accessibilityLabel("Opzioni conversazione")
             }
         }
         .task {

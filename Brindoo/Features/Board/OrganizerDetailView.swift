@@ -74,6 +74,16 @@ struct OrganizerDetailView: View {
         .background(Color.brindooBackground)
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
+            if !isPreview {
+                ToolbarItem(placement: .topBarTrailing) {
+                    ShareLink(item: URL(string: "https://brindoo.app/p/\(organizer.id.uuidString)")!) {
+                        Image(systemName: "square.and.arrow.up")
+                            .font(.system(size: 17, weight: .semibold))
+                            .foregroundStyle(Color.brindooCoral)
+                    }
+                    .accessibilityLabel("Condividi profilo")
+                }
+            }
             if !isPreview && !isViewingOwn {
                 ToolbarItem(placement: .topBarTrailing) {
                     Button {
@@ -86,6 +96,7 @@ struct OrganizerDetailView: View {
                             .animation(BrindooAnimation.bouncy, value: isFavorite)
                     }
                     .disabled(isFavoriteSaving)
+                    .accessibilityLabel(isFavorite ? "Rimuovi dai preferiti" : "Aggiungi ai preferiti")
                 }
                 ToolbarItem(placement: .topBarTrailing) {
                     Menu {

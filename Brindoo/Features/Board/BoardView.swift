@@ -54,12 +54,34 @@ struct BoardView: View {
     @AppStorage("brindoo.client.welcomeSeen") private var welcomeSeen: Bool = false
     @State private var showWelcome: Bool = false
     @State private var sortMode: BoardSortMode = .recommended
+    @State private var organizerRatings: [UUID: OrganizerRating] = [:]
+    @State private var minRating: Int = 0      // 0 = qualsiasi
+    @State private var maxPrice: Double = 0     // 0 = nessun limite
+    @State private var showFilters: Bool = false
+
+    private var hasExtraFilters: Bool { minRating > 0 || maxPrice > 0 }
+
+    private func minOfferPrice(for id: UUID) -> Double? {
+        organizerOffersMap[id]?.map(\.price).min()
+    }
 
     private var sortedOrganizers: [Profile] {
+        var list = organizers
+
+        if minRating > 0 {
+            list = list.filter { (organizerRatings[$0.id]?.avgRating ?? 0) >= Double(minRating) }
+        }
+        if maxPrice > 0 {
+            list = list.filter {
+                if let p = minOfferPrice(for: $0.id) { return p <= maxPrice }
+                return false
+            }
+        }
+
         switch sortMode {
-        case .recommended: return organizers
-        case .recent:      return organizers.sorted { $0.createdAt > $1.createdAt }
-        case .nameAsc:     return organizers.sorted { ($0.fullName ?? "").localizedCaseInsensitiveCompare($1.fullName ?? "") == .orderedAscending }
+        case .recommended: return list
+        case .recent:      return list.sorted { $0.createdAt > $1.createdAt }
+        case .nameAsc:     return list.sorted { ($0.fullName ?? "").localizedCaseInsensitiveCompare($1.fullName ?? "") == .orderedAscending }
         }
     }
 
@@ -116,9 +138,20 @@ struct BoardView: View {
                             .font(.system(size: 22))
                             .foregroundStyle(Color.brindooCoral)
                     }
+                    .accessibilityLabel("Crea offerta")
                 }
             }
             if isClient {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button {
+                        showFilters = true
+                    } label: {
+                        Image(systemName: hasExtraFilters ? "line.3.horizontal.decrease.circle.fill" : "line.3.horizontal.decrease.circle")
+                            .font(.system(size: 17, weight: .semibold))
+                            .foregroundStyle(Color.brindooCoral)
+                    }
+                    .accessibilityLabel("Filtri")
+                }
                 ToolbarItem(placement: .topBarTrailing) {
                     Menu {
                         Picker("Ordina", selection: $sortMode) {
@@ -131,6 +164,7 @@ struct BoardView: View {
                             .font(.system(size: 17, weight: .semibold))
                             .foregroundStyle(Color.brindooCoral)
                     }
+                    .accessibilityLabel("Ordina")
                 }
             }
             if clientPreview {
@@ -157,6 +191,11 @@ struct BoardView: View {
                 Task { await checkOrganizerCategoriesIfNeeded() }
             }) {
                 EditProfileView()
+            }
+            .sheet(isPresented: $showFilters) {
+                BoardFiltersSheet(minRating: $minRating, maxPrice: $maxPrice)
+                    .presentationDetents([.medium])
+                    .presentationDragIndicator(.visible)
             }
             .sheet(isPresented: $showWelcome) {
                 ClientWelcomeSheet(categories: categories) { chosen in
@@ -416,7 +455,8 @@ struct BoardView: View {
                             OrganizerWithOffersCard(
                                 organizer: organizer,
                                 categories: organizerCategoriesMap[organizer.id] ?? [],
-                                offers: organizerOffersMap[organizer.id] ?? []
+                                offers: organizerOffersMap[organizer.id] ?? [],
+                                rating: organizerRatings[organizer.id]
                             )
                         }
                         .buttonStyle(BrindooPressStyle())
@@ -426,6 +466,7 @@ struct BoardView: View {
                 }
                 .padding(.horizontal, BrindooSpacing.md)
                 .padding(.bottom, BrindooSpacing.lg)
+                .brindooReadableWidth()
             }
         }
     }
@@ -531,6 +572,7 @@ struct BoardView: View {
                 }
                 .padding(.horizontal, BrindooSpacing.md)
                 .padding(.vertical, BrindooSpacing.md)
+                .brindooReadableWidth()
             }
         }
     }
@@ -649,6 +691,9 @@ struct BoardView: View {
             await loadOffersForOrganizers(profiles)
             await loadCategoriesForOrganizers(profiles)
             organizers = profiles
+            if let ratings = try? await ReviewService.shared.fetchRatings(organizerIds: profiles.map { $0.id }) {
+                organizerRatings = ratings
+            }
         } catch {
             errorMessage = "Impossibile caricare i professionisti"
             print("❌ \(error)")
@@ -718,6 +763,7 @@ struct OrganizerWithOffersCard: View {
     let organizer: Profile
     let categories: [ServiceCategory]
     let offers: [ServiceOffer]
+    var rating: OrganizerRating? = nil
 
     private let previewCount = 2
 
@@ -783,6 +829,14 @@ struct OrganizerWithOffersCard: View {
                             .lineLimit(1)
                         if organizer.isPro {
                             ProBadge()
+                        }
+                        if let rating, rating.reviewCount > 0 {
+                            HStack(spacing: 2) {
+                                Image(systemName: "star.fill").font(.system(size: 10))
+                                Text(String(format: "%.1f", rating.avgRating))
+                                    .font(.system(size: 11, weight: .bold))
+                            }
+                            .foregroundStyle(Color.brindooWarning)
                         }
                     }
 
@@ -996,6 +1050,68 @@ struct AreaPickerSheet: View {
             .clipShape(RoundedRectangle(cornerRadius: BrindooRadius.sm))
         }
         .buttonStyle(.plain)
+    }
+}
+
+// MARK: - Filtri bacheca (cliente)
+
+struct BoardFiltersSheet: View {
+    @Binding var minRating: Int
+    @Binding var maxPrice: Double
+    @Environment(\.dismiss) private var dismiss
+
+    var body: some View {
+        NavigationStack {
+            ScrollView {
+                VStack(alignment: .leading, spacing: BrindooSpacing.lg) {
+
+                    VStack(alignment: .leading, spacing: BrindooSpacing.sm) {
+                        Text("Valutazione minima")
+                            .font(BrindooFont.titleSmall)
+                        Picker("Valutazione minima", selection: $minRating) {
+                            Text("Tutte").tag(0)
+                            Text("3+ ⭐").tag(3)
+                            Text("4+ ⭐").tag(4)
+                            Text("5 ⭐").tag(5)
+                        }
+                        .pickerStyle(.segmented)
+                    }
+
+                    VStack(alignment: .leading, spacing: BrindooSpacing.sm) {
+                        HStack {
+                            Text("Prezzo massimo")
+                                .font(BrindooFont.titleSmall)
+                            Spacer()
+                            Text(maxPrice > 0 ? "€\(Int(maxPrice))" : "Nessun limite")
+                                .font(BrindooFont.bodyMedium.weight(.semibold))
+                                .foregroundStyle(Color.brindooCoral)
+                        }
+                        Slider(value: $maxPrice, in: 0...2000, step: 50)
+                            .tint(Color.brindooCoral)
+                        Text("Mostra solo professionisti con almeno un'offerta entro questo prezzo.")
+                            .font(BrindooFont.caption)
+                            .foregroundStyle(Color.brindooTextSecondary)
+                    }
+                }
+                .padding(BrindooSpacing.lg)
+            }
+            .background(Color.brindooBackground)
+            .navigationTitle("Filtri")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .topBarLeading) {
+                    Button("Azzera") {
+                        minRating = 0
+                        maxPrice = 0
+                    }
+                    .disabled(minRating == 0 && maxPrice == 0)
+                }
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button("Applica") { dismiss() }
+                        .font(BrindooFont.bodyMedium.weight(.semibold))
+                }
+            }
+        }
     }
 }
 

@@ -20,6 +20,9 @@ struct Review: Codable, Identifiable, Equatable, Hashable {
     let comment: String?
     /// True se la recensione segue una trattativa realmente conclusa.
     let verified: Bool?
+    /// Risposta dell'organizzatore alla recensione (facoltativa).
+    let reply: String?
+    let replyAt: Date?
     let createdAt: Date
     let updatedAt: Date
 
@@ -31,6 +34,8 @@ struct Review: Codable, Identifiable, Equatable, Hashable {
         case rating
         case comment
         case verified
+        case reply
+        case replyAt = "reply_at"
         case createdAt = "created_at"
         case updatedAt = "updated_at"
     }

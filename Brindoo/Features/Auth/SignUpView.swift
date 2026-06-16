@@ -51,15 +51,9 @@ struct SignUpView: View {
         ScrollView {
             VStack(alignment: .leading, spacing: BrindooSpacing.lg) {
 
-                VStack(alignment: .leading, spacing: BrindooSpacing.xs) {
-                    Text("Crea il tuo account")
-                        .font(BrindooFont.displayMedium)
-
-                    Text("Iscriviti gratuitamente e inizia a usare Brindoo")
-                        .font(BrindooFont.bodyLarge)
-                        .foregroundStyle(Color.brindooTextSecondary)
-                }
-                .padding(.top, BrindooSpacing.lg)
+                BrindooAuthHero(subtitle: "Crea il tuo account gratuito")
+                    .frame(maxWidth: .infinity)
+                    .padding(.top, BrindooSpacing.md)
 
                 if showSuccessMessage {
                     successView

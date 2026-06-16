@@ -16,8 +16,21 @@ struct MainTabView: View {
 
     @State private var pendingNegotiations: Int = 0
     @State private var unreadChats: Int = 0
+    @State private var linkTarget: LinkTarget?
 
     private var isClient: Bool { session.currentProfile?.role == .client }
+
+    /// Destinazione aperta da un link condiviso o da una notifica.
+    enum LinkTarget: Identifiable {
+        case offer(ServiceOffer)
+        case profile(Profile)
+        var id: String {
+            switch self {
+            case .offer(let o): return "o-\(o.id)"
+            case .profile(let p): return "p-\(p.id)"
+            }
+        }
+    }
 
     var body: some View {
         TabView(selection: $router.selectedTab) {
@@ -55,6 +68,34 @@ struct MainTabView: View {
         .tint(.brindooCoral)
         .environment(router)
         .task(id: router.selectedTab) { await refreshBadges() }
+        .onChange(of: router.pendingProfileId) { _, id in
+            guard let id else { return }
+            Task {
+                if let p = try? await ProfileService.shared.fetchProfile(userID: id) {
+                    linkTarget = .profile(p)
+                }
+                router.clearPendingProfile()
+            }
+        }
+        .onChange(of: router.pendingOfferId) { _, id in
+            guard let id else { return }
+            Task {
+                if let o = try? await ServiceOfferService.shared.fetchOffer(id: id) {
+                    linkTarget = .offer(o)
+                }
+                router.clearPendingOffer()
+            }
+        }
+        .sheet(item: $linkTarget) { target in
+            NavigationStack {
+                switch target {
+                case .offer(let offer):
+                    OfferDetailView(offer: offer)
+                case .profile(let profile):
+                    OrganizerDetailView(organizer: profile)
+                }
+            }
+        }
     }
 
     private func refreshBadges() async {

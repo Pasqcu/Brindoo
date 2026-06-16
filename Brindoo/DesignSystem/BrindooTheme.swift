@@ -150,4 +150,11 @@ extension View {
     func brindooScreenPadding() -> some View {
         self.padding(.horizontal, BrindooSpacing.md)
     }
+
+    /// Limita la larghezza dei contenuti su schermi grandi (iPad), restando centrati.
+    func brindooReadableWidth(_ maxWidth: CGFloat = 680) -> some View {
+        self
+            .frame(maxWidth: maxWidth)
+            .frame(maxWidth: .infinity)
+    }
 }

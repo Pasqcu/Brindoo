@@ -30,6 +30,7 @@ struct ChatComposerView: View {
                     .foregroundStyle(isAttachDisabled ? Color.brindooBorder : Color.brindooCoral)
             }
             .disabled(isAttachDisabled)
+            .accessibilityLabel("Allega foto")
 
             TextField("Scrivi un messaggio", text: $inputText, axis: .vertical)
                 .lineLimit(1...5)
@@ -57,6 +58,7 @@ struct ChatComposerView: View {
             .clipShape(Circle())
             .disabled(!canSend || isSending)
             .brindooPressEffect(isPressed: isSending)
+            .accessibilityLabel(isEditing ? "Salva modifica" : "Invia messaggio")
         }
         .padding(.horizontal, BrindooSpacing.md)
         .padding(.vertical, BrindooSpacing.sm)
