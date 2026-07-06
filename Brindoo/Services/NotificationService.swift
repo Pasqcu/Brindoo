@@ -116,6 +116,26 @@ final class NotificationService {
         print("❌ Registrazione APNs fallita: \(error.localizedDescription)")
     }
 
+    // MARK: - Badge
+
+    /// Azzera il badge sull'icona dell'app e ripulisce le notifiche già
+    /// consegnate dal Centro Notifiche. Chiamato quando l'app diventa attiva:
+    /// evita badge "fantasma" che restano sull'icona a tempo indeterminato.
+    func clearBadgeAndDeliveredNotifications() async {
+        try? await center.setBadgeCount(0)
+        center.removeAllDeliveredNotifications()
+    }
+
+    /// Allinea il numerino sull'icona alle cose realmente da gestire
+    /// (trattative che aspettano una risposta + messaggi non letti).
+    /// Con zero, ripulisce anche le notifiche già consegnate: è il "reset".
+    func syncAppBadge(to count: Int) async {
+        try? await center.setBadgeCount(max(0, count))
+        if count <= 0 {
+            center.removeAllDeliveredNotifications()
+        }
+    }
+
     /// Cancella i token del device dell'utente corrente (es. su logout).
     func removeDeviceToken() async {
         guard let userId = SupabaseManager.shared.currentUserID else { return }

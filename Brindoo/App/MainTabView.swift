@@ -12,6 +12,7 @@ import SwiftUI
 struct MainTabView: View {
 
     @Environment(SessionStore.self) private var session
+    @Environment(\.scenePhase) private var scenePhase
     @State private var router = DeepLinkRouter.shared
 
     @State private var pendingNegotiations: Int = 0
@@ -68,6 +69,13 @@ struct MainTabView: View {
         .tint(.brindooCoral)
         .environment(router)
         .task(id: router.selectedTab) { await refreshBadges() }
+        .onChange(of: scenePhase) { _, newPhase in
+            // Al rientro in app i conteggi (e il numerino sull'icona)
+            // si riallineano subito alla realtà.
+            if newPhase == .active {
+                Task { await refreshBadges() }
+            }
+        }
         .task(id: session.currentProfile?.id) {
             // Aggiorna (al massimo una volta al giorno) la velocità di risposta
             // mostrata sul profilo pubblico del professionista.
@@ -114,6 +122,10 @@ struct MainTabView: View {
 
         let counts = (try? await unreadTask) ?? [:]
         unreadChats = counts.values.reduce(0, +)
+
+        // Il numerino sull'icona rispecchia le cose reali da gestire:
+        // con zero sparisce (e sparisce anche la coda di notifiche vecchie).
+        await NotificationService.shared.syncAppBadge(to: pendingNegotiations + unreadChats)
     }
 }
 

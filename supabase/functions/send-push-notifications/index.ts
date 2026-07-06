@@ -89,6 +89,52 @@ async function getApnsJwt(): Promise<string> {
   return token;
 }
 
+// MARK: - Badge reale del destinatario
+
+// Il numerino sull'icona deve rispecchiare le cose realmente da gestire:
+// trattative che aspettano una risposta del destinatario + messaggi non letti.
+// (Prima era un "1" fisso che restava sull'icona come notifica fantasma.)
+async function computeBadge(recipientId: string): Promise<number> {
+  try {
+    const { count: pendingAsClient } = await supabase
+      .from("offer_proposals")
+      .select("*", { count: "exact", head: true })
+      .eq("status", "pending")
+      .eq("client_id", recipientId)
+      .eq("last_proposer", "organizer");
+
+    const { count: pendingAsOrganizer } = await supabase
+      .from("offer_proposals")
+      .select("*", { count: "exact", head: true })
+      .eq("status", "pending")
+      .eq("organizer_id", recipientId)
+      .eq("last_proposer", "client");
+
+    let unreadMessages = 0;
+    const { data: convs } = await supabase
+      .from("conversations")
+      .select("id")
+      .or(`client_id.eq.${recipientId},organizer_id.eq.${recipientId}`);
+    const convIds = (convs ?? []).map((c: { id: string }) => c.id);
+    if (convIds.length > 0) {
+      const { count } = await supabase
+        .from("messages")
+        .select("*", { count: "exact", head: true })
+        .in("conversation_id", convIds)
+        .eq("is_read", false)
+        .neq("sender_id", recipientId);
+      unreadMessages = count ?? 0;
+    }
+
+    const total = (pendingAsClient ?? 0) + (pendingAsOrganizer ?? 0) + unreadMessages;
+    // Almeno 1: la notifica appena arrivata è comunque una novità da vedere.
+    return Math.max(total, 1);
+  } catch (error) {
+    console.warn("computeBadge fallback a 1:", error);
+    return 1;
+  }
+}
+
 // MARK: - Invio notifica APNs
 
 interface ApnsResult {
@@ -101,6 +147,7 @@ interface ApnsResult {
 async function sendToApns(
   deviceToken: string,
   notification: NotificationRow,
+  badge: number,
 ): Promise<ApnsResult> {
   const jwt = await getApnsJwt();
 
@@ -112,7 +159,7 @@ async function sendToApns(
       body: notification.body,
     },
     sound: "default",
-    badge: 1,
+    badge,
     "mutable-content": 1,
   };
 
@@ -226,10 +273,13 @@ Deno.serve(async (_req) => {
         continue;
       }
 
+      // Numerino reale per questo destinatario (una volta sola per notifica)
+      const badge = await computeBadge(notification.recipient_id);
+
       // Invia a tutti i device dell'utente
       let anySuccess = false;
       for (const token of tokens as DeviceTokenRow[]) {
-        const result = await sendToApns(token.token, notification);
+        const result = await sendToApns(token.token, notification, badge);
 
         if (result.success) {
           anySuccess = true;

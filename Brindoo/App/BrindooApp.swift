@@ -7,6 +7,7 @@
 //
 
 import SwiftUI
+import UserNotifications
 
 @main
 struct BrindooApp: App {
@@ -16,6 +17,8 @@ struct BrindooApp: App {
     
     /// Stato globale dell'app (sessione utente, profilo).
     @State private var session = SessionStore()
+
+    @Environment(\.scenePhase) private var scenePhase
     
     var body: some Scene {
         WindowGroup {
@@ -30,6 +33,15 @@ struct BrindooApp: App {
                     // (utile dopo restore o cambio device).
                     await PurchaseService.shared.loadProducts()
                     await PurchaseService.shared.refreshEntitlements()
+                }
+                .onChange(of: scenePhase) { _, newPhase in
+                    // Da loggati il numerino sull'icona è gestito da MainTabView
+                    // (allineato a trattative e messaggi reali). Qui si azzera
+                    // solo quando NON c'è una sessione, per non lasciare
+                    // badge fantasma dopo un logout.
+                    if newPhase == .active && session.authState != .signedIn {
+                        Task { await NotificationService.shared.clearBadgeAndDeliveredNotifications() }
+                    }
                 }
                 .onChange(of: session.authState) { _, newState in
                     Task {

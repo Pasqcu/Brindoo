@@ -55,12 +55,15 @@ final class AppDelegate: NSObject, UIApplicationDelegate {
 extension AppDelegate: UNUserNotificationCenterDelegate {
 
     /// Notifica ricevuta mentre l'app è in foreground:
-    /// la mostriamo come banner con suono.
+    /// la mostriamo come banner con suono. Niente `.badge`: applicherebbe
+    /// all'icona il numero della push anche se l'utente sta già leggendo
+    /// in-app, lasciando un "1" fantasma quando esce. Il numerino sull'icona
+    /// è gestito da MainTabView, allineato alle cose realmente da gestire.
     func userNotificationCenter(
         _ center: UNUserNotificationCenter,
         willPresent notification: UNNotification
     ) async -> UNNotificationPresentationOptions {
-        return [.banner, .sound, .badge, .list]
+        return [.banner, .sound, .list]
     }
 
     /// L'utente ha toccato una notifica → naviga alla schermata corrispondente
