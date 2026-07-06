@@ -24,7 +24,10 @@ struct StarRatingView: View {
     
     /// Binding usato solo in modalità input
     var onChange: ((Int) -> Void)? = nil
-    
+
+    /// Stella appena toccata: rimbalza per un attimo (solo input).
+    @State private var bouncingIndex: Int? = nil
+
     var body: some View {
         HStack(spacing: spacing) {
             ForEach(1...maxRating, id: \.self) { index in
@@ -32,19 +35,28 @@ struct StarRatingView: View {
             }
         }
     }
-    
+
     @ViewBuilder
     private func starView(for index: Int) -> some View {
         let value = Double(index)
         let isFilled = rating >= value
         let isHalf = !isFilled && rating >= value - 0.5
-        
+
         Group {
             if mode == .input {
                 Button {
+                    BrindooHaptics.impact(.light)
+                    bouncingIndex = index
                     onChange?(index)
+                    Task {
+                        try? await Task.sleep(nanoseconds: 280_000_000)
+                        bouncingIndex = nil
+                    }
                 } label: {
                     starImage(filled: isFilled, half: false)
+                        .scaleEffect(bouncingIndex == index ? 1.35 : 1.0)
+                        .rotationEffect(.degrees(bouncingIndex == index ? -8 : 0))
+                        .animation(.spring(response: 0.25, dampingFraction: 0.45), value: bouncingIndex)
                 }
                 .buttonStyle(.plain)
             } else {

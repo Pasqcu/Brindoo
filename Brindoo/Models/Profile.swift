@@ -115,6 +115,34 @@ struct Profile: Identifiable, Codable, Hashable, Equatable {
         updatedAt = try c.decode(Date.self, forKey: .updatedAt)
     }
 
+    /// Encoding simmetrico al decoding (vacation_until come "yyyy-MM-dd"),
+    /// così il profilo può essere salvato e riletto dalla cache locale.
+    func encode(to encoder: Encoder) throws {
+        var c = encoder.container(keyedBy: CodingKeys.self)
+        try c.encode(id, forKey: .id)
+        try c.encode(role, forKey: .role)
+        try c.encodeIfPresent(fullName, forKey: .fullName)
+        try c.encodeIfPresent(phone, forKey: .phone)
+        try c.encodeIfPresent(city, forKey: .city)
+        try c.encodeIfPresent(province?.rawValue, forKey: .province)
+        try c.encode(coverageAreas, forKey: .coverageAreas)
+        try c.encodeIfPresent(bio, forKey: .bio)
+        try c.encodeIfPresent(avatarUrl, forKey: .avatarUrl)
+        try c.encode(isPro, forKey: .isPro)
+        try c.encodeIfPresent(proExpiresAt, forKey: .proExpiresAt)
+        try c.encodeIfPresent(boostExpiresAt, forKey: .boostExpiresAt)
+        try c.encode(readReceiptsEnabled, forKey: .readReceiptsEnabled)
+        if let vacationUntil {
+            let fmt = DateFormatter()
+            fmt.dateFormat = "yyyy-MM-dd"
+            fmt.timeZone = TimeZone(identifier: "UTC")
+            try c.encode(fmt.string(from: vacationUntil), forKey: .vacationUntil)
+        }
+        try c.encodeIfPresent(responseMinutes, forKey: .responseMinutes)
+        try c.encode(createdAt, forKey: .createdAt)
+        try c.encode(updatedAt, forKey: .updatedAt)
+    }
+
     /// True quando il profilo ha i campi minimi compilati (nome + città + provincia).
     var isComplete: Bool {
         guard let fullName, !fullName.trimmingCharacters(in: .whitespaces).isEmpty else {

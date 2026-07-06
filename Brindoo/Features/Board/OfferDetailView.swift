@@ -22,6 +22,7 @@ struct OfferDetailView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(SessionStore.self) private var session
     @Environment(\.requestReview) private var requestReview
+    @EnvironmentObject private var toastCenter: BrindooToastCenter
 
     let offer: ServiceOffer
 
@@ -56,6 +57,10 @@ struct OfferDetailView: View {
     // Cartolina di condivisione
     @State private var isPreparingShare: Bool = false
     @State private var shareItems: SharePayload?
+
+    // Sposta data + festa per l'accordo
+    @State private var moveDateTarget: OfferProposal?
+    @State private var showConfetti: Bool = false
 
     private struct SharePayload: Identifiable {
         let id = UUID()
@@ -127,11 +132,27 @@ struct OfferDetailView: View {
                 if isOwnOffer {
                     Divider()
                     ownerControls
-                    receivedProposalsSection
+                    ReceivedProposalsSection(
+                        offer: offer,
+                        proposals: receivedProposals,
+                        clientProfiles: clientProfilesMap,
+                        onAccept: { p in Task { await acceptProposal(p) } },
+                        onReject: { p in Task { await rejectProposal(p) } },
+                        onCounter: { p in showNegotiateSheet = .counter(proposal: p, role: .organizer, offer: offer) },
+                        onOpenChat: { client in Task { await openChat(with: client) } },
+                        onMarkBooking: { p, status in Task { await markBooking(p, status) } },
+                        onMoveDate: { p in moveDateTarget = p },
+                        onAddToCalendar: { p in Task { await addToCalendar(p) } }
+                    )
                 }
             }
             .padding(BrindooSpacing.md)
             .brindooReadableWidth()
+        }
+        .overlay {
+            if showConfetti {
+                BrindooConfettiView()
+            }
         }
         .background(Color.brindooBackground)
         .navigationTitle("Offerta")
@@ -187,6 +208,11 @@ struct OfferDetailView: View {
         .sheet(item: $shareItems) { payload in
             ActivityShareSheet(items: payload.items)
                 .presentationDetents([.medium, .large])
+        }
+        .sheet(item: $moveDateTarget) { proposal in
+            MoveEventDateSheet(proposal: proposal) { newDate in
+                Task { await moveEventDate(proposal, to: newDate) }
+            }
         }
         .task { await loadData() }
         .navigationDestination(item: $navigateToChat) { conv in
@@ -405,7 +431,7 @@ struct OfferDetailView: View {
                 Text("Trattativa in corso")
                     .font(BrindooFont.titleSmall)
                 Spacer()
-                proposalStatusPill(proposal.status)
+                ProposalStatusPill(status: proposal.status)
             }
 
             // Mostra "ultima controproposta" — chi ha proposto cosa.
@@ -430,7 +456,7 @@ struct OfferDetailView: View {
             }
 
             if let eventDate = proposal.eventDateDisplay {
-                eventDateRow(eventDate)
+                EventDateRow(dateText: eventDate)
             }
 
             if let lastMessage = proposal.lastMessage, !lastMessage.isEmpty {
@@ -451,7 +477,7 @@ struct OfferDetailView: View {
     private func clientProposalActions(_ proposal: OfferProposal) -> some View {
         if proposal.status == .accepted, let org = organizerProfile {
             VStack(spacing: BrindooSpacing.sm) {
-                bookingStatusRow(proposal)
+                BookingStatusRow(proposal: proposal)
 
                 BrindooButton("Apri chat", style: .primary, size: .medium, icon: "bubble.left.and.bubble.right.fill") {
                     Task { await openChat(with: org) }
@@ -463,7 +489,12 @@ struct OfferDetailView: View {
                     }
                 }
 
-                bookingActionButtons(proposal)
+                BookingActionButtons(
+                    proposal: proposal,
+                    onMark: { status in Task { await markBooking(proposal, status) } },
+                    onMoveDate: { moveDateTarget = proposal },
+                    onAddToCalendar: proposal.eventDate == nil ? nil : { Task { await addToCalendar(proposal) } }
+                )
             }
             .sheet(isPresented: $showWriteReview) {
                 WriteReviewView(organizer: org, existingReview: nil) {
@@ -546,232 +577,6 @@ struct OfferDetailView: View {
                 showDeleteConfirm = true
             }
         }
-    }
-
-    @ViewBuilder
-    private var receivedProposalsSection: some View {
-        VStack(alignment: .leading, spacing: BrindooSpacing.sm) {
-            HStack {
-                Text("Proposte ricevute")
-                    .font(BrindooFont.titleSmall)
-                Spacer()
-                if !receivedProposals.isEmpty {
-                    Text("\(receivedProposals.count)")
-                        .font(BrindooFont.caption.weight(.semibold))
-                        .padding(.horizontal, BrindooSpacing.xs)
-                        .padding(.vertical, 3)
-                        .background(Color.brindooCoral)
-                        .foregroundStyle(.white)
-                        .clipShape(Capsule())
-                }
-            }
-
-            if receivedProposals.isEmpty {
-                Text("Nessuna proposta ancora. Quando un cliente farà una proposta apparirà qui.")
-                    .font(BrindooFont.bodySmall)
-                    .foregroundStyle(Color.brindooTextSecondary)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .padding(BrindooSpacing.md)
-                    .background(Color.brindooSurface)
-                    .clipShape(RoundedRectangle(cornerRadius: BrindooRadius.md))
-            } else {
-                ForEach(receivedProposals) { proposal in
-                    proposalCardForOrganizer(proposal)
-                }
-            }
-        }
-    }
-
-    @ViewBuilder
-    private func proposalCardForOrganizer(_ proposal: OfferProposal) -> some View {
-        let client = clientProfilesMap[proposal.clientId]
-        VStack(alignment: .leading, spacing: BrindooSpacing.sm) {
-            HStack(spacing: BrindooSpacing.sm) {
-                AvatarView(url: client?.avatarUrl, name: client?.fullName, size: 40)
-                VStack(alignment: .leading, spacing: 2) {
-                    Text(client?.fullName ?? "Cliente")
-                        .font(BrindooFont.bodyMedium.weight(.semibold))
-                    Text(proposal.updatedAtDisplay)
-                        .font(BrindooFont.caption)
-                        .foregroundStyle(Color.brindooTextSecondary)
-                }
-                Spacer()
-                proposalStatusPill(proposal.status)
-            }
-
-            HStack(spacing: BrindooSpacing.sm) {
-                VStack(alignment: .leading, spacing: 2) {
-                    Text(proposal.lastProposer == .client ? "Proposta del cliente" : "Tua controproposta")
-                        .font(BrindooFont.caption)
-                        .foregroundStyle(Color.brindooTextSecondary)
-                    Text(proposal.currentPriceDisplay)
-                        .font(BrindooFont.titleSmall)
-                        .foregroundStyle(Color.brindooCoral)
-                }
-                Spacer()
-            }
-
-            if let eventDate = proposal.eventDateDisplay {
-                eventDateRow(eventDate)
-            }
-
-            if let lastMessage = proposal.lastMessage, !lastMessage.isEmpty {
-                Text("\"\(lastMessage)\"")
-                    .font(BrindooFont.bodySmall)
-                    .foregroundStyle(Color.brindooTextSecondary)
-                    .fixedSize(horizontal: false, vertical: true)
-            }
-
-            organizerProposalActions(proposal, client: client)
-        }
-        .padding(BrindooSpacing.md)
-        .background(Color.brindooSurface)
-        .clipShape(RoundedRectangle(cornerRadius: BrindooRadius.md))
-    }
-
-    @ViewBuilder
-    private func organizerProposalActions(_ proposal: OfferProposal, client: Profile?) -> some View {
-        if proposal.status == .accepted, let client {
-            VStack(spacing: BrindooSpacing.sm) {
-                bookingStatusRow(proposal)
-                BrindooButton("Apri chat", style: .primary, size: .medium, icon: "bubble.left.and.bubble.right.fill") {
-                    Task { await openChat(with: client) }
-                }
-                bookingActionButtons(proposal)
-            }
-        } else if proposal.status == .pending, proposal.lastProposer == .client {
-            VStack(spacing: BrindooSpacing.sm) {
-                HStack(spacing: BrindooSpacing.sm) {
-                    Button { Task { await rejectProposal(proposal) } } label: {
-                        Label("Rifiuta", systemImage: "xmark")
-                            .font(BrindooFont.bodySmall.weight(.semibold))
-                            .frame(maxWidth: .infinity)
-                            .padding(.vertical, 10)
-                            .foregroundStyle(Color.brindooError)
-                            .background(Color.brindooError.opacity(0.1))
-                            .clipShape(RoundedRectangle(cornerRadius: BrindooRadius.sm))
-                    }
-                    .buttonStyle(.plain)
-
-                    Button { Task { await acceptProposal(proposal) } } label: {
-                        Label("Accetta", systemImage: "checkmark")
-                            .font(BrindooFont.bodySmall.weight(.semibold))
-                            .frame(maxWidth: .infinity)
-                            .padding(.vertical, 10)
-                            .foregroundStyle(.white)
-                            .background(Color.brindooSuccess)
-                            .clipShape(RoundedRectangle(cornerRadius: BrindooRadius.sm))
-                    }
-                    .buttonStyle(.plain)
-                }
-                BrindooButton(
-                    "Controproponi",
-                    style: .secondary,
-                    size: .medium,
-                    icon: "arrow.left.arrow.right"
-                ) {
-                    showNegotiateSheet = .counter(proposal: proposal, role: .organizer, offer: offer)
-                }
-            }
-        } else if proposal.status == .pending && proposal.lastProposer == .organizer {
-            Text("In attesa di risposta dal cliente.")
-                .font(BrindooFont.bodySmall)
-                .foregroundStyle(Color.brindooTextSecondary)
-        }
-    }
-
-    @ViewBuilder
-    private func bookingStatusRow(_ proposal: OfferProposal) -> some View {
-        let booking = proposal.effectiveBooking
-        let color: Color = {
-            switch booking {
-            case .confirmed: return .brindooSuccess
-            case .completed: return .brindooCoral
-            case .cancelled: return .brindooError
-            }
-        }()
-        HStack(spacing: BrindooSpacing.xs) {
-            Image(systemName: booking.iconName)
-                .font(.system(size: 13, weight: .semibold))
-            Text("Appuntamento: \(booking.displayName)")
-                .font(BrindooFont.bodySmall.weight(.semibold))
-            Spacer()
-        }
-        .foregroundStyle(color)
-        .padding(.vertical, BrindooSpacing.xxs)
-        .padding(.horizontal, BrindooSpacing.sm)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(color.opacity(0.10))
-        .clipShape(RoundedRectangle(cornerRadius: BrindooRadius.sm))
-    }
-
-    @ViewBuilder
-    private func bookingActionButtons(_ proposal: OfferProposal) -> some View {
-        if proposal.effectiveBooking == .confirmed {
-            HStack(spacing: BrindooSpacing.sm) {
-                Button { Task { await markBooking(proposal, .completed) } } label: {
-                    Label("Segna svolto", systemImage: "checkmark.seal")
-                        .font(BrindooFont.bodySmall.weight(.semibold))
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 10)
-                        .foregroundStyle(Color.brindooSuccess)
-                        .background(Color.brindooSuccess.opacity(0.1))
-                        .clipShape(RoundedRectangle(cornerRadius: BrindooRadius.sm))
-                }
-                .buttonStyle(.plain)
-
-                Button { Task { await markBooking(proposal, .cancelled) } } label: {
-                    Label("Annulla", systemImage: "calendar.badge.minus")
-                        .font(BrindooFont.bodySmall.weight(.semibold))
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 10)
-                        .foregroundStyle(Color.brindooError)
-                        .background(Color.brindooError.opacity(0.1))
-                        .clipShape(RoundedRectangle(cornerRadius: BrindooRadius.sm))
-                }
-                .buttonStyle(.plain)
-            }
-        }
-    }
-
-    @ViewBuilder
-    private func eventDateRow(_ dateText: String) -> some View {
-        HStack(spacing: BrindooSpacing.xs) {
-            Image(systemName: "calendar")
-                .font(.system(size: 13, weight: .medium))
-            Text("Data evento: \(dateText)")
-                .font(BrindooFont.bodySmall.weight(.medium))
-            Spacer()
-        }
-        .foregroundStyle(Color.brindooCoral)
-        .padding(.vertical, BrindooSpacing.xxs)
-        .padding(.horizontal, BrindooSpacing.sm)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Color.brindooCoral.opacity(0.08))
-        .clipShape(RoundedRectangle(cornerRadius: BrindooRadius.sm))
-    }
-
-    @ViewBuilder
-    private func proposalStatusPill(_ status: OfferProposalStatus) -> some View {
-        let color: Color = {
-            switch status {
-            case .pending:   return .brindooWarning
-            case .accepted:  return .brindooSuccess
-            case .rejected:  return .brindooError
-            case .withdrawn: return .brindooTextSecondary
-            }
-        }()
-        HStack(spacing: 4) {
-            Image(systemName: status.iconName)
-                .font(.system(size: 9))
-            Text(status.displayName)
-                .font(BrindooFont.caption.weight(.medium))
-        }
-        .foregroundStyle(color)
-        .padding(.horizontal, 8)
-        .padding(.vertical, 3)
-        .background(color.opacity(0.12))
-        .clipShape(Capsule())
     }
 
     // MARK: - Cartolina di condivisione
@@ -886,7 +691,13 @@ struct OfferDetailView: View {
         do {
             let conv = try await OfferProposalService.shared.accept(proposal: proposal)
             BrindooHaptics.notify(.success)
+
+            // Festa! Coriandoli per l'accordo raggiunto, poi si apre la chat.
+            showConfetti = true
             await loadData()
+            try? await Task.sleep(nanoseconds: 1_600_000_000)
+            showConfetti = false
+
             if let conv {
                 // Per il cliente l'altro è l'organizzatore, per l'organizzatore è il cliente.
                 if session.userID == proposal.clientId {
@@ -899,6 +710,43 @@ struct OfferDetailView: View {
         } catch {
             actionError = "Impossibile accettare."
             print("❌ \(error)")
+        }
+    }
+
+    /// Sposta (o fissa) la data dell'evento e avvisa l'altra parte in chat.
+    private func moveEventDate(_ proposal: OfferProposal, to newDate: String) async {
+        do {
+            try await OfferProposalService.shared.updateEventDate(
+                proposal: proposal,
+                newDate: newDate,
+                offerTitle: offer.title
+            )
+            BrindooHaptics.notify(.success)
+            toastCenter.show(BrindooToast("Data aggiornata", message: "L'altra parte è stata avvisata in chat.", style: .success))
+            await loadData()
+        } catch {
+            toastCenter.show(BrindooToast("Impossibile spostare la data", message: "Controlla la connessione e riprova.", style: .error))
+            print("❌ \(error)")
+        }
+    }
+
+    /// Aggiunge l'evento confermato al calendario dell'iPhone.
+    private func addToCalendar(_ proposal: OfferProposal) async {
+        guard let day = proposal.eventDate, !day.isEmpty else { return }
+        do {
+            try await CalendarService.addAllDayEvent(
+                title: "🎉 \(offer.title) — Brindoo",
+                dayString: day,
+                notes: "Evento concordato su Brindoo per \(proposal.currentPriceDisplay)."
+            )
+            BrindooHaptics.notify(.success)
+            toastCenter.show(BrindooToast("Aggiunto al calendario", style: .success))
+        } catch {
+            toastCenter.show(BrindooToast(
+                "Calendario non disponibile",
+                message: (error as? CalendarServiceError)?.errorDescription ?? "Riprova.",
+                style: .error
+            ))
         }
     }
 
@@ -964,7 +812,10 @@ struct OfferDetailView: View {
             try await ServiceOfferService.shared.updateStatus(offerId: offer.id, status: next)
             currentStatus = next
             onChange?()
-        } catch { print("❌ \(error)") }
+        } catch {
+            toastCenter.show(BrindooToast("Impossibile aggiornare l'offerta", message: "Controlla la connessione e riprova.", style: .error))
+            print("❌ \(error)")
+        }
     }
 
     private func deleteOffer() async {
@@ -972,7 +823,10 @@ struct OfferDetailView: View {
             try await ServiceOfferService.shared.deleteOffer(offerId: offer.id)
             onChange?()
             dismiss()
-        } catch { print("❌ \(error)") }
+        } catch {
+            toastCenter.show(BrindooToast("Impossibile eliminare l'offerta", message: "Controlla la connessione e riprova.", style: .error))
+            print("❌ \(error)")
+        }
     }
 
     private func openChat(with other: Profile) async {
@@ -985,7 +839,10 @@ struct OfferDetailView: View {
             }
             chatPartner = other
             navigateToChat = conv
-        } catch { print("❌ \(error)") }
+        } catch {
+            toastCenter.show(BrindooToast("Impossibile aprire la chat", message: "Controlla la connessione e riprova.", style: .error))
+            print("❌ \(error)")
+        }
     }
 }
 

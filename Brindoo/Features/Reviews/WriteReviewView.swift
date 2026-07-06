@@ -7,6 +7,7 @@
 
 import SwiftUI
 import StoreKit
+import PhotosUI
 
 struct WriteReviewView: View {
     
@@ -21,7 +22,12 @@ struct WriteReviewView: View {
 
     @State private var rating: Int = 0
     @State private var comment: String = ""
-    
+
+    // Foto dell'evento (opzionale)
+    @State private var photoPickerItem: PhotosPickerItem?
+    @State private var photoImage: UIImage?
+    @State private var existingPhotoUrl: String?
+
     @State private var isLoading: Bool = false
     @State private var generalError: String?
     @State private var showDeleteConfirm: Bool = false
@@ -118,7 +124,9 @@ struct WriteReviewView: View {
                                 .foregroundStyle(comment.count > 1000 ? Color.brindooError : Color.brindooTextSecondary)
                         }
                     }
-                    
+
+                    photoSection
+
                     if let generalError {
                         HStack(spacing: BrindooSpacing.xs) {
                             Image(systemName: "exclamationmark.triangle.fill")
@@ -180,6 +188,16 @@ struct WriteReviewView: View {
                 if let existing = existingReview {
                     rating = existing.rating
                     comment = existing.comment ?? ""
+                    existingPhotoUrl = existing.photoUrl
+                }
+            }
+            .onChange(of: photoPickerItem) { _, item in
+                guard let item else { return }
+                Task {
+                    if let data = try? await item.loadTransferable(type: Data.self),
+                       let img = UIImage(data: data) {
+                        photoImage = img
+                    }
                 }
             }
             .alert("Eliminare recensione?", isPresented: $showDeleteConfirm) {
@@ -193,6 +211,66 @@ struct WriteReviewView: View {
         }
     }
     
+    // MARK: - Foto dell'evento
+
+    @ViewBuilder
+    private var photoSection: some View {
+        VStack(alignment: .leading, spacing: BrindooSpacing.xs) {
+            Text("Foto dell'evento (opzionale)")
+                .font(BrindooFont.bodySmall.weight(.medium))
+                .foregroundStyle(Color.brindooTextSecondary)
+
+            PhotosPicker(selection: $photoPickerItem, matching: .images) {
+                ZStack {
+                    if let photoImage {
+                        Image(uiImage: photoImage)
+                            .resizable()
+                            .scaledToFill()
+                    } else if let existingPhotoUrl, let url = URL(string: existingPhotoUrl) {
+                        AsyncImage(url: url) { image in
+                            image.resizable().scaledToFill()
+                        } placeholder: {
+                            BrindooSkeleton(cornerRadius: BrindooRadius.md)
+                        }
+                    } else {
+                        VStack(spacing: BrindooSpacing.xs) {
+                            Image(systemName: "camera.badge.clock")
+                                .font(.system(size: 26))
+                                .foregroundStyle(Color.brindooCoral)
+                            Text("Una foto dell'evento rende la recensione più credibile")
+                                .font(BrindooFont.caption)
+                                .foregroundStyle(Color.brindooTextSecondary)
+                                .multilineTextAlignment(.center)
+                        }
+                        .padding(BrindooSpacing.md)
+                    }
+                }
+                .frame(maxWidth: .infinity)
+                .frame(height: 120)
+                .background(Color.brindooSurface)
+                .clipShape(RoundedRectangle(cornerRadius: BrindooRadius.md))
+                .overlay(
+                    RoundedRectangle(cornerRadius: BrindooRadius.md)
+                        .strokeBorder(Color.brindooBorder, lineWidth: 1)
+                )
+            }
+            .disabled(isLoading)
+
+            if photoImage != nil || existingPhotoUrl != nil {
+                Button {
+                    photoImage = nil
+                    photoPickerItem = nil
+                    existingPhotoUrl = nil
+                } label: {
+                    Label("Rimuovi foto", systemImage: "trash")
+                        .font(BrindooFont.caption.weight(.medium))
+                        .foregroundStyle(Color.brindooError)
+                }
+                .buttonStyle(.plain)
+            }
+        }
+    }
+
     private var ratingDescription: String {
         switch rating {
         case 1: return "Pessima"
@@ -223,17 +301,25 @@ struct WriteReviewView: View {
         defer { isLoading = false }
         
         do {
+            // Foto: carica quella nuova, oppure conserva l'esistente (nil = nessuna).
+            var photoUrl: String? = existingPhotoUrl
+            if let photoImage {
+                photoUrl = try await StorageService.shared.uploadReviewImage(photoImage)
+            }
+
             if let existing = existingReview {
                 _ = try await ReviewService.shared.updateReview(
                     reviewId: existing.id,
                     rating: rating,
-                    comment: comment
+                    comment: comment,
+                    photoUrl: photoUrl
                 )
             } else {
                 _ = try await ReviewService.shared.createReview(
                     organizerId: organizer.id,
                     rating: rating,
-                    comment: comment
+                    comment: comment,
+                    photoUrl: photoUrl
                 )
                 // Dopo una recensione positiva, proponi la valutazione dell'app.
                 if rating >= 4 { requestReview() }

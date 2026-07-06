@@ -56,5 +56,6 @@ enum BrindooCacheKey {
     static let recentOffers = "recent_offers"
     static let savedFilters = "saved_filters"
     static let onboardingSeen = "onboarding_seen"
+    static let boardSnapshot = "board_snapshot_v1"
     static func draft(conversationID: UUID) -> String { "chat_draft_\(conversationID.uuidString)" }
 }

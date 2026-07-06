@@ -134,7 +134,8 @@ final class ReviewService {
         organizerId: UUID,
         rating: Int,
         comment: String?,
-        applicationId: UUID? = nil
+        applicationId: UUID? = nil,
+        photoUrl: String? = nil
     ) async throws -> Review {
         guard let userId = SupabaseManager.shared.currentUserID else {
             throw NSError(domain: "ReviewService", code: 401,
@@ -163,7 +164,8 @@ final class ReviewService {
             application_id: applicationId,
             rating: rating,
             comment: finalComment,
-            verified: isVerified
+            verified: isVerified,
+            photo_url: photoUrl
         )
 
         do {
@@ -189,7 +191,8 @@ final class ReviewService {
     func updateReview(
         reviewId: UUID,
         rating: Int,
-        comment: String?
+        comment: String?,
+        photoUrl: String? = nil
     ) async throws -> Review {
         guard (1...5).contains(rating) else {
             throw NSError(domain: "ReviewService", code: 400,
@@ -202,9 +205,20 @@ final class ReviewService {
         struct UpdatePayload: Encodable {
             let rating: Int
             let comment: String?
+            let photo_url: String?
+
+            // Encoding esplicito: nil deve diventare NULL sul DB (per poter
+            // rimuovere commento/foto), non "campo omesso = invariato".
+            enum CodingKeys: String, CodingKey { case rating, comment, photo_url }
+            func encode(to encoder: Encoder) throws {
+                var c = encoder.container(keyedBy: CodingKeys.self)
+                try c.encode(rating, forKey: .rating)
+                try c.encode(comment, forKey: .comment)
+                try c.encode(photo_url, forKey: .photo_url)
+            }
         }
 
-        let payload = UpdatePayload(rating: rating, comment: finalComment)
+        let payload = UpdatePayload(rating: rating, comment: finalComment, photo_url: photoUrl)
 
         do {
             let review: Review = try await client

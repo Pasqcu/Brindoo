@@ -11,6 +11,7 @@ import SwiftUI
 struct AgendaView: View {
 
     @Environment(SessionStore.self) private var session
+    @EnvironmentObject private var toastCenter: BrindooToastCenter
 
     @State private var proposals: [OfferProposal] = []
     @State private var offerMap: [UUID: ServiceOffer] = [:]
@@ -204,18 +205,55 @@ struct AgendaView: View {
 
             Spacer()
 
-            VStack(alignment: .trailing, spacing: 2) {
+            VStack(alignment: .trailing, spacing: 4) {
                 Text(proposal.currentPriceDisplay)
                     .font(BrindooFont.bodyMedium.weight(.semibold))
                     .foregroundStyle(Color.brindooCoral)
-                Image(systemName: "chevron.right")
-                    .font(.system(size: 11, weight: .semibold))
-                    .foregroundStyle(Color.brindooTextSecondary)
+
+                // "Aggiungi al calendario iPhone" solo per gli eventi futuri.
+                if entry.date >= Calendar.current.startOfDay(for: Date()) {
+                    Button {
+                        Task { await addToCalendar(entry, offerTitle: offer?.title) }
+                    } label: {
+                        Image(systemName: "calendar.badge.plus")
+                            .font(.system(size: 16, weight: .semibold))
+                            .foregroundStyle(Color.brindooCoral)
+                            .frame(width: 32, height: 32)
+                            .background(Color.brindooCoral.opacity(0.1))
+                            .clipShape(Circle())
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityLabel("Aggiungi al calendario")
+                } else {
+                    Image(systemName: "chevron.right")
+                        .font(.system(size: 11, weight: .semibold))
+                        .foregroundStyle(Color.brindooTextSecondary)
+                }
             }
         }
         .padding(BrindooSpacing.md)
         .background(Color.brindooSurface)
         .clipShape(RoundedRectangle(cornerRadius: BrindooRadius.md))
+    }
+
+    /// Mette l'evento nel calendario dell'iPhone, con avviso di esito.
+    private func addToCalendar(_ entry: Entry, offerTitle: String?) async {
+        guard let day = entry.proposal.eventDate else { return }
+        do {
+            try await CalendarService.addAllDayEvent(
+                title: "🎉 \(offerTitle ?? "Evento") — Brindoo",
+                dayString: day,
+                notes: "Evento concordato su Brindoo per \(entry.proposal.currentPriceDisplay)."
+            )
+            BrindooHaptics.notify(.success)
+            toastCenter.show(BrindooToast("Aggiunto al calendario", style: .success))
+        } catch {
+            toastCenter.show(BrindooToast(
+                "Calendario non disponibile",
+                message: (error as? CalendarServiceError)?.errorDescription ?? "Riprova.",
+                style: .error
+            ))
+        }
     }
 
     // MARK: - Loading
@@ -227,30 +265,23 @@ struct AgendaView: View {
             proposals = try await OfferProposalService.shared.fetchMyOngoingProposals()
             await loadRelated()
         } catch {
+            toastCenter.show(BrindooToast("Impossibile caricare l'agenda", message: "Controlla la connessione e riprova.", style: .error))
             print("❌ \(error)")
         }
     }
 
     private func loadRelated() async {
-        let offerIds: Set<UUID> = Set(entries.map { $0.proposal.offerId })
-        var profileIds: Set<UUID> = Set(entries.flatMap { [$0.proposal.clientId, $0.proposal.organizerId] })
+        // Due sole richieste (offerte + profili), non una per elemento.
+        let offerIds = Set(entries.map { $0.proposal.offerId }).filter { offerMap[$0] == nil }
+        var profileIds = Set(entries.flatMap { [$0.proposal.clientId, $0.proposal.organizerId] })
         if let me = session.userID { profileIds.remove(me) }
+        let missingProfiles = profileIds.filter { profileMap[$0] == nil }
 
-        await withTaskGroup(of: Void.self) { group in
-            for id in offerIds where offerMap[id] == nil {
-                group.addTask {
-                    if let o = try? await ServiceOfferService.shared.fetchOffer(id: id) {
-                        await MainActor.run { offerMap[id] = o }
-                    }
-                }
-            }
-            for id in profileIds where profileMap[id] == nil {
-                group.addTask {
-                    if let p = try? await ProfileService.shared.fetchProfile(userID: id) {
-                        await MainActor.run { profileMap[id] = p }
-                    }
-                }
-            }
+        if let offers = try? await ServiceOfferService.shared.fetchOffers(ids: Array(offerIds)) {
+            for o in offers { offerMap[o.id] = o }
+        }
+        if let profiles = try? await ProfileService.shared.fetchProfiles(ids: Array(missingProfiles)) {
+            for p in profiles { profileMap[p.id] = p }
         }
     }
 }

@@ -165,6 +165,29 @@ final class ServiceOfferService {
         return Dictionary(grouping: offers, by: { $0.organizerId })
     }
 
+    // MARK: - Offerte recenti dei preferiti
+
+    /// Offerte attive pubblicate di recente dagli organizzatori indicati
+    /// (sezione "Novità dai tuoi preferiti" in Attività).
+    func fetchRecentOffers(
+        fromOrganizers organizerIds: [UUID],
+        since: Date,
+        limit: Int = 10
+    ) async throws -> [ServiceOffer] {
+        guard !organizerIds.isEmpty else { return [] }
+        let iso = ISO8601DateFormatter().string(from: since)
+        return try await client
+            .from("service_offers")
+            .select()
+            .in("organizer_id", values: organizerIds.map { $0.uuidString })
+            .eq("status", value: "active")
+            .gte("created_at", value: iso)
+            .order("created_at", ascending: false)
+            .limit(limit)
+            .execute()
+            .value
+    }
+
     // MARK: - Singola offerta
 
     func fetchOffer(id: UUID) async throws -> ServiceOffer? {
@@ -176,6 +199,17 @@ final class ServiceOfferService {
             .execute()
             .value
         return result.first
+    }
+
+    /// Più offerte per id, in un'unica richiesta.
+    func fetchOffers(ids: [UUID]) async throws -> [ServiceOffer] {
+        guard !ids.isEmpty else { return [] }
+        return try await client
+            .from("service_offers")
+            .select()
+            .in("id", values: ids.map { $0.uuidString })
+            .execute()
+            .value
     }
 
     // MARK: - Categorie di un'offerta
@@ -193,6 +227,24 @@ final class ServiceOfferService {
             .value
 
         return rows.map { $0.service_categories }
+    }
+
+    /// Categorie di più offerte in un'unica richiesta (una sola query
+    /// invece di una per offerta).
+    func fetchOfferCategoriesMap(offerIds: [UUID]) async throws -> [UUID: [ServiceCategory]] {
+        guard !offerIds.isEmpty else { return [:] }
+        struct Row: Decodable {
+            let offer_id: UUID
+            let service_categories: ServiceCategory
+        }
+        let rows: [Row] = try await client
+            .from("service_offer_categories")
+            .select("offer_id, service_categories(*)")
+            .in("offer_id", values: offerIds.map { $0.uuidString })
+            .execute()
+            .value
+        return Dictionary(grouping: rows, by: { $0.offer_id })
+            .mapValues { $0.map(\.service_categories) }
     }
 
     // MARK: - Le mie offerte (lato organizzatore)

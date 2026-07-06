@@ -18,6 +18,10 @@ struct ActivityView: View {
     @State private var recentReviews: [Review] = []
     @State private var isLoading: Bool = true
 
+    // Novità dai preferiti (lato cliente)
+    @State private var favoriteNews: [ServiceOffer] = []
+    @State private var favoriteNames: [UUID: String] = [:]
+
     private var me: UUID? { session.userID }
     private var isOrganizer: Bool { session.currentProfile?.role == .organizer }
 
@@ -85,6 +89,14 @@ struct ActivityView: View {
                             }
                         }
 
+                        if !isOrganizer && !favoriteNews.isEmpty {
+                            section(title: "Novità dai tuoi preferiti", icon: "heart.fill", color: .brindooCoral) {
+                                ForEach(favoriteNews) { offer in
+                                    favoriteNewsRow(offer)
+                                }
+                            }
+                        }
+
                         if isOrganizer && !recentReviews.isEmpty {
                             section(title: "Ultime recensioni", icon: "star.fill", color: .brindooCoral) {
                                 ForEach(recentReviews) { r in
@@ -109,7 +121,46 @@ struct ActivityView: View {
     }
 
     private var isEmptyState: Bool {
-        toHandle.isEmpty && upcomingEvents.isEmpty && unreadCount == 0 && recentReviews.isEmpty
+        toHandle.isEmpty && upcomingEvents.isEmpty && unreadCount == 0
+            && recentReviews.isEmpty && favoriteNews.isEmpty
+    }
+
+    /// Nuova offerta pubblicata da un professionista salvato nei preferiti.
+    @ViewBuilder
+    private func favoriteNewsRow(_ offer: ServiceOffer) -> some View {
+        NavigationLink {
+            OfferDetailView(offer: offer)
+        } label: {
+            HStack(spacing: BrindooSpacing.sm) {
+                Image(systemName: "tag.fill")
+                    .font(.system(size: 15, weight: .semibold))
+                    .foregroundStyle(.white)
+                    .frame(width: 36, height: 36)
+                    .background(Color.brindooCoral)
+                    .clipShape(Circle())
+                VStack(alignment: .leading, spacing: 2) {
+                    HStack(spacing: 4) {
+                        Text(offer.title)
+                            .font(BrindooFont.bodyMedium.weight(.semibold))
+                            .foregroundStyle(Color.brindooTextPrimary)
+                            .lineLimit(1)
+                        if offer.isNew { NewOfferBadge() }
+                    }
+                    Text("\(favoriteNames[offer.organizerId] ?? "Un tuo preferito") · \(offer.priceDisplay)")
+                        .font(BrindooFont.caption)
+                        .foregroundStyle(Color.brindooTextSecondary)
+                        .lineLimit(1)
+                }
+                Spacer()
+                Image(systemName: "chevron.right")
+                    .font(.system(size: 12, weight: .semibold))
+                    .foregroundStyle(Color.brindooTextSecondary)
+            }
+            .padding(BrindooSpacing.md)
+            .background(Color.brindooSurface)
+            .clipShape(RoundedRectangle(cornerRadius: BrindooRadius.md))
+        }
+        .buttonStyle(.plain)
     }
 
     @ViewBuilder
@@ -187,23 +238,35 @@ struct ActivityView: View {
         proposals = (try? await propsTask) ?? []
         unreadCount = ((try? await unreadTask) ?? [:]).values.reduce(0, +)
 
-        // Titoli offerte coinvolte.
-        let ids = Set(proposals.map { $0.offerId })
-        await withTaskGroup(of: (UUID, String?).self) { group in
-            for id in ids where offerTitles[id] == nil {
-                group.addTask {
-                    let o = try? await ServiceOfferService.shared.fetchOffer(id: id)
-                    return (id, o?.title)
-                }
-            }
-            for await (id, title) in group {
-                if let title { offerTitles[id] = title }
-            }
+        // Titoli offerte coinvolte (una sola richiesta).
+        let missingTitleIds = Set(proposals.map { $0.offerId }).filter { offerTitles[$0] == nil }
+        if let offers = try? await ServiceOfferService.shared.fetchOffers(ids: Array(missingTitleIds)) {
+            for o in offers { offerTitles[o.id] = o.title }
         }
 
         if isOrganizer, let me {
             let all = (try? await ReviewService.shared.fetchReviews(organizerId: me)) ?? []
             recentReviews = Array(all.prefix(3))
+        }
+
+        // Cliente: nuove offerte (ultime 2 settimane) dei professionisti preferiti.
+        if !isOrganizer {
+            let favoriteIds = (try? await OrganizerFavoriteService.shared.fetchMyFavoriteOrganizerIds()) ?? []
+            if !favoriteIds.isEmpty {
+                let since = Calendar.current.date(byAdding: .day, value: -14, to: Date()) ?? Date()
+                let news = (try? await ServiceOfferService.shared.fetchRecentOffers(
+                    fromOrganizers: Array(favoriteIds),
+                    since: since
+                )) ?? []
+                favoriteNews = news
+
+                let nameIds = Set(news.map(\.organizerId)).filter { favoriteNames[$0] == nil }
+                if let profiles = try? await ProfileService.shared.fetchProfiles(ids: Array(nameIds)) {
+                    for p in profiles { favoriteNames[p.id] = p.fullName ?? "Professionista" }
+                }
+            } else {
+                favoriteNews = []
+            }
         }
     }
 }

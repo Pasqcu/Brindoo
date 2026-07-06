@@ -24,10 +24,21 @@ enum BoardSortMode: String, CaseIterable, Identifiable {
     }
 }
 
+/// Ultima lista mostrata in bacheca, salvata su disco per l'apertura istantanea.
+struct BoardSnapshot: Codable {
+    let organizers: [Profile]
+    let offers: [UUID: [ServiceOffer]]
+    let categories: [UUID: [ServiceCategory]]
+    let ratings: [UUID: OrganizerRating]
+    let areaSlugs: Set<String>
+    let savedAt: Date
+}
+
 struct BoardView: View {
 
     @Environment(SessionStore.self) private var session
     @Environment(\.dismiss) private var dismiss
+    @EnvironmentObject private var toastCenter: BrindooToastCenter
 
     /// Quando `true`, la vista viene forzata in modalità cliente per permettere
     /// a un organizzatore di vedere l'anteprima della bacheca pubblica.
@@ -795,7 +806,6 @@ struct BoardView: View {
 
     private func loadInitial() async {
         isLoading = true
-        defer { isLoading = false }
         do {
             categories = try await CategoryService.shared.fetchCategories()
         } catch { print("❌ \(error)") }
@@ -808,7 +818,21 @@ struct BoardView: View {
             selectedAreaSlugs = [provinceSlug(prov)]
         }
 
+        // Bacheca istantanea: mostra subito l'ultima lista salvata (se combacia
+        // con i filtri iniziali), poi aggiorna comunque dalla rete.
+        if isClient && !clientPreview,
+           let snapshot = await LocalCacheStore.shared.load(BoardSnapshot.self, for: BrindooCacheKey.boardSnapshot),
+           snapshot.areaSlugs == selectedAreaSlugs,
+           !snapshot.organizers.isEmpty {
+            organizers = snapshot.organizers
+            organizerOffersMap = snapshot.offers
+            organizerCategoriesMap = snapshot.categories
+            organizerRatings = snapshot.ratings
+            isLoading = false
+        }
+
         await reload()
+        isLoading = false
 
         // Primo passo guidato per il cliente (una sola volta).
         if isClient && !clientPreview && !welcomeSeen && !categories.isEmpty {
@@ -891,10 +915,35 @@ struct BoardView: View {
             organizers = collected
             pageOffset = offset
             canLoadMore = hasMore
+
+            await saveSnapshotIfEligible()
         } catch {
-            errorMessage = "Impossibile caricare i professionisti"
+            // Se abbiamo la lista dalla cache, non coprirla con la schermata d'errore.
+            if organizers.isEmpty {
+                errorMessage = "Impossibile caricare i professionisti"
+            }
             print("❌ \(error)")
         }
+    }
+
+    /// Salva la lista corrente per l'apertura istantanea (solo la vista
+    /// "di default": niente ricerca, categorie o filtri extra).
+    private func saveSnapshotIfEligible() async {
+        guard isClient, !clientPreview,
+              searchText.isEmpty, selectedCategoryIds.isEmpty,
+              minRating == 0, maxPrice == 0, eventDate == nil,
+              !organizers.isEmpty else { return }
+
+        let ids = Set(organizers.map(\.id))
+        let snapshot = BoardSnapshot(
+            organizers: organizers,
+            offers: organizerOffersMap.filter { ids.contains($0.key) },
+            categories: organizerCategoriesMap.filter { ids.contains($0.key) },
+            ratings: organizerRatings.filter { ids.contains($0.key) },
+            areaSlugs: selectedAreaSlugs,
+            savedAt: Date()
+        )
+        await LocalCacheStore.shared.save(snapshot, for: BrindooCacheKey.boardSnapshot)
     }
 
     /// Aggiunge la pagina successiva in fondo alla lista.
@@ -924,6 +973,7 @@ struct BoardView: View {
             canLoadMore = hasMore
         } catch {
             canLoadMore = false
+            toastCenter.show(BrindooToast("Impossibile caricare altri profili", message: "Trascina in basso per riprovare.", style: .error))
             print("❌ \(error)")
         }
     }
@@ -939,17 +989,12 @@ struct BoardView: View {
     }
 
     private func loadCategoriesForOrganizers(_ profiles: [Profile]) async {
-        await withTaskGroup(of: (UUID, [ServiceCategory]).self) { group in
-            for profile in profiles {
-                if organizerCategoriesMap[profile.id] != nil { continue }
-                group.addTask {
-                    let cats = (try? await OrganizerService.shared.fetchOrganizerCategories(organizerID: profile.id)) ?? []
-                    return (profile.id, cats)
-                }
-            }
-            for await (id, cats) in group {
-                organizerCategoriesMap[id] = cats
-            }
+        // Una sola richiesta per tutta la pagina (non una per professionista).
+        let missing = profiles.map(\.id).filter { organizerCategoriesMap[$0] == nil }
+        guard !missing.isEmpty else { return }
+        let map = (try? await OrganizerService.shared.fetchOrganizerCategoriesMap(organizerIds: missing)) ?? [:]
+        for id in missing {
+            organizerCategoriesMap[id] = map[id] ?? []
         }
     }
 
@@ -976,17 +1021,12 @@ struct BoardView: View {
     }
 
     private func loadCategoriesForMyOffers(_ offers: [ServiceOffer]) async {
-        await withTaskGroup(of: (UUID, [ServiceCategory]).self) { group in
-            for offer in offers {
-                if myOfferCategoriesMap[offer.id] != nil { continue }
-                group.addTask {
-                    let cats = (try? await ServiceOfferService.shared.fetchOfferCategories(offerId: offer.id)) ?? []
-                    return (offer.id, cats)
-                }
-            }
-            for await (id, cats) in group {
-                myOfferCategoriesMap[id] = cats
-            }
+        // Una sola richiesta per tutte le offerte.
+        let missing = offers.map(\.id).filter { myOfferCategoriesMap[$0] == nil }
+        guard !missing.isEmpty else { return }
+        let map = (try? await ServiceOfferService.shared.fetchOfferCategoriesMap(offerIds: missing)) ?? [:]
+        for id in missing {
+            myOfferCategoriesMap[id] = map[id] ?? []
         }
     }
 }

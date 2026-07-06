@@ -124,6 +124,24 @@ final class OrganizerService {
         return Set(rows.map { $0.organizer_id })
     }
 
+    /// Categorie di più organizzatori in un'unica richiesta (una sola query
+    /// invece di una per professionista — la bacheca ringrazia).
+    func fetchOrganizerCategoriesMap(organizerIds: [UUID]) async throws -> [UUID: [ServiceCategory]] {
+        guard !organizerIds.isEmpty else { return [:] }
+        struct Row: Decodable {
+            let organizer_id: UUID
+            let service_categories: ServiceCategory
+        }
+        let rows: [Row] = try await client
+            .from("organizer_categories")
+            .select("organizer_id, service_categories(*)")
+            .in("organizer_id", values: organizerIds.map { $0.uuidString })
+            .execute()
+            .value
+        return Dictionary(grouping: rows, by: { $0.organizer_id })
+            .mapValues { $0.map(\.service_categories) }
+    }
+
     func fetchOrganizerCategories(organizerID: UUID) async throws -> [ServiceCategory] {
         struct JoinRow: Decodable {
             let service_categories: ServiceCategory

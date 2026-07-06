@@ -101,6 +101,10 @@ struct OfferCard: View {
                     .lineLimit(2)
                     .frame(maxWidth: .infinity, alignment: .leading)
 
+                if offer.isNew {
+                    NewOfferBadge()
+                }
+
                 if !showOrganizer {
                     statusBadge
                 }

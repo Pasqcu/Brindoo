@@ -313,6 +313,57 @@ final class OfferProposalService {
             .execute()
     }
 
+    /// Sposta la data dell'evento di una trattativa accettata.
+    /// Aggiorna il promemoria locale e avvisa l'altra parte con un messaggio
+    /// automatico in chat. `newDate` in formato "yyyy-MM-dd".
+    func updateEventDate(
+        proposal: OfferProposal,
+        newDate: String,
+        offerTitle: String
+    ) async throws {
+        struct U: Encodable { let event_date: String }
+        try await client
+            .from("offer_proposals")
+            .update(U(event_date: newDate))
+            .eq("id", value: proposal.id)
+            .execute()
+
+        // Riprogramma il promemoria del giorno prima (stesso identifier → sostituisce).
+        LocalReminderService.cancelReminder(proposalId: proposal.id)
+        await LocalReminderService.scheduleEventReminder(
+            proposalId: proposal.id,
+            eventDate: newDate,
+            offerTitle: offerTitle
+        )
+
+        // Nota automatica in chat per l'altra parte (best effort).
+        guard let me = SupabaseManager.shared.currentUserID else { return }
+        let display: String = {
+            let parser = DateFormatter()
+            parser.dateFormat = "yyyy-MM-dd"
+            parser.timeZone = TimeZone(identifier: "UTC")
+            guard let d = parser.date(from: newDate) else { return newDate }
+            let out = DateFormatter()
+            out.locale = Locale(identifier: "it_IT")
+            out.dateFormat = "d MMMM yyyy"
+            return out.string(from: d)
+        }()
+        let conv: Conversation?
+        if me == proposal.clientId {
+            conv = try? await ConversationService.shared
+                .findOrCreateConversationAsClient(organizerId: proposal.organizerId)
+        } else {
+            conv = try? await ConversationService.shared
+                .findOrCreateConversationAsOrganizer(clientId: proposal.clientId)
+        }
+        if let conv {
+            _ = try? await MessageService.shared.sendSystemMessage(
+                conversationId: conv.id,
+                content: "📅 La data dell'evento \"\(offerTitle)\" è stata spostata al \(display)"
+            )
+        }
+    }
+
     /// Aggiorna lo stato dell'appuntamento (svolto / annullato) di una trattativa accettata.
     func updateBookingStatus(proposalId: UUID, booking: BookingStatus) async throws {
         struct U: Encodable { let booking_status: String }

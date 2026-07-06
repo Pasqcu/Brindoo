@@ -23,6 +23,8 @@ struct Review: Codable, Identifiable, Equatable, Hashable {
     /// Risposta dell'organizzatore alla recensione (facoltativa).
     let reply: String?
     let replyAt: Date?
+    /// Foto dell'evento allegata dal cliente (facoltativa).
+    let photoUrl: String?
     let createdAt: Date
     let updatedAt: Date
 
@@ -36,6 +38,7 @@ struct Review: Codable, Identifiable, Equatable, Hashable {
         case verified
         case reply
         case replyAt = "reply_at"
+        case photoUrl = "photo_url"
         case createdAt = "created_at"
         case updatedAt = "updated_at"
     }
@@ -100,4 +103,5 @@ struct NewReview: Encodable {
     let rating: Int
     let comment: String?
     let verified: Bool
+    let photo_url: String?
 }

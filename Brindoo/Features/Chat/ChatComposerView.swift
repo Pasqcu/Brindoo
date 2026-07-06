@@ -16,6 +16,8 @@ struct ChatComposerView: View {
     let isEditing: Bool
     let isAttachDisabled: Bool
     let onSend: () -> Void
+    /// Se presente, mostra il bottone "risposte rapide" (lato professionista).
+    var onQuickReply: ((String) -> Void)? = nil
 
     var body: some View {
         HStack(spacing: BrindooSpacing.sm) {
@@ -31,6 +33,10 @@ struct ChatComposerView: View {
             }
             .disabled(isAttachDisabled)
             .accessibilityLabel("Allega foto")
+
+            if let onQuickReply {
+                QuickReplyMenuButton(onPick: onQuickReply)
+            }
 
             TextField("Scrivi un messaggio", text: $inputText, axis: .vertical)
                 .lineLimit(1...5)

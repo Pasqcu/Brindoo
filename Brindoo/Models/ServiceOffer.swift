@@ -47,6 +47,13 @@ struct ServiceOffer: Identifiable, Codable, Hashable, Equatable {
         case updatedAt = "updated_at"
     }
 
+    /// True se l'offerta è stata pubblicata da meno di 7 giorni ("Nuovo").
+    func isNew(asOf now: Date = Date()) -> Bool {
+        now.timeIntervalSince(createdAt) < 7 * 24 * 60 * 60
+    }
+
+    var isNew: Bool { isNew() }
+
     /// Stringa formattata del prezzo.
     var priceDisplay: String {
         let f = NumberFormatter()

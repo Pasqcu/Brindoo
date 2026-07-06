@@ -252,6 +252,10 @@ struct ChatView: View {
                 LazyVStack(spacing: BrindooSpacing.xs) {
                     ForEach(messages) { message in
                         let isOwn = message.senderId == session.userID
+                        if message.messageType == .system {
+                            systemNote(message)
+                                .id(message.id)
+                        } else {
                         MessageBubble(
                             message: message,
                             isOwn: isOwn,
@@ -282,6 +286,7 @@ struct ChatView: View {
                             }
                         )
                         .id(message.id)
+                        }
                     }
                 }
                 .padding(.horizontal, BrindooSpacing.sm)
@@ -304,6 +309,21 @@ struct ChatView: View {
     private func repliedToMessage(for message: Message) -> Message? {
         guard let id = message.repliedToId else { return nil }
         return messages.first { $0.id == id }
+    }
+
+    /// Nota "di sistema" centrata (es. data evento spostata).
+    @ViewBuilder
+    private func systemNote(_ message: Message) -> some View {
+        Text(message.content)
+            .font(BrindooFont.caption.weight(.medium))
+            .foregroundStyle(Color.brindooTextSecondary)
+            .multilineTextAlignment(.center)
+            .padding(.horizontal, BrindooSpacing.md)
+            .padding(.vertical, BrindooSpacing.xs)
+            .background(Color.brindooSurface)
+            .clipShape(Capsule())
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, BrindooSpacing.xxs)
     }
     
     // MARK: - Banners
@@ -393,7 +413,13 @@ struct ChatView: View {
                 } else {
                     Task { await sendText() }
                 }
-            }
+            },
+            // Risposte rapide: solo per il professionista.
+            onQuickReply: session.currentProfile?.role == .organizer
+                ? { phrase in
+                    inputText = inputText.isEmpty ? phrase : inputText + " " + phrase
+                }
+                : nil
         )
         .onChange(of: inputText) { _, newValue in
             Task { await ChatDraftStore.shared.setDraft(newValue, for: conversation.id) }

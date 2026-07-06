@@ -4,6 +4,8 @@
 <dict>
 	<key>CFBundleDevelopmentRegion</key>
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
+	<key>NSCalendarsWriteOnlyAccessUsageDescription</key>
+	<string>Brindoo aggiunge al tuo calendario gli eventi che hai confermato, così non li dimentichi.</string>
 	<key>CFBundleDisplayName</key>
 	<string>Brindoo</string>
 	<key>CFBundleExecutable</key>

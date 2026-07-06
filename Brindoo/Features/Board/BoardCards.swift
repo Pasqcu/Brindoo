@@ -8,6 +8,21 @@
 
 import SwiftUI
 
+// MARK: - Etichetta "Nuovo" (offerte fresche, < 7 giorni)
+
+struct NewOfferBadge: View {
+    var body: some View {
+        Text("NUOVO")
+            .font(.system(size: 9, weight: .heavy))
+            .foregroundStyle(.white)
+            .padding(.horizontal, 6)
+            .padding(.vertical, 3)
+            .background(BrindooGradient.coralSoft)
+            .clipShape(Capsule())
+            .accessibilityLabel("Offerta nuova")
+    }
+}
+
 // MARK: - Card professionista con offerte annidate (cliente)
 
 struct OrganizerWithOffersCard: View {
@@ -185,10 +200,15 @@ struct OrganizerWithOffersCard: View {
                 .clipShape(Circle())
 
             VStack(alignment: .leading, spacing: 2) {
-                Text(offer.title)
-                    .font(BrindooFont.bodySmall.weight(.semibold))
-                    .lineLimit(1)
-                    .foregroundStyle(Color.brindooTextPrimary)
+                HStack(spacing: 4) {
+                    Text(offer.title)
+                        .font(BrindooFont.bodySmall.weight(.semibold))
+                        .lineLimit(1)
+                        .foregroundStyle(Color.brindooTextPrimary)
+                    if offer.isNew {
+                        NewOfferBadge()
+                    }
+                }
                 Text(offer.coverageArea)
                     .font(BrindooFont.caption)
                     .foregroundStyle(Color.brindooTextSecondary)

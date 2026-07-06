@@ -22,6 +22,13 @@ struct ReviewsListView: View {
     @State private var showWriteReview: Bool = false
     @State private var reviewToReport: Review?
     @State private var reviewToReply: Review?
+    @State private var fullScreenPhotoUrl: FullScreenPhoto?
+
+    /// Foto recensione aperta a schermo intero.
+    struct FullScreenPhoto: Identifiable {
+        let id = UUID()
+        let url: String
+    }
 
     private var isOrganizerOwner: Bool {
         session.userID == organizer.id
@@ -70,6 +77,11 @@ struct ReviewsListView: View {
         .sheet(item: $reviewToReply) { review in
             ReplyToReviewSheet(review: review) {
                 Task { await loadAllData() }
+            }
+        }
+        .fullScreenCover(item: $fullScreenPhotoUrl) { photo in
+            FullScreenImageView(url: photo.url) {
+                fullScreenPhotoUrl = nil
             }
         }
     }
@@ -290,6 +302,25 @@ struct ReviewsListView: View {
                     .foregroundStyle(Color.brindooTextPrimary)
                     .lineLimit(nil)
                     .fixedSize(horizontal: false, vertical: true)
+            }
+
+            // Foto dell'evento allegata dal cliente
+            if let photo = review.photoUrl, !photo.isEmpty, let url = URL(string: photo) {
+                Button {
+                    fullScreenPhotoUrl = FullScreenPhoto(url: photo)
+                } label: {
+                    AsyncImage(url: url) { image in
+                        image.resizable().scaledToFill()
+                    } placeholder: {
+                        BrindooSkeleton(cornerRadius: BrindooRadius.sm)
+                    }
+                    .frame(height: 140)
+                    .frame(maxWidth: .infinity)
+                    .clipped()
+                    .clipShape(RoundedRectangle(cornerRadius: BrindooRadius.sm))
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel("Foto dell'evento, tocca per ingrandire")
             }
 
             // Risposta dell'organizzatore

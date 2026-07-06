@@ -36,6 +36,17 @@ final class ProfileService {
         return try await fetchProfile(userID: userID)
     }
 
+    /// Più profili per id, in un'unica richiesta.
+    func fetchProfiles(ids: [UUID]) async throws -> [Profile] {
+        guard !ids.isEmpty else { return [] }
+        return try await client
+            .from("profiles")
+            .select()
+            .in("id", values: ids.map { $0.uuidString })
+            .execute()
+            .value
+    }
+
     // MARK: - Creazione
 
     /// Crea il profilo dell'utente loggato se non esiste ancora.

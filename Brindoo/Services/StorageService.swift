@@ -181,6 +181,38 @@ final class StorageService {
         }
     }
 
+    // MARK: - Foto recensione
+
+    /// Carica la foto allegata a una recensione (lato cliente). Riusa il
+    /// bucket `portfolio` (upload consentito a ogni utente autenticato).
+    func uploadReviewImage(_ image: UIImage) async throws -> String {
+        guard let userId = SupabaseManager.shared.currentUserID else {
+            throw NSError(domain: "StorageService", code: 401,
+                          userInfo: [NSLocalizedDescriptionKey: "Devi essere loggato"])
+        }
+
+        guard let imageData = compressImage(image, quality: 0.8) else {
+            throw NSError(domain: "StorageService", code: 400,
+                          userInfo: [NSLocalizedDescriptionKey: "Immagine non valida"])
+        }
+
+        let path = "\(userId.uuidString)/review_\(UUID().uuidString).jpg"
+
+        try await storage
+            .from("portfolio")
+            .upload(
+                path,
+                data: imageData,
+                options: FileOptions(
+                    cacheControl: "3600",
+                    contentType: "image/jpeg",
+                    upsert: false
+                )
+            )
+        let publicUrl = try storage.from("portfolio").getPublicURL(path: path)
+        return publicUrl.absoluteString
+    }
+
     /// Cancella una foto specifica dal portfolio
     func deletePortfolioImage(storagePath: String) async throws {
         do {

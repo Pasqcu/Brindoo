@@ -79,8 +79,47 @@ final class MessageService {
         return inserted
     }
     
+    // MARK: - Send messaggio di sistema
+
+    /// Messaggio "di servizio" mostrato al centro della chat (es. data evento
+    /// spostata). Viene inviato a nome dell'utente corrente ma reso come nota.
+    @discardableResult
+    func sendSystemMessage(
+        conversationId: UUID,
+        content: String
+    ) async throws -> Message {
+        guard let senderId = SupabaseManager.shared.currentUserID else {
+            throw NSError(domain: "Msg", code: 401)
+        }
+
+        struct Payload: Encodable {
+            let conversation_id: UUID
+            let sender_id: UUID
+            let content: String
+            let message_type: String
+        }
+
+        let payload = Payload(
+            conversation_id: conversationId,
+            sender_id: senderId,
+            content: content,
+            message_type: "system"
+        )
+
+        let inserted: Message = try await client
+            .from("messages")
+            .insert(payload)
+            .select()
+            .single()
+            .execute()
+            .value
+
+        await updateConversationLastMessage(conversationId: conversationId, preview: content)
+        return inserted
+    }
+
     // MARK: - Send foto
-    
+
     @discardableResult
     func sendImage(
         conversationId: UUID,

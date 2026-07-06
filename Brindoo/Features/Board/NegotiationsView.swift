@@ -16,6 +16,7 @@ import SwiftUI
 struct NegotiationsView: View {
 
     @Environment(SessionStore.self) private var session
+    @EnvironmentObject private var toastCenter: BrindooToastCenter
 
     @State private var proposals: [OfferProposal] = []
     @State private var offerMap: [UUID: ServiceOffer] = [:]
@@ -308,30 +309,23 @@ struct NegotiationsView: View {
             proposals = try await OfferProposalService.shared.fetchMyOngoingProposals()
             await loadRelated()
         } catch {
+            toastCenter.show(BrindooToast("Impossibile caricare le trattative", message: "Controlla la connessione e riprova.", style: .error))
             print("❌ \(error)")
         }
     }
 
     private func loadRelated() async {
-        let offerIds: Set<UUID> = Set(proposals.map { $0.offerId })
-        var profileIds: Set<UUID> = Set(proposals.flatMap { [$0.clientId, $0.organizerId] })
+        // Due sole richieste (offerte + profili), non una per trattativa.
+        let offerIds = Set(proposals.map { $0.offerId }).filter { offerMap[$0] == nil }
+        var profileIds = Set(proposals.flatMap { [$0.clientId, $0.organizerId] })
         if let me = currentUserId { profileIds.remove(me) }
+        let missingProfiles = profileIds.filter { profileMap[$0] == nil }
 
-        await withTaskGroup(of: Void.self) { group in
-            for id in offerIds where offerMap[id] == nil {
-                group.addTask {
-                    if let o = try? await ServiceOfferService.shared.fetchOffer(id: id) {
-                        await MainActor.run { offerMap[id] = o }
-                    }
-                }
-            }
-            for id in profileIds where profileMap[id] == nil {
-                group.addTask {
-                    if let p = try? await ProfileService.shared.fetchProfile(userID: id) {
-                        await MainActor.run { profileMap[id] = p }
-                    }
-                }
-            }
+        if let offers = try? await ServiceOfferService.shared.fetchOffers(ids: Array(offerIds)) {
+            for o in offers { offerMap[o.id] = o }
+        }
+        if let profiles = try? await ProfileService.shared.fetchProfiles(ids: Array(missingProfiles)) {
+            for p in profiles { profileMap[p.id] = p }
         }
     }
 }
