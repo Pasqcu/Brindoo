@@ -58,6 +58,8 @@ struct Profile: Identifiable, Codable, Hashable, Equatable {
     let boostExpiresAt: Date?
     let readReceiptsEnabled: Bool
     let vacationUntil: Date?
+    /// Tempo mediano di risposta in chat (minuti), auto-calcolato dall'app.
+    let responseMinutes: Int?
     let createdAt: Date
     let updatedAt: Date
 
@@ -76,6 +78,7 @@ struct Profile: Identifiable, Codable, Hashable, Equatable {
         case boostExpiresAt = "boost_expires_at"
         case readReceiptsEnabled = "read_receipts_enabled"
         case vacationUntil = "vacation_until"
+        case responseMinutes = "response_minutes"
         case createdAt = "created_at"
         case updatedAt = "updated_at"
     }
@@ -95,6 +98,7 @@ struct Profile: Identifiable, Codable, Hashable, Equatable {
         proExpiresAt = try c.decodeIfPresent(Date.self, forKey: .proExpiresAt)
         boostExpiresAt = try c.decodeIfPresent(Date.self, forKey: .boostExpiresAt)
         readReceiptsEnabled = try c.decodeIfPresent(Bool.self, forKey: .readReceiptsEnabled) ?? true
+        responseMinutes = try c.decodeIfPresent(Int.self, forKey: .responseMinutes)
 
         // vacation_until è memorizzato come date (YYYY-MM-DD).
         if let dateString = try c.decodeIfPresent(String.self, forKey: .vacationUntil),
@@ -152,6 +156,47 @@ struct Profile: Identifiable, Codable, Hashable, Equatable {
         f.locale = Locale(identifier: "it_IT")
         f.dateFormat = "d MMMM"
         return f.string(from: vacationUntil)
+    }
+
+    /// Velocità di risposta in chat, se nota e ragionevole.
+    var responseSpeed: ResponseSpeed? {
+        ResponseSpeed(minutes: responseMinutes)
+    }
+}
+
+// MARK: - Velocità di risposta
+
+/// Fascia di velocità con cui il professionista risponde ai messaggi.
+/// Oltre i 3 giorni non mostriamo nulla (meglio niente che un'etichetta negativa).
+enum ResponseSpeed: Equatable {
+    case withinHour
+    case sameDay
+    case fewDays
+
+    init?(minutes: Int?) {
+        guard let minutes, minutes >= 0 else { return nil }
+        switch minutes {
+        case ...60:          self = .withinHour
+        case ...(24 * 60):   self = .sameDay
+        case ...(3 * 24 * 60): self = .fewDays
+        default:             return nil
+        }
+    }
+
+    var label: String {
+        switch self {
+        case .withinHour: return "Risponde entro un'ora"
+        case .sameDay:    return "Risponde in giornata"
+        case .fewDays:    return "Risponde entro pochi giorni"
+        }
+    }
+
+    var iconName: String {
+        switch self {
+        case .withinHour: return "bolt.fill"
+        case .sameDay:    return "clock.badge.checkmark"
+        case .fewDays:    return "clock"
+        }
     }
 }
 

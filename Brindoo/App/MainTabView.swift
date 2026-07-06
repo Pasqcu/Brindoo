@@ -68,6 +68,11 @@ struct MainTabView: View {
         .tint(.brindooCoral)
         .environment(router)
         .task(id: router.selectedTab) { await refreshBadges() }
+        .task(id: session.currentProfile?.id) {
+            // Aggiorna (al massimo una volta al giorno) la velocità di risposta
+            // mostrata sul profilo pubblico del professionista.
+            await ResponseInsightsService.shared.updateIfNeeded(profile: session.currentProfile)
+        }
         .onChange(of: router.pendingProfileId) { _, id in
             guard let id else { return }
             Task {

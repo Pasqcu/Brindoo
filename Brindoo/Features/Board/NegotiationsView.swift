@@ -98,6 +98,18 @@ struct NegotiationsView: View {
         .background(Color.brindooBackground)
         .navigationTitle("Trattative")
         .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            ToolbarItem(placement: .topBarTrailing) {
+                NavigationLink {
+                    AgendaView()
+                } label: {
+                    Image(systemName: "calendar")
+                        .font(.system(size: 17, weight: .semibold))
+                        .foregroundStyle(Color.brindooCoral)
+                }
+                .accessibilityLabel("Agenda eventi")
+            }
+        }
         .task { await loadData() }
         .refreshable { await loadData() }
         .navigationDestination(item: $chatTarget) { target in

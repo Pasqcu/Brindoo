@@ -3,8 +3,11 @@
 //  Brindoo
 //
 //  Bacheca: vista principale dell'app.
-//  - Cliente: sfoglia i professionisti con le loro offerte (filtro per categoria + ricerca).
-//  - Professionista: gestisce le proprie offerte pubblicate (CRUD).
+//  - Cliente: sfoglia i professionisti con le loro offerte (filtri + ricerca),
+//    caricati a pagine man mano che si scorre.
+//  - Professionista: gestisce le proprie offerte pubblicate (CRUD + duplica).
+//
+//  Le card sono in BoardCards.swift, i pannelli modali in BoardSheets.swift.
 //
 
 import SwiftUI
@@ -39,15 +42,20 @@ struct BoardView: View {
     @State private var errorMessage: String?
     @State private var showAreaPicker: Bool = false
 
-    // Cliente: professionisti con offerte annidate
+    // Cliente: professionisti con offerte annidate, caricati a pagine
     @State private var organizers: [Profile] = []
     @State private var organizerCategoriesMap: [UUID: [ServiceCategory]] = [:]
     @State private var organizerOffersMap: [UUID: [ServiceOffer]] = [:]
+    @State private var canLoadMore: Bool = false
+    @State private var isLoadingMore: Bool = false
+    @State private var pageOffset: Int = 0
+    private let pageSize = 20
 
     // Organizer: proprie offerte
     @State private var myOffers: [ServiceOffer] = []
     @State private var myOfferCategoriesMap: [UUID: [ServiceCategory]] = [:]
     @State private var showCreateOffer: Bool = false
+    @State private var duplicateTemplate: OfferTemplate?
     @State private var showCompleteProfile: Bool = false
     @State private var hasOrganizerCategories: Bool = true
 
@@ -57,9 +65,10 @@ struct BoardView: View {
     @State private var organizerRatings: [UUID: OrganizerRating] = [:]
     @State private var minRating: Int = 0      // 0 = qualsiasi
     @State private var maxPrice: Double = 0     // 0 = nessun limite
+    @State private var eventDate: Date? = nil   // nil = qualsiasi giorno
     @State private var showFilters: Bool = false
 
-    private var hasExtraFilters: Bool { minRating > 0 || maxPrice > 0 }
+    private var hasExtraFilters: Bool { minRating > 0 || maxPrice > 0 || eventDate != nil }
 
     private func minOfferPrice(for id: UUID) -> Double? {
         organizerOffersMap[id]?.map(\.price).min()
@@ -90,7 +99,7 @@ struct BoardView: View {
     }
 
     private var hasActiveFilters: Bool {
-        !selectedCategoryIds.isEmpty || !selectedAreaSlugs.isEmpty || !searchText.isEmpty
+        !selectedCategoryIds.isEmpty || !selectedAreaSlugs.isEmpty || !searchText.isEmpty || eventDate != nil
     }
 
     /// Filtri "di contenuto" (categoria/ricerca): l'area provincia non conta,
@@ -110,6 +119,13 @@ struct BoardView: View {
     private var areaFilterTitle: String {
         if selectedAreaSlugs.isEmpty { return "Area" }
         return LazioArea.displayLabel(forSlugs: Array(selectedAreaSlugs))
+    }
+
+    /// Offerta usata come base per "Duplica offerta".
+    struct OfferTemplate: Identifiable {
+        let id = UUID()
+        let offer: ServiceOffer
+        let categoryIds: [UUID]
     }
 
     var body: some View {
@@ -194,6 +210,11 @@ struct BoardView: View {
             }) {
                 CreateOfferView()
             }
+            .sheet(item: $duplicateTemplate, onDismiss: {
+                Task { await loadMyOffers() }
+            }) { template in
+                CreateOfferView(template: template.offer, templateCategoryIds: template.categoryIds)
+            }
             .sheet(isPresented: $showAreaPicker) {
                 AreaPickerSheet(selected: $selectedAreaSlugs) {
                     Task { await loadOrganizers() }
@@ -207,8 +228,8 @@ struct BoardView: View {
                 EditProfileView()
             }
             .sheet(isPresented: $showFilters) {
-                BoardFiltersSheet(minRating: $minRating, maxPrice: $maxPrice)
-                    .presentationDetents([.medium])
+                BoardFiltersSheet(minRating: $minRating, maxPrice: $maxPrice, eventDate: $eventDate)
+                    .presentationDetents([.medium, .large])
                     .presentationDragIndicator(.visible)
             }
             .sheet(isPresented: $showWelcome) {
@@ -225,6 +246,9 @@ struct BoardView: View {
             }
             .task { await loadInitial() }
             .refreshable { await reload() }
+            .onChange(of: eventDate) { _, _ in
+                Task { await loadOrganizers() }
+            }
             .coachMark(
                 isClient ? .boardClient : .boardOrganizer,
                 content: isClient
@@ -363,7 +387,7 @@ struct BoardView: View {
                 .padding(.horizontal, BrindooSpacing.md)
             }
 
-            if !selectedCategoryIds.isEmpty || !selectedAreaSlugs.isEmpty {
+            if !selectedCategoryIds.isEmpty || !selectedAreaSlugs.isEmpty || eventDate != nil {
                 HStack {
                     Text(activeFiltersSummary)
                         .font(BrindooFont.caption)
@@ -372,6 +396,7 @@ struct BoardView: View {
                     Button {
                         selectedCategoryIds.removeAll()
                         selectedAreaSlugs.removeAll()
+                        eventDate = nil
                         Task { await loadOrganizers() }
                     } label: {
                         Text("Pulisci")
@@ -427,6 +452,12 @@ struct BoardView: View {
         }
         if !selectedAreaSlugs.isEmpty {
             parts.append("\(selectedAreaSlugs.count) aree")
+        }
+        if let eventDate {
+            let f = DateFormatter()
+            f.locale = Locale(identifier: "it_IT")
+            f.dateFormat = "d MMM"
+            parts.append("liberi il \(f.string(from: eventDate))")
         }
         return parts.joined(separator: " · ")
     }
@@ -515,6 +546,13 @@ struct BoardView: View {
                         .buttonStyle(BrindooPressStyle())
                     }
 
+                    if canLoadMore {
+                        ProgressView()
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, BrindooSpacing.md)
+                            .task(id: pageOffset) { await loadMoreOrganizers() }
+                    }
+
                     inviteCard
                 }
                 .padding(.horizontal, BrindooSpacing.md)
@@ -567,7 +605,7 @@ struct BoardView: View {
                 Image(systemName: "sparkles")
                     .font(.system(size: 14, weight: .semibold))
                     .foregroundStyle(Color.brindooCoral)
-                Text("\(organizers.count) professionisti consigliati per te")
+                Text("\(organizers.count)\(canLoadMore ? "+" : "") professionisti consigliati per te")
                     .font(BrindooFont.bodySmall.weight(.medium))
                     .foregroundStyle(Color.brindooTextSecondary)
                 Spacer()
@@ -656,7 +694,23 @@ struct BoardView: View {
                             )
                         }
                         .buttonStyle(BrindooPressStyle())
+                        .contextMenu {
+                            Button {
+                                duplicateTemplate = OfferTemplate(
+                                    offer: offer,
+                                    categoryIds: (myOfferCategoriesMap[offer.id] ?? []).map(\.id)
+                                )
+                            } label: {
+                                Label("Duplica offerta", systemImage: "plus.square.on.square")
+                            }
+                        }
                     }
+
+                    Text("Tieni premuta un'offerta per duplicarla")
+                        .font(BrindooFont.caption)
+                        .foregroundStyle(Color.brindooTextSecondary)
+                        .frame(maxWidth: .infinity)
+                        .padding(.top, BrindooSpacing.xs)
                 }
                 .padding(.horizontal, BrindooSpacing.md)
                 .padding(.vertical, BrindooSpacing.md)
@@ -691,6 +745,7 @@ struct BoardView: View {
                     selectedCategoryIds.removeAll()
                     selectedAreaSlugs.removeAll()
                     searchText = ""
+                    eventDate = nil
                     Task { await loadOrganizers() }
                 }
                 .frame(maxWidth: 200)
@@ -783,23 +838,103 @@ struct BoardView: View {
         }
     }
 
+    /// Una pagina di professionisti già filtrata per data evento (se attiva).
+    private func fetchPage(offset: Int, busyIds: Set<UUID>) async throws -> (profiles: [Profile], hasMore: Bool) {
+        let page = try await OrganizerService.shared.fetchOrganizers(
+            categoryIds: selectedCategoryIds,
+            areaFilters: selectedAreaSlugs,
+            searchText: searchText.isEmpty ? nil : searchText,
+            includeCurrentUser: clientPreview,
+            limit: pageSize,
+            offset: offset
+        )
+        return (applyDateFilter(page.profiles, busyIds: busyIds), page.hasMore)
+    }
+
+    /// Esclude chi è occupato o in vacanza nella data evento selezionata.
+    private func applyDateFilter(_ profiles: [Profile], busyIds: Set<UUID>) -> [Profile] {
+        guard let eventDate else { return profiles }
+        let day = Calendar.current.startOfDay(for: eventDate)
+        return profiles.filter { p in
+            if busyIds.contains(p.id) { return false }
+            if let vacation = p.vacationUntil,
+               day <= Calendar.current.startOfDay(for: vacation) {
+                return false
+            }
+            return true
+        }
+    }
+
+    private func fetchBusyIdsIfNeeded() async -> Set<UUID> {
+        guard let eventDate else { return [] }
+        return (try? await AvailabilityService.shared.fetchBusyOrganizerIds(on: eventDate)) ?? []
+    }
+
+    /// Ricarica da zero la prima pagina (e continua finché non trova almeno
+    /// un risultato visibile o le pagine finiscono, per non mostrare un
+    /// "nessun risultato" ingannevole con il filtro data attivo).
     private func loadOrganizers() async {
         do {
-            let profiles = try await OrganizerService.shared.fetchOrganizers(
-                categoryIds: selectedCategoryIds,
-                areaFilters: selectedAreaSlugs,
-                searchText: searchText.isEmpty ? nil : searchText,
-                includeCurrentUser: clientPreview
-            )
-            await loadOffersForOrganizers(profiles)
-            await loadCategoriesForOrganizers(profiles)
-            organizers = profiles
-            if let ratings = try? await ReviewService.shared.fetchRatings(organizerIds: profiles.map { $0.id }) {
-                organizerRatings = ratings
-            }
+            let busyIds = await fetchBusyIdsIfNeeded()
+            var collected: [Profile] = []
+            var offset = 0
+            var hasMore = true
+
+            repeat {
+                let page = try await fetchPage(offset: offset, busyIds: busyIds)
+                offset += pageSize
+                hasMore = page.hasMore
+                collected.append(contentsOf: page.profiles)
+            } while collected.isEmpty && hasMore && offset < pageSize * 5
+
+            await loadRelated(for: collected)
+            organizers = collected
+            pageOffset = offset
+            canLoadMore = hasMore
         } catch {
             errorMessage = "Impossibile caricare i professionisti"
             print("❌ \(error)")
+        }
+    }
+
+    /// Aggiunge la pagina successiva in fondo alla lista.
+    private func loadMoreOrganizers() async {
+        guard canLoadMore, !isLoadingMore else { return }
+        isLoadingMore = true
+        defer { isLoadingMore = false }
+
+        do {
+            let busyIds = await fetchBusyIdsIfNeeded()
+            var appended: [Profile] = []
+            var offset = pageOffset
+            var hasMore = true
+
+            repeat {
+                let page = try await fetchPage(offset: offset, busyIds: busyIds)
+                offset += pageSize
+                hasMore = page.hasMore
+                appended.append(contentsOf: page.profiles)
+            } while appended.isEmpty && hasMore && offset < pageOffset + pageSize * 5
+
+            let known = Set(organizers.map(\.id))
+            let fresh = appended.filter { !known.contains($0.id) }
+            await loadRelated(for: fresh)
+            organizers.append(contentsOf: fresh)
+            pageOffset = offset
+            canLoadMore = hasMore
+        } catch {
+            canLoadMore = false
+            print("❌ \(error)")
+        }
+    }
+
+    /// Carica offerte, categorie e valutazioni dei professionisti indicati.
+    private func loadRelated(for profiles: [Profile]) async {
+        await loadOffersForOrganizers(profiles)
+        await loadCategoriesForOrganizers(profiles)
+        if !profiles.isEmpty,
+           let ratings = try? await ReviewService.shared.fetchRatings(organizerIds: profiles.map { $0.id }) {
+            organizerRatings.merge(ratings) { _, new in new }
         }
     }
 
@@ -820,13 +955,10 @@ struct BoardView: View {
 
     private func loadOffersForOrganizers(_ profiles: [Profile]) async {
         let ids = profiles.map { $0.id }
-        guard !ids.isEmpty else {
-            organizerOffersMap = [:]
-            return
-        }
+        guard !ids.isEmpty else { return }
         do {
             let grouped = try await ServiceOfferService.shared.fetchActiveOffers(forOrganizers: ids)
-            organizerOffersMap = grouped
+            organizerOffersMap.merge(grouped) { _, new in new }
         } catch {
             print("❌ \(error)")
         }
@@ -854,508 +986,6 @@ struct BoardView: View {
             }
             for await (id, cats) in group {
                 myOfferCategoriesMap[id] = cats
-            }
-        }
-    }
-}
-
-// MARK: - Card professionista con offerte annidate (cliente)
-
-struct OrganizerWithOffersCard: View {
-
-    let organizer: Profile
-    let categories: [ServiceCategory]
-    let offers: [ServiceOffer]
-    var rating: OrganizerRating? = nil
-
-    private let previewCount = 2
-
-    private var coverImageUrl: String? {
-        offers.first(where: { ($0.imageUrl?.isEmpty == false) })?.imageUrl
-    }
-
-    private var minPrice: Double? {
-        offers.map(\.price).min()
-    }
-
-    private var minPriceDisplay: String? {
-        guard let minPrice else { return nil }
-        let f = NumberFormatter()
-        f.numberStyle = .currency
-        f.currencyCode = "EUR"
-        f.maximumFractionDigits = 0
-        return f.string(from: NSNumber(value: minPrice))
-    }
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: BrindooSpacing.sm) {
-            if let cover = coverImageUrl, let url = URL(string: cover) {
-                ZStack(alignment: .bottomLeading) {
-                    AsyncImage(url: url) { phase in
-                        switch phase {
-                        case .success(let image): image.resizable().scaledToFill()
-                        case .empty: BrindooSkeleton(cornerRadius: BrindooRadius.sm)
-                        default: Color.brindooSurface
-                        }
-                    }
-                    .frame(maxWidth: .infinity)
-                    .frame(height: 150)
-                    .clipped()
-
-                    BrindooGradient.glassOverlay
-                        .frame(height: 70)
-                        .frame(maxHeight: .infinity, alignment: .bottom)
-                        .allowsHitTesting(false)
-
-                    if let price = minPriceDisplay {
-                        Text("da \(price)")
-                            .font(BrindooFont.bodyMedium.weight(.bold))
-                            .foregroundStyle(.white)
-                            .padding(.horizontal, BrindooSpacing.sm)
-                            .padding(.vertical, 4)
-                            .background(.ultraThinMaterial)
-                            .clipShape(Capsule())
-                            .padding(BrindooSpacing.xs)
-                    }
-                }
-                .frame(height: 150)
-                .clipShape(RoundedRectangle(cornerRadius: BrindooRadius.sm))
-            }
-
-            HStack(spacing: BrindooSpacing.sm) {
-                AvatarView(url: organizer.avatarUrl, name: organizer.fullName, size: 56)
-
-                VStack(alignment: .leading, spacing: 2) {
-                    HStack(spacing: 4) {
-                        Text(organizer.fullName ?? "Senza nome")
-                            .font(BrindooFont.titleSmall)
-                            .lineLimit(1)
-                        if organizer.isPro {
-                            ProBadge()
-                        }
-                        if let rating, rating.reviewCount > 0 {
-                            HStack(spacing: 2) {
-                                Image(systemName: "star.fill").font(.system(size: 10))
-                                Text(String(format: "%.1f", rating.avgRating))
-                                    .font(.system(size: 11, weight: .bold))
-                            }
-                            .foregroundStyle(Color.brindooWarning)
-                        }
-                    }
-
-                    if let city = organizer.city, !city.isEmpty {
-                        HStack(spacing: 4) {
-                            Image(systemName: "mappin.and.ellipse")
-                                .font(.system(size: 11))
-                            Text(city)
-                                .font(BrindooFont.caption)
-                                .lineLimit(1)
-                        }
-                        .foregroundStyle(Color.brindooTextSecondary)
-                    }
-                }
-
-                Spacer()
-
-                Image(systemName: "chevron.right")
-                    .font(.system(size: 13, weight: .semibold))
-                    .foregroundStyle(Color.brindooTextSecondary)
-            }
-
-            if !categories.isEmpty {
-                ScrollView(.horizontal, showsIndicators: false) {
-                    HStack(spacing: 4) {
-                        ForEach(categories.prefix(4)) { cat in
-                            HStack(spacing: 3) {
-                                Image(systemName: cat.icon)
-                                    .font(.system(size: 10, weight: .medium))
-                                Text(cat.name)
-                                    .font(.system(size: 11, weight: .medium))
-                            }
-                            .foregroundStyle(cat.tint)
-                            .padding(.horizontal, 8)
-                            .padding(.vertical, 3)
-                            .background(cat.tint.opacity(0.12))
-                            .clipShape(Capsule())
-                        }
-                        if categories.count > 4 {
-                            Text("+\(categories.count - 4)")
-                                .font(.system(size: 11, weight: .medium))
-                                .foregroundStyle(Color.brindooTextSecondary)
-                        }
-                    }
-                }
-            }
-
-            if !offers.isEmpty {
-                Divider()
-                    .padding(.vertical, 2)
-
-                VStack(spacing: BrindooSpacing.xs) {
-                    ForEach(offers.prefix(previewCount)) { offer in
-                        offerRow(offer)
-                    }
-                }
-
-                if offers.count > previewCount {
-                    Text("+\(offers.count - previewCount) altre offerte")
-                        .font(BrindooFont.caption.weight(.medium))
-                        .foregroundStyle(Color.brindooCoral)
-                        .padding(.top, 2)
-                }
-            }
-        }
-        .padding(BrindooSpacing.md)
-        .background(Color.brindooSurface)
-        .clipShape(RoundedRectangle(cornerRadius: BrindooRadius.lg))
-        .overlay(
-            RoundedRectangle(cornerRadius: BrindooRadius.lg)
-                .strokeBorder(Color.brindooBorder, lineWidth: 1)
-        )
-        .brindooCardShadow()
-    }
-
-    @ViewBuilder
-    private func offerRow(_ offer: ServiceOffer) -> some View {
-        HStack(alignment: .top, spacing: BrindooSpacing.sm) {
-            Image(systemName: "tag.fill")
-                .font(.system(size: 12))
-                .foregroundStyle(Color.brindooCoral)
-                .frame(width: 24, height: 24)
-                .background(Color.brindooCoral.opacity(0.1))
-                .clipShape(Circle())
-
-            VStack(alignment: .leading, spacing: 2) {
-                Text(offer.title)
-                    .font(BrindooFont.bodySmall.weight(.semibold))
-                    .lineLimit(1)
-                    .foregroundStyle(Color.brindooTextPrimary)
-                Text(offer.coverageArea)
-                    .font(BrindooFont.caption)
-                    .foregroundStyle(Color.brindooTextSecondary)
-                    .lineLimit(1)
-            }
-
-            Spacer()
-
-            Text(offer.priceDisplay)
-                .font(BrindooFont.bodySmall.weight(.semibold))
-                .foregroundStyle(Color.brindooCoral)
-        }
-    }
-}
-
-// MARK: - Card "In evidenza" (vetrina boost)
-
-struct FeaturedOrganizerCard: View {
-    let organizer: Profile
-    var rating: OrganizerRating?
-    var coverImageUrl: String?
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 0) {
-            ZStack(alignment: .topLeading) {
-                if let cover = coverImageUrl, let url = URL(string: cover) {
-                    AsyncImage(url: url) { phase in
-                        switch phase {
-                        case .success(let image): image.resizable().scaledToFill()
-                        case .empty: BrindooSkeleton(cornerRadius: 0)
-                        default: BrindooGradient.coralSoft
-                        }
-                    }
-                } else {
-                    BrindooGradient.coralSoft
-                }
-
-                HStack(spacing: 3) {
-                    Image(systemName: "star.fill").font(.system(size: 9))
-                    Text("In evidenza").font(.system(size: 10, weight: .bold))
-                }
-                .foregroundStyle(.white)
-                .padding(.horizontal, 8)
-                .padding(.vertical, 4)
-                .background(.ultraThinMaterial)
-                .clipShape(Capsule())
-                .padding(BrindooSpacing.xs)
-            }
-            .frame(width: 240, height: 130)
-            .clipped()
-
-            VStack(alignment: .leading, spacing: 2) {
-                HStack(spacing: 4) {
-                    Text(organizer.fullName ?? "Professionista")
-                        .font(BrindooFont.bodyMedium.weight(.semibold))
-                        .lineLimit(1)
-                    if organizer.isPro { ProBadge() }
-                }
-                HStack(spacing: BrindooSpacing.xs) {
-                    if let city = organizer.city, !city.isEmpty {
-                        HStack(spacing: 3) {
-                            Image(systemName: "mappin.and.ellipse").font(.system(size: 10))
-                            Text(city).font(BrindooFont.caption).lineLimit(1)
-                        }
-                        .foregroundStyle(Color.brindooTextSecondary)
-                    }
-                    if let rating, rating.reviewCount > 0 {
-                        HStack(spacing: 2) {
-                            Image(systemName: "star.fill").font(.system(size: 9))
-                            Text(String(format: "%.1f", rating.avgRating)).font(.system(size: 11, weight: .bold))
-                        }
-                        .foregroundStyle(Color.brindooWarning)
-                    }
-                }
-            }
-            .padding(BrindooSpacing.sm)
-        }
-        .frame(width: 240)
-        .background(Color.brindooSurface)
-        .clipShape(RoundedRectangle(cornerRadius: BrindooRadius.lg))
-        .overlay(
-            RoundedRectangle(cornerRadius: BrindooRadius.lg)
-                .strokeBorder(Color.brindooCoral.opacity(0.35), lineWidth: 1)
-        )
-        .brindooCardShadow()
-    }
-}
-
-// MARK: - Area picker sheet (per cliente: filtro bacheca)
-
-struct AreaPickerSheet: View {
-
-    @Binding var selected: Set<String>
-    let onApply: () -> Void
-
-    @Environment(\.dismiss) private var dismiss
-    @State private var working: Set<String> = []
-    @State private var searchQuery: String = ""
-
-    private var filteredAreas: [LazioArea] {
-        let q = searchQuery.trimmingCharacters(in: .whitespaces).lowercased()
-        guard !q.isEmpty else { return LazioArea.allCases }
-        return LazioArea.allCases.filter { $0.name.lowercased().contains(q) }
-    }
-
-    private var areasByProvince: [(LazioProvince, [LazioArea])] {
-        let grouped = Dictionary(grouping: filteredAreas, by: { $0.province })
-        return LazioProvince.allCases.compactMap { p in
-            guard let list = grouped[p], !list.isEmpty else { return nil }
-            return (p, list)
-        }
-    }
-
-    var body: some View {
-        NavigationStack {
-            ScrollView {
-                VStack(spacing: BrindooSpacing.md) {
-
-                    BrindooTextField(
-                        title: "Cerca",
-                        placeholder: "Es. EUR, Tivoli, Latina…",
-                        text: $searchQuery,
-                        icon: "magnifyingglass",
-                        autocapitalization: .never
-                    )
-
-                    ForEach(areasByProvince, id: \.0) { province, areas in
-                        VStack(alignment: .leading, spacing: BrindooSpacing.xs) {
-                            Text(province.displayName)
-                                .font(BrindooFont.bodySmall.weight(.semibold))
-                                .foregroundStyle(Color.brindooTextSecondary)
-                                .textCase(.uppercase)
-                                .padding(.top, BrindooSpacing.xs)
-
-                            VStack(spacing: BrindooSpacing.xxs) {
-                                ForEach(areas) { area in
-                                    row(area)
-                                }
-                            }
-                        }
-                    }
-                }
-                .padding(BrindooSpacing.md)
-            }
-            .background(Color.brindooBackground)
-            .navigationTitle("Filtra per area")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .topBarLeading) {
-                    Button("Pulisci") { working.removeAll() }
-                        .disabled(working.isEmpty)
-                }
-                ToolbarItem(placement: .topBarTrailing) {
-                    Button("Applica") {
-                        selected = working
-                        onApply()
-                        dismiss()
-                    }
-                    .font(BrindooFont.bodyMedium.weight(.semibold))
-                }
-            }
-            .onAppear { working = selected }
-        }
-    }
-
-    @ViewBuilder
-    private func row(_ area: LazioArea) -> some View {
-        let isOn = working.contains(area.slug)
-        Button {
-            if isOn { working.remove(area.slug) }
-            else { working.insert(area.slug) }
-        } label: {
-            HStack(spacing: BrindooSpacing.sm) {
-                Image(systemName: area.isWholeProvince ? "map.fill" : "mappin.and.ellipse")
-                    .font(.system(size: 14, weight: .medium))
-                    .foregroundStyle(isOn ? .white : Color.brindooCoral)
-                    .frame(width: 28, height: 28)
-                    .background(isOn ? Color.brindooCoral : Color.brindooCoral.opacity(0.1))
-                    .clipShape(Circle())
-
-                Text(area.name)
-                    .font(BrindooFont.bodyMedium.weight(.medium))
-                    .foregroundStyle(Color.brindooTextPrimary)
-
-                Spacer()
-
-                Image(systemName: isOn ? "checkmark.circle.fill" : "circle")
-                    .font(.system(size: 18))
-                    .foregroundStyle(isOn ? Color.brindooCoral : Color.brindooTextSecondary)
-            }
-            .padding(.horizontal, BrindooSpacing.sm)
-            .padding(.vertical, BrindooSpacing.xs)
-            .background(isOn ? Color.brindooCoral.opacity(0.05) : Color.brindooSurface)
-            .clipShape(RoundedRectangle(cornerRadius: BrindooRadius.sm))
-        }
-        .buttonStyle(.plain)
-    }
-}
-
-// MARK: - Filtri bacheca (cliente)
-
-struct BoardFiltersSheet: View {
-    @Binding var minRating: Int
-    @Binding var maxPrice: Double
-    @Environment(\.dismiss) private var dismiss
-
-    var body: some View {
-        NavigationStack {
-            ScrollView {
-                VStack(alignment: .leading, spacing: BrindooSpacing.lg) {
-
-                    VStack(alignment: .leading, spacing: BrindooSpacing.sm) {
-                        Text("Valutazione minima")
-                            .font(BrindooFont.titleSmall)
-                        Picker("Valutazione minima", selection: $minRating) {
-                            Text("Tutte").tag(0)
-                            Text("3+ ⭐").tag(3)
-                            Text("4+ ⭐").tag(4)
-                            Text("5 ⭐").tag(5)
-                        }
-                        .pickerStyle(.segmented)
-                    }
-
-                    VStack(alignment: .leading, spacing: BrindooSpacing.sm) {
-                        HStack {
-                            Text("Prezzo massimo")
-                                .font(BrindooFont.titleSmall)
-                            Spacer()
-                            Text(maxPrice > 0 ? "€\(Int(maxPrice))" : "Nessun limite")
-                                .font(BrindooFont.bodyMedium.weight(.semibold))
-                                .foregroundStyle(Color.brindooCoral)
-                        }
-                        Slider(value: $maxPrice, in: 0...2000, step: 50)
-                            .tint(Color.brindooCoral)
-                        Text("Mostra solo professionisti con almeno un'offerta entro questo prezzo.")
-                            .font(BrindooFont.caption)
-                            .foregroundStyle(Color.brindooTextSecondary)
-                    }
-                }
-                .padding(BrindooSpacing.lg)
-            }
-            .background(Color.brindooBackground)
-            .navigationTitle("Filtri")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .topBarLeading) {
-                    Button("Azzera") {
-                        minRating = 0
-                        maxPrice = 0
-                    }
-                    .disabled(minRating == 0 && maxPrice == 0)
-                }
-                ToolbarItem(placement: .topBarTrailing) {
-                    Button("Applica") { dismiss() }
-                        .font(BrindooFont.bodyMedium.weight(.semibold))
-                }
-            }
-        }
-    }
-}
-
-// MARK: - Primo passo guidato (cliente)
-
-struct ClientWelcomeSheet: View {
-
-    let categories: [ServiceCategory]
-    let onApply: (Set<UUID>) -> Void
-    let onSkip: () -> Void
-
-    @Environment(\.dismiss) private var dismiss
-    @State private var selected: Set<UUID> = []
-
-    var body: some View {
-        NavigationStack {
-            ScrollView {
-                VStack(alignment: .leading, spacing: BrindooSpacing.lg) {
-                    VStack(alignment: .leading, spacing: BrindooSpacing.xs) {
-                        Text("Che tipo di evento organizzi?")
-                            .font(BrindooFont.titleLarge)
-                        Text("Scegli uno o più servizi: ti mostriamo subito i professionisti giusti.")
-                            .font(BrindooFont.bodyMedium)
-                            .foregroundStyle(Color.brindooTextSecondary)
-                    }
-
-                    FlowLayoutView(spacing: BrindooSpacing.xs) {
-                        ForEach(categories) { cat in
-                            let isOn = selected.contains(cat.id)
-                            Button {
-                                if isOn { selected.remove(cat.id) } else { selected.insert(cat.id) }
-                            } label: {
-                                HStack(spacing: 4) {
-                                    Image(systemName: cat.icon).font(.system(size: 13, weight: .medium))
-                                    Text(cat.name).font(BrindooFont.bodySmall.weight(.medium))
-                                }
-                                .padding(.horizontal, BrindooSpacing.md)
-                                .padding(.vertical, BrindooSpacing.xs)
-                                .foregroundStyle(isOn ? .white : cat.tint)
-                                .background(isOn ? cat.tint : cat.tint.opacity(0.12))
-                                .clipShape(Capsule())
-                            }
-                        }
-                    }
-                }
-                .padding(BrindooSpacing.lg)
-            }
-            .background(Color.brindooBackground)
-            .navigationTitle("Benvenuto 🎉")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .topBarTrailing) {
-                    Button("Salta") { onSkip(); dismiss() }
-                        .foregroundStyle(Color.brindooTextSecondary)
-                }
-            }
-            .safeAreaInset(edge: .bottom) {
-                BrindooButton(
-                    selected.isEmpty ? "Mostra tutti i professionisti" : "Mostra professionisti",
-                    style: .primary,
-                    size: .large
-                ) {
-                    onApply(selected)
-                    dismiss()
-                }
-                .padding(.horizontal, BrindooSpacing.lg)
-                .padding(.vertical, BrindooSpacing.sm)
-                .background(Color.brindooBackground)
             }
         }
     }

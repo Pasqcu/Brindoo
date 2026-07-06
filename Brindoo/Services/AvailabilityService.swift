@@ -39,6 +39,19 @@ final class AvailabilityService {
         return Set(rows.map { $0.day })
     }
 
+    /// ID degli organizzatori che hanno segnato come occupato il giorno dato.
+    /// Usato dal filtro "data evento" della bacheca cliente.
+    func fetchBusyOrganizerIds(on day: Date) async throws -> Set<UUID> {
+        struct IdRow: Decodable { let organizer_id: UUID }
+        let rows: [IdRow] = try await client
+            .from("organizer_unavailable_dates")
+            .select("organizer_id")
+            .eq("day", value: Self.fmt.string(from: day))
+            .execute()
+            .value
+        return Set(rows.map { $0.organizer_id })
+    }
+
     func fetchMyUnavailableDays() async throws -> Set<Date> {
         guard let userId = SupabaseManager.shared.currentUserID else { return [] }
         let days = try await fetchUnavailableDays(organizerId: userId)

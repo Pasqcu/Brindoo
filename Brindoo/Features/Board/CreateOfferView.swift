@@ -19,6 +19,17 @@ struct CreateOfferView: View {
 
     @State private var coverPickerItem: PhotosPickerItem?
     @State private var coverImage: UIImage?
+    /// Foto ereditata dall'offerta duplicata (usata se non se ne sceglie una nuova).
+    @State private var templateImageUrl: String?
+
+    /// Crea il form vuoto, oppure precompilato da un'offerta esistente ("Duplica").
+    init(template: ServiceOffer? = nil, templateCategoryIds: [UUID] = []) {
+        _title = State(initialValue: template?.title ?? "")
+        _description = State(initialValue: template?.description ?? "")
+        _price = State(initialValue: template.map { String(Int($0.price)) } ?? "")
+        _selectedCategoryIds = State(initialValue: Set(templateCategoryIds))
+        _templateImageUrl = State(initialValue: template?.imageUrl)
+    }
 
     @State private var allCategories: [ServiceCategory] = []
     @State private var selectedCategoryIds: Set<UUID> = []
@@ -217,6 +228,12 @@ struct CreateOfferView: View {
                         Image(uiImage: coverImage)
                             .resizable()
                             .scaledToFill()
+                    } else if let templateImageUrl, let url = URL(string: templateImageUrl) {
+                        AsyncImage(url: url) { image in
+                            image.resizable().scaledToFill()
+                        } placeholder: {
+                            BrindooSkeleton(cornerRadius: BrindooRadius.md)
+                        }
                     } else {
                         VStack(spacing: BrindooSpacing.xs) {
                             Image(systemName: "photo.badge.plus")
@@ -241,10 +258,11 @@ struct CreateOfferView: View {
             }
             .disabled(isLoading)
 
-            if coverImage != nil {
+            if coverImage != nil || templateImageUrl != nil {
                 Button {
                     coverImage = nil
                     coverPickerItem = nil
+                    templateImageUrl = nil
                 } label: {
                     Label("Rimuovi foto", systemImage: "trash")
                         .font(BrindooFont.caption.weight(.medium))
@@ -326,7 +344,8 @@ struct CreateOfferView: View {
 
         do {
             // Carica prima la foto di copertina, se presente.
-            var imageUrl: String? = nil
+            // In un duplicato senza nuova foto si riusa quella dell'originale.
+            var imageUrl: String? = templateImageUrl
             if let coverImage {
                 imageUrl = try await StorageService.shared.uploadOfferImage(coverImage)
             }

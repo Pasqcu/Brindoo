@@ -18,9 +18,23 @@ struct ProfileView: View {
     @State private var organizerCategories: [OrganizerCategoryDetail] = []
     @State private var reviewSummary: ReviewSummary?
     @State private var portfolioCount: Int = 0
+    @State private var activeOffersCount: Int = 0
 
     private var isOrganizer: Bool {
         session.currentProfile?.role == .organizer
+    }
+
+    /// Quanto è curato il profilo del professionista (barra + suggerimenti).
+    private var completion: ProfileCompletion? {
+        guard isOrganizer, let profile = session.currentProfile else { return nil }
+        return ProfileCompletion.evaluate(
+            hasAvatar: profile.avatarUrl?.isEmpty == false,
+            bioLength: (profile.bio ?? "").trimmingCharacters(in: .whitespacesAndNewlines).count,
+            categoriesCount: organizerCategories.count,
+            portfolioCount: portfolioCount,
+            activeOffersCount: activeOffersCount,
+            coverageAreasCount: profile.coverageAreas.count
+        )
     }
 
     var body: some View {
@@ -29,6 +43,12 @@ struct ProfileView: View {
                 if let profile = session.currentProfile {
                     VStack(spacing: BrindooSpacing.lg) {
                         headerSection(profile)
+
+                        if let completion, !completion.isComplete {
+                            ProfileCompletionCard(completion: completion) {
+                                showEditProfile = true
+                            }
+                        }
 
                         if let bio = profile.bio, !bio.isEmpty {
                             bioSection(bio)
@@ -468,6 +488,11 @@ struct ProfileView: View {
                 let items = try await PortfolioService.shared.fetchPortfolio(organizerId: userId)
                 portfolioCount = items.count
             } catch { print("❌ \(error)") }
+
+            // Per la barra "profilo completo": quante offerte attive ha.
+            if let offers = try? await ServiceOfferService.shared.fetchMyOffers() {
+                activeOffersCount = offers.filter { $0.status == .active }.count
+            }
         }
     }
 }

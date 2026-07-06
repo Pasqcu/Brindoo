@@ -15,7 +15,14 @@ final class OrganizerService {
         SupabaseManager.shared.client
     }
 
-    /// Restituisce gli organizzatori visibili in bacheca al cliente.
+    /// Una pagina di organizzatori visibili in bacheca al cliente.
+    /// `hasMore` è true quando esiste (probabilmente) una pagina successiva.
+    struct OrganizersPage {
+        let profiles: [Profile]
+        let hasMore: Bool
+    }
+
+    /// Restituisce gli organizzatori visibili in bacheca al cliente, a pagine.
     /// Filtra per categorie (OR logico se più selezionate), testo di ricerca e città.
     /// Esclude l'utente corrente e gli utenti bloccati.
     func fetchOrganizers(
@@ -24,9 +31,20 @@ final class OrganizerService {
         searchText: String? = nil,
         city: String? = nil,
         includeCurrentUser: Bool = false,
-        limit: Int = 50
-    ) async throws -> [Profile] {
+        limit: Int = 50,
+        offset: Int = 0
+    ) async throws -> OrganizersPage {
         let currentUserId = SupabaseManager.shared.currentUserID
+
+        // Filtro multi-categoria (OR) applicato a monte, così la paginazione
+        // lavora su pagine "vere" e non su pagine svuotate a valle.
+        var allowedIds: Set<UUID>? = nil
+        if !categoryIds.isEmpty {
+            allowedIds = try await fetchOrganizersInCategories(categoryIds: categoryIds)
+            if allowedIds?.isEmpty == true {
+                return OrganizersPage(profiles: [], hasMore: false)
+            }
+        }
 
         var query = client
             .from("profiles")
@@ -36,6 +54,17 @@ final class OrganizerService {
 
         if let currentUserId, !includeCurrentUser {
             query = query.neq("id", value: currentUserId)
+        }
+
+        // Con troppe corrispondenze il filtro `in` renderebbe l'URL enorme:
+        // in quel caso si torna al filtro a valle (caso raro).
+        var filterCategoriesLocally = false
+        if let allowedIds {
+            if allowedIds.count <= 150 {
+                query = query.in("id", values: allowedIds.map { $0.uuidString })
+            } else {
+                filterCategoriesLocally = true
+            }
         }
 
         // Filtro per aree di copertura: include sia i professionisti con almeno
@@ -60,21 +89,23 @@ final class OrganizerService {
             .order("boost_expires_at", ascending: false, nullsFirst: false)
             .order("is_pro", ascending: false)
             .order("updated_at", ascending: false)
-            .limit(limit)
+            .range(from: offset, to: offset + limit - 1)
             .execute()
             .value
 
-        // Filtro multi-categoria (OR)
-        if !categoryIds.isEmpty {
-            let organizerIdsForCategories = try await fetchOrganizersInCategories(categoryIds: categoryIds)
-            profiles = profiles.filter { organizerIdsForCategories.contains($0.id) }
+        // La pagina è "piena" se il DB ha restituito esattamente `limit` righe,
+        // valutato prima dei filtri applicati in locale.
+        let hasMore = profiles.count == limit
+
+        if filterCategoriesLocally, let allowedIds {
+            profiles = profiles.filter { allowedIds.contains($0.id) }
         }
 
         // Escludi utenti bloccati o che mi hanno bloccato
         let blocked = BlockService.shared.blockedIds.union(BlockService.shared.blockedByIds)
         profiles = profiles.filter { !blocked.contains($0.id) }
 
-        return profiles
+        return OrganizersPage(profiles: profiles, hasMore: hasMore)
     }
 
     /// Organizzatori che hanno ALMENO una delle categorie indicate.

@@ -53,6 +53,15 @@ struct OfferDetailView: View {
     // Recensione post-evento
     @State private var showWriteReview: Bool = false
 
+    // Cartolina di condivisione
+    @State private var isPreparingShare: Bool = false
+    @State private var shareItems: SharePayload?
+
+    private struct SharePayload: Identifiable {
+        let id = UUID()
+        let items: [Any]
+    }
+
     /// Callback chiamato quando l'offerta viene modificata o cancellata.
     var onChange: (() -> Void)?
 
@@ -129,10 +138,17 @@ struct OfferDetailView: View {
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
-                ShareLink(item: URL(string: "https://brindoo.app/o/\(offer.id.uuidString)")!) {
-                    Image(systemName: "square.and.arrow.up")
-                        .foregroundStyle(Color.brindooCoral)
+                Button {
+                    Task { await prepareShareCard() }
+                } label: {
+                    if isPreparingShare {
+                        ProgressView()
+                    } else {
+                        Image(systemName: "square.and.arrow.up")
+                            .foregroundStyle(Color.brindooCoral)
+                    }
                 }
+                .disabled(isPreparingShare)
                 .accessibilityLabel("Condividi offerta")
             }
             if isClient && !isOwnOffer {
@@ -167,6 +183,10 @@ struct OfferDetailView: View {
                 targetId: offer.id,
                 targetLabel: "questa offerta"
             )
+        }
+        .sheet(item: $shareItems) { payload in
+            ActivityShareSheet(items: payload.items)
+                .presentationDetents([.medium, .large])
         }
         .task { await loadData() }
         .navigationDestination(item: $navigateToChat) { conv in
@@ -752,6 +772,30 @@ struct OfferDetailView: View {
         .padding(.vertical, 3)
         .background(color.opacity(0.12))
         .clipShape(Capsule())
+    }
+
+    // MARK: - Cartolina di condivisione
+
+    /// Prepara l'immagine-cartolina dell'offerta e apre il foglio di
+    /// condivisione (immagine + link). In caso di problemi condivide solo il link.
+    private func prepareShareCard() async {
+        isPreparingShare = true
+        defer { isPreparingShare = false }
+
+        let url = URL(string: "https://brindoo.app/o/\(offer.id.uuidString)")!
+        let cover = await ShareCardRenderer.loadImage(from: offer.imageUrl)
+        let card = OfferShareCard(
+            title: offer.title,
+            priceDisplay: offer.priceDisplay,
+            organizerName: organizerProfile?.fullName,
+            cover: cover
+        )
+
+        if let image = ShareCardRenderer.render(card) {
+            shareItems = SharePayload(items: [image, url])
+        } else {
+            shareItems = SharePayload(items: [url])
+        }
     }
 
     // MARK: - Actions

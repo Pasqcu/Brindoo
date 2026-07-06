@@ -25,8 +25,38 @@ struct OrganizerDetailView: View {
     @State private var isFavorite: Bool = false
     @State private var isFavoriteSaving: Bool = false
 
+    // Profilo a schede
+    private enum ProfileTab: String, CaseIterable, Identifiable {
+        case about = "Presentazione"
+        case portfolio = "Portfolio"
+        case reviews = "Recensioni"
+        var id: String { rawValue }
+    }
+    @State private var selectedTab: ProfileTab = .about
+
+    // Distintivi e cartolina di condivisione
+    @State private var verifiedReviewCount: Int = 0
+    @State private var isPreparingShare: Bool = false
+    @State private var shareItems: SharePayload?
+
+    private struct SharePayload: Identifiable {
+        let id = UUID()
+        let items: [Any]
+    }
+
     private var isViewingOwn: Bool {
         session.userID == organizer.id
+    }
+
+    private var badges: [AchievementBadge] {
+        AchievementBadge.earned(
+            reviewCount: reviewSummary?.reviewCount ?? 0,
+            avgRating: reviewSummary?.avgRating ?? 0,
+            verifiedReviewCount: verifiedReviewCount,
+            portfolioCount: portfolioItems.count,
+            memberSince: organizer.createdAt,
+            responseSpeed: organizer.responseSpeed
+        )
     }
 
     var body: some View {
@@ -37,24 +67,15 @@ struct OrganizerDetailView: View {
                 VStack(alignment: .leading, spacing: BrindooSpacing.lg) {
                     titleSection
 
-                    if organizer.isOnVacation {
-                        vacationBanner
-                    }
+                    AchievementBadgeRow(badges: badges)
+                        .padding(.horizontal, -BrindooSpacing.md)
 
-                    if let bio = organizer.bio, !bio.isEmpty {
-                        bioSection(bio)
-                    }
+                    tabPicker
 
-                    if !categories.isEmpty {
-                        categoriesSection
-                    }
-
-                    if !portfolioItems.isEmpty {
-                        portfolioSection
-                    }
-
-                    if let summary = reviewSummary, summary.totalReviews > 0 {
-                        reviewsSection(summary)
+                    switch selectedTab {
+                    case .about:     aboutTab
+                    case .portfolio: portfolioTab
+                    case .reviews:   reviewsTab
                     }
 
                     if !isViewingOwn && !isPreview {
@@ -76,11 +97,18 @@ struct OrganizerDetailView: View {
         .toolbar {
             if !isPreview {
                 ToolbarItem(placement: .topBarTrailing) {
-                    ShareLink(item: URL(string: "https://brindoo.app/p/\(organizer.id.uuidString)")!) {
-                        Image(systemName: "square.and.arrow.up")
-                            .font(.system(size: 17, weight: .semibold))
-                            .foregroundStyle(Color.brindooCoral)
+                    Button {
+                        Task { await prepareShareCard() }
+                    } label: {
+                        if isPreparingShare {
+                            ProgressView()
+                        } else {
+                            Image(systemName: "square.and.arrow.up")
+                                .font(.system(size: 17, weight: .semibold))
+                                .foregroundStyle(Color.brindooCoral)
+                        }
                     }
+                    .disabled(isPreparingShare)
                     .accessibilityLabel("Condividi profilo")
                 }
             }
@@ -156,6 +184,166 @@ struct OrganizerDetailView: View {
                 targetId: organizer.id,
                 targetLabel: organizer.fullName ?? "questo profilo"
             )
+        }
+        .sheet(item: $shareItems) { payload in
+            ActivityShareSheet(items: payload.items)
+                .presentationDetents([.medium, .large])
+        }
+    }
+
+    // MARK: - Schede
+
+    @ViewBuilder
+    private var tabPicker: some View {
+        Picker("Sezione", selection: $selectedTab) {
+            ForEach(ProfileTab.allCases) { tab in
+                Text(tab.rawValue).tag(tab)
+            }
+        }
+        .pickerStyle(.segmented)
+    }
+
+    /// Scheda "Presentazione": bio, servizi e zone coperte.
+    @ViewBuilder
+    private var aboutTab: some View {
+        if organizer.isOnVacation {
+            vacationBanner
+        }
+
+        if let bio = organizer.bio, !bio.isEmpty {
+            bioSection(bio)
+        }
+
+        if !categories.isEmpty {
+            categoriesSection
+        }
+
+        coverageSection
+
+        if (organizer.bio ?? "").isEmpty && categories.isEmpty {
+            tabEmptyHint(icon: "person.text.rectangle",
+                         text: "Il professionista non ha ancora completato la presentazione.")
+        }
+    }
+
+    /// Scheda "Portfolio": griglia di foto.
+    @ViewBuilder
+    private var portfolioTab: some View {
+        if portfolioItems.isEmpty {
+            tabEmptyHint(icon: "photo.on.rectangle.angled",
+                         text: "Nessuna foto nel portfolio, per ora.")
+        } else {
+            VStack(alignment: .leading, spacing: BrindooSpacing.sm) {
+                LazyVGrid(
+                    columns: Array(repeating: GridItem(.flexible(), spacing: BrindooSpacing.xs), count: 3),
+                    spacing: BrindooSpacing.xs
+                ) {
+                    ForEach(portfolioItems.prefix(9)) { item in
+                        AsyncImage(url: URL(string: item.imageUrl)) { image in
+                            image.resizable().scaledToFill()
+                        } placeholder: {
+                            Color.brindooBorder
+                        }
+                        .frame(height: 110)
+                        .frame(maxWidth: .infinity)
+                        .clipped()
+                        .clipShape(RoundedRectangle(cornerRadius: BrindooRadius.sm))
+                    }
+                }
+
+                NavigationLink {
+                    PortfolioGalleryView(organizerId: organizer.id, isOwner: false)
+                } label: {
+                    Text(portfolioItems.count > 9
+                         ? "Vedi tutte le \(portfolioItems.count) foto"
+                         : "Apri la galleria")
+                        .font(BrindooFont.bodySmall.weight(.medium))
+                        .foregroundStyle(Color.brindooCoral)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, BrindooSpacing.xs)
+                }
+            }
+        }
+    }
+
+    /// Scheda "Recensioni".
+    @ViewBuilder
+    private var reviewsTab: some View {
+        if let summary = reviewSummary, summary.totalReviews > 0 {
+            reviewsSection(summary)
+        } else {
+            tabEmptyHint(icon: "star",
+                         text: "Ancora nessuna recensione. Sarà il primo evento a parlare!")
+        }
+    }
+
+    @ViewBuilder
+    private func tabEmptyHint(icon: String, text: String) -> some View {
+        VStack(spacing: BrindooSpacing.sm) {
+            Image(systemName: icon)
+                .font(.system(size: 34))
+                .foregroundStyle(Color.brindooCoral.opacity(0.6))
+            Text(text)
+                .font(BrindooFont.bodySmall)
+                .foregroundStyle(Color.brindooTextSecondary)
+                .multilineTextAlignment(.center)
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, BrindooSpacing.xl)
+    }
+
+    // MARK: - Zone coperte (mappa)
+
+    @ViewBuilder
+    private var coverageSection: some View {
+        VStack(alignment: .leading, spacing: BrindooSpacing.sm) {
+            Text("Dove lavoro")
+                .font(BrindooFont.titleSmall)
+
+            VStack(spacing: BrindooSpacing.sm) {
+                LazioMapView(highlighted: LazioArea.provinces(forSlugs: organizer.coverageAreas))
+                    .frame(maxHeight: 190)
+                    .frame(maxWidth: .infinity)
+
+                HStack(spacing: 4) {
+                    Image(systemName: "mappin.and.ellipse")
+                        .font(.system(size: 11))
+                    Text(organizer.coverageAreasDisplay)
+                        .font(BrindooFont.caption.weight(.medium))
+                        .lineLimit(2)
+                }
+                .foregroundStyle(Color.brindooTextSecondary)
+            }
+            .padding(BrindooSpacing.md)
+            .frame(maxWidth: .infinity)
+            .background(Color.brindooSurface)
+            .clipShape(RoundedRectangle(cornerRadius: BrindooRadius.md))
+        }
+    }
+
+    // MARK: - Cartolina di condivisione
+
+    /// Prepara l'immagine-cartolina e apre il foglio di condivisione
+    /// (immagine + link insieme). Se qualcosa va storto, condivide solo il link.
+    private func prepareShareCard() async {
+        isPreparingShare = true
+        defer { isPreparingShare = false }
+
+        let url = URL(string: "https://brindoo.app/p/\(organizer.id.uuidString)")!
+        let avatar = await ShareCardRenderer.loadImage(from: organizer.avatarUrl)
+        let card = ProfileShareCard(
+            name: organizer.fullName ?? "Professionista",
+            city: organizer.city,
+            categories: categories.map { $0.category.name },
+            rating: reviewSummary,
+            isPro: organizer.isPro,
+            avatar: avatar
+        )
+
+        if let image = ShareCardRenderer.render(card) {
+            shareItems = SharePayload(items: [image, url])
+        } else {
+            shareItems = SharePayload(items: [url])
         }
     }
 
@@ -244,6 +432,15 @@ struct OrganizerDetailView: View {
             }
             .foregroundStyle(Color.brindooSuccess)
             .padding(.top, 2)
+
+            if let speed = organizer.responseSpeed {
+                HStack(spacing: 4) {
+                    Image(systemName: speed.iconName).font(.system(size: 11))
+                    Text(speed.label)
+                        .font(BrindooFont.caption.weight(.medium))
+                }
+                .foregroundStyle(Color.brindooSuccess)
+            }
         }
         .frame(maxWidth: .infinity)
     }
@@ -334,38 +531,6 @@ struct OrganizerDetailView: View {
                     .padding(BrindooSpacing.sm)
                     .background(Color.brindooSurface)
                     .clipShape(RoundedRectangle(cornerRadius: BrindooRadius.sm))
-                }
-            }
-        }
-    }
-
-    @ViewBuilder
-    private var portfolioSection: some View {
-        VStack(alignment: .leading, spacing: BrindooSpacing.sm) {
-            HStack {
-                Text("Portfolio")
-                    .font(BrindooFont.titleSmall)
-                Spacer()
-                NavigationLink {
-                    PortfolioGalleryView(organizerId: organizer.id, isOwner: false)
-                } label: {
-                    Text("Vedi tutto")
-                        .font(BrindooFont.bodySmall.weight(.medium))
-                        .foregroundStyle(Color.brindooCoral)
-                }
-            }
-
-            ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: BrindooSpacing.xs) {
-                    ForEach(portfolioItems.prefix(8)) { item in
-                        AsyncImage(url: URL(string: item.imageUrl)) { image in
-                            image.resizable().scaledToFill()
-                        } placeholder: {
-                            Color.brindooBorder
-                        }
-                        .frame(width: 120, height: 120)
-                        .clipShape(RoundedRectangle(cornerRadius: BrindooRadius.sm))
-                    }
                 }
             }
         }
@@ -464,6 +629,11 @@ struct OrganizerDetailView: View {
         do {
             reviewSummary = try await ReviewService.shared.fetchSummary(organizerId: organizer.id)
         } catch { print("❌ \(error)") }
+
+        // Conteggio recensioni verificate: alimenta il distintivo "eventi verificati".
+        if let reviews = try? await ReviewService.shared.fetchReviews(organizerId: organizer.id) {
+            verifiedReviewCount = reviews.filter(\.isVerified).count
+        }
     }
 
     private func startChat() async {
