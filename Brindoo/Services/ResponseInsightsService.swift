@@ -69,7 +69,7 @@ final class ResponseInsightsService {
             UserDefaults.standard.set(Date(), forKey: Self.lastRunKey)
         } catch {
             // Colonna mancante o rete assente: riproverà al prossimo avvio.
-            print("❌ ResponseInsights: \(error)")
+            BrindooLog.error("ResponseInsights: \(error)")
         }
     }
 

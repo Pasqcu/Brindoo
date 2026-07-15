@@ -33,7 +33,7 @@ final class ReviewService {
             print("✅ Caricate \(reviews.count) recensioni")
             return reviews
         } catch {
-            print("❌ Errore caricamento recensioni: \(error)")
+            BrindooLog.error("Errore caricamento recensioni: \(error)")
             throw error
         }
     }
@@ -61,7 +61,7 @@ final class ReviewService {
                 )
             }
         } catch {
-            print("❌ Errore caricamento rating: \(error)")
+            BrindooLog.error("Errore caricamento rating: \(error)")
             throw error
         }
     }
@@ -180,7 +180,7 @@ final class ReviewService {
             print("✅ Recensione creata: \(review.id)")
             return review
         } catch {
-            print("❌ Errore creazione recensione: \(error)")
+            BrindooLog.error("Errore creazione recensione: \(error)")
             throw error
         }
     }
@@ -233,7 +233,7 @@ final class ReviewService {
             print("✅ Recensione aggiornata")
             return review
         } catch {
-            print("❌ Errore update recensione: \(error)")
+            BrindooLog.error("Errore update recensione: \(error)")
             throw error
         }
     }
@@ -270,7 +270,7 @@ final class ReviewService {
                 .execute()
             print("✅ Recensione eliminata")
         } catch {
-            print("❌ Errore cancellazione recensione: \(error)")
+            BrindooLog.error("Errore cancellazione recensione: \(error)")
             throw error
         }
     }

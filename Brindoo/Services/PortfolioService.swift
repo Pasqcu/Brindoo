@@ -37,7 +37,7 @@ final class PortfolioService {
             print("✅ Caricate \(items.count) foto portfolio")
             return items
         } catch {
-            print("❌ Errore caricamento portfolio: \(error)")
+            BrindooLog.error("Errore caricamento portfolio: \(error)")
             throw error
         }
     }
@@ -95,7 +95,7 @@ final class PortfolioService {
             return item
         } catch {
             // Rollback: cancella la foto dallo Storage
-            print("❌ Errore inserimento DB, rollback dello Storage")
+            BrindooLog.error("Errore inserimento DB, rollback dello Storage")
             try? await StorageService.shared.deletePortfolioImage(storagePath: storagePath)
             throw error
         }
@@ -118,7 +118,7 @@ final class PortfolioService {
                 .eq("id", value: item.id)
                 .execute()
         } catch {
-            print("❌ Errore cancellazione DB: \(error)")
+            BrindooLog.error("Errore cancellazione DB: \(error)")
             throw error
         }
 
@@ -144,7 +144,7 @@ final class PortfolioService {
                 .eq("id", value: itemId)
                 .execute()
         } catch {
-            print("❌ Errore update caption: \(error)")
+            BrindooLog.error("Errore update caption: \(error)")
             throw error
         }
     }

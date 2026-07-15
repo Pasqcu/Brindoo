@@ -39,7 +39,7 @@ final class AccountService {
             
             print("✅ Account eliminato")
         } catch {
-            print("❌ Errore eliminazione account: \(error)")
+            BrindooLog.error("Errore eliminazione account: \(error)")
             throw error
         }
         

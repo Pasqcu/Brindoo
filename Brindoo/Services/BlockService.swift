@@ -50,7 +50,7 @@ final class BlockService {
             
             print("✅ Block cache: blocco \(blockedIds.count), bloccato da \(blockedByIds.count)")
         } catch {
-            print("❌ Errore loadBlocks: \(error)")
+            BrindooLog.error("Errore loadBlocks: \(error)")
         }
     }
     

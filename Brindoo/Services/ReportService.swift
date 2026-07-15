@@ -134,7 +134,7 @@ final class ReportService {
                 print("ℹ️ Segnalazione già esistente, ignoro")
                 return
             }
-            print("❌ Errore invio segnalazione: \(error)")
+            BrindooLog.error("Errore invio segnalazione: \(error)")
             throw error
         }
     }

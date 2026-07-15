@@ -73,7 +73,7 @@ final class PurchaseService {
             
             print("✅ Caricati \(products.count) prodotti")
         } catch {
-            print("❌ Errore caricamento prodotti: \(error)")
+            BrindooLog.error("Errore caricamento prodotti: \(error)")
         }
     }
     
@@ -121,7 +121,7 @@ final class PurchaseService {
                 ))
             }
         } catch {
-            print("❌ Errore acquisto: \(error)")
+            BrindooLog.error("Errore acquisto: \(error)")
             return .failed(error)
         }
     }
@@ -135,7 +135,7 @@ final class PurchaseService {
             await refreshEntitlements()
             print("✅ Acquisti ripristinati")
         } catch {
-            print("❌ Errore restore: \(error)")
+            BrindooLog.error("Errore restore: \(error)")
         }
     }
     

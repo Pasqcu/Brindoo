@@ -39,7 +39,7 @@ final class NotificationService {
             }
             return granted
         } catch {
-            print("❌ Errore autorizzazione notifiche: \(error)")
+            BrindooLog.error("Errore autorizzazione notifiche: \(error)")
             return false
         }
     }
@@ -107,13 +107,13 @@ final class NotificationService {
                 .execute()
             print("✅ Device token salvato su Supabase")
         } catch {
-            print("❌ Errore salvataggio device token: \(error)")
+            BrindooLog.error("Errore salvataggio device token: \(error)")
         }
     }
 
     /// Chiamato da AppDelegate se la registrazione APNs fallisce.
     func handleRegistrationFailure(_ error: Error) {
-        print("❌ Registrazione APNs fallita: \(error.localizedDescription)")
+        BrindooLog.error("Registrazione APNs fallita: \(error.localizedDescription)")
     }
 
     // MARK: - Badge

@@ -139,7 +139,7 @@ final class SessionStore {
             }
 
         } catch {
-            print("❌ Errore caricamento profilo: \(error.localizedDescription)")
+            BrindooLog.error("Errore caricamento profilo: \(error.localizedDescription)")
             self.authState = .profileSetup
         }
     }

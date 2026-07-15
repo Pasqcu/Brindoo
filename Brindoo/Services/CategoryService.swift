@@ -47,7 +47,7 @@ final class CategoryService {
             print("✅ Caricate \(categories.count) categorie")
             return categories
         } catch {
-            print("❌ Errore caricamento categorie: \(error)")
+            BrindooLog.error("Errore caricamento categorie: \(error)")
             throw error
         }
     }

@@ -176,7 +176,7 @@ final class AuthService {
             )
             print("✅ Registrazione completata per: \(trimmedEmail)")
         } catch {
-            print("❌ Errore registrazione: \(error)")
+            BrindooLog.error("Errore registrazione: \(error)")
             throw mapError(error)
         }
     }
@@ -200,7 +200,7 @@ final class AuthService {
             )
             print("✅ Login effettuato per: \(trimmedEmail)")
         } catch {
-            print("❌ Errore login: \(error)")
+            BrindooLog.error("Errore login: \(error)")
             throw mapError(error)
         }
     }
@@ -223,7 +223,7 @@ final class AuthService {
             try await auth.signOut()
             print("✅ Logout effettuato")
         } catch {
-            print("❌ Errore logout: \(error.localizedDescription)")
+            BrindooLog.error("Errore logout: \(error.localizedDescription)")
         }
     }
 
@@ -248,7 +248,7 @@ final class AuthService {
             )
             print("✅ Login con Apple effettuato")
         } catch {
-            print("❌ Errore login Apple: \(error)")
+            BrindooLog.error("Errore login Apple: \(error)")
             throw mapError(error)
         }
     }
@@ -260,7 +260,7 @@ final class AuthService {
             try await auth.session(from: url)
             print("✅ Sessione attivata via deep link")
         } catch {
-            print("❌ Errore handle deep link: \(error)")
+            BrindooLog.error("Errore handle deep link: \(error)")
         }
     }
 
@@ -280,7 +280,7 @@ final class AuthService {
             _ = try await auth.update(user: UserAttributes(email: trimmed))
             print("✅ Richiesta cambio email inviata a: \(trimmed)")
         } catch {
-            print("❌ Errore cambio email: \(error)")
+            BrindooLog.error("Errore cambio email: \(error)")
             throw mapError(error)
         }
     }
@@ -301,7 +301,7 @@ final class AuthService {
             )
             print("✅ Email di reset password inviata a: \(trimmedEmail)")
         } catch {
-            print("❌ Errore reset password: \(error)")
+            BrindooLog.error("Errore reset password: \(error)")
             throw mapError(error)
         }
     }

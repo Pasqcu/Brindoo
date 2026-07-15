@@ -82,7 +82,7 @@ final class StorageService {
             print("✅ Avatar caricato: \(urlWithCacheBust)")
             return urlWithCacheBust
         } catch {
-            print("❌ Errore upload avatar: \(error)")
+            BrindooLog.error("Errore upload avatar: \(error)")
             throw error
         }
     }
@@ -138,7 +138,7 @@ final class StorageService {
             print("✅ Foto portfolio caricata")
             return (url: publicUrl.absoluteString, path: path)
         } catch {
-            print("❌ Errore upload portfolio: \(error)")
+            BrindooLog.error("Errore upload portfolio: \(error)")
             throw error
         }
     }
@@ -176,7 +176,7 @@ final class StorageService {
             print("✅ Foto offerta caricata")
             return publicUrl.absoluteString
         } catch {
-            print("❌ Errore upload foto offerta: \(error)")
+            BrindooLog.error("Errore upload foto offerta: \(error)")
             throw error
         }
     }

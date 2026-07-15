@@ -59,7 +59,7 @@ final class AnalyticsService {
 
     // MARK: - Statistiche aggregate (per dashboard Pro)
 
-    struct OrganizerStats {
+    struct OrganizerStats: Equatable {
         let profileViews30d: Int
         let offerViews30d: Int
         let applicationsReceived30d: Int
