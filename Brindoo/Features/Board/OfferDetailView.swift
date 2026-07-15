@@ -30,6 +30,8 @@ struct OfferDetailView: View {
     @State private var organizerProfile: Profile?
     /// Foto del portfolio dell'organizzatore mostrate nella galleria in alto.
     @State private var portfolioUrls: [String] = []
+    /// Pacchetti prezzo dell'offerta (Base / Completo / Premium).
+    @State private var packages: [OfferPackage] = []
     @State private var navigateToChat: Conversation?
     @State private var chatPartner: Profile?
 
@@ -118,6 +120,12 @@ struct OfferDetailView: View {
 
                 OfferDescriptionSection(text: offer.description)
 
+                // Vetrina pacchetti in sola lettura per proprietario e offerte
+                // in pausa; la versione selezionabile vive nelle azioni cliente.
+                if !packages.isEmpty && !canClientInteract {
+                    OfferPackagesDisplay(packages: packages)
+                }
+
                 if let error = actionError {
                     errorBanner(error)
                 }
@@ -128,7 +136,10 @@ struct OfferDetailView: View {
                         offer: offer,
                         proposal: myProposal,
                         organizerProfile: organizerProfile,
-                        onAcceptAtPrice: { Task { await acceptAtOrganizerPrice() } },
+                        packages: packages,
+                        onAcceptAtPrice: { price, label in
+                            Task { await acceptAtPrice(price, label: label) }
+                        },
                         onProposeNew: { showNegotiateSheet = .openAsClient(offer: offer) },
                         onHide: { Task { await dismissOffer() } },
                         onAccept: { p in Task { await acceptProposal(p) } },
@@ -330,6 +341,9 @@ struct OfferDetailView: View {
             portfolioUrls = items.prefix(6).map { $0.imageUrl }
         }
 
+        // Pacchetti prezzo (best-effort).
+        packages = (try? await OfferPackageService.shared.fetchPackages(offerId: offer.id)) ?? []
+
         // Cliente: carica la sua trattativa attiva + stato preferito + traccia view.
         if canClientInteract {
             do {
@@ -387,13 +401,15 @@ struct OfferDetailView: View {
         }
     }
 
-    private func acceptAtOrganizerPrice() async {
+    /// Accetta al prezzo dato (base o di un pacchetto). L'etichetta del
+    /// pacchetto, se presente, finisce nel messaggio della proposta.
+    private func acceptAtPrice(_ price: Double, label: String?) async {
         actionError = nil
         do {
             _ = try await OfferProposalService.shared.openProposal(
                 offer: offer,
-                price: offer.price,
-                message: nil
+                price: price,
+                message: label
             )
             await loadData()
         } catch {

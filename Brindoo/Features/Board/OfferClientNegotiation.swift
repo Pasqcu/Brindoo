@@ -13,8 +13,12 @@ struct ClientNegotiationSection: View {
     let offer: ServiceOffer
     let proposal: OfferProposal?
     let organizerProfile: Profile?
+    /// Pacchetti prezzo dell'offerta (se presenti il cliente può sceglierne uno).
+    var packages: [OfferPackage] = []
 
-    var onAcceptAtPrice: () -> Void
+    /// Accetta al prezzo dato; l'etichetta (es. "Pacchetto Base") finisce
+    /// nel messaggio della proposta, se presente.
+    var onAcceptAtPrice: (Double, String?) -> Void
     var onProposeNew: () -> Void
     var onHide: () -> Void
     var onAccept: (OfferProposal) -> Void
@@ -29,6 +33,11 @@ struct ClientNegotiationSection: View {
     var onReviewSubmitted: () -> Void
 
     @State private var showWriteReview: Bool = false
+    @State private var selectedPackageId: UUID?
+
+    private var selectedPackage: OfferPackage? {
+        packages.first { $0.id == selectedPackageId }
+    }
 
     var body: some View {
         if let proposal {
@@ -47,13 +56,24 @@ struct ClientNegotiationSection: View {
                 .font(BrindooFont.titleSmall)
                 .frame(maxWidth: .infinity, alignment: .leading)
 
+            // Con i pacchetti il cliente sceglie la versione del servizio;
+            // senza selezione si accetta il prezzo base dell'offerta.
+            if !packages.isEmpty {
+                OfferPackagesDisplay(packages: packages, selectedId: $selectedPackageId)
+            }
+
             BrindooButton(
-                "Accetta a \(offer.priceDisplay)",
+                selectedPackage.map { "Accetta \($0.name) a \($0.priceDisplay)" }
+                    ?? "Accetta a \(offer.priceDisplay)",
                 style: .primary,
                 size: .large,
                 icon: "checkmark"
             ) {
-                onAcceptAtPrice()
+                if let package = selectedPackage {
+                    onAcceptAtPrice(package.price, "Pacchetto \(package.name)")
+                } else {
+                    onAcceptAtPrice(offer.price, nil)
+                }
             }
 
             BrindooButton(

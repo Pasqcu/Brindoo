@@ -34,6 +34,9 @@ struct CreateOfferView: View {
     @State private var allCategories: [ServiceCategory] = []
     @State private var selectedCategoryIds: Set<UUID> = []
 
+    // Pacchetti prezzo facoltativi (Base / Completo / Premium)
+    @State private var packages: [DraftOfferPackage] = []
+
     @State private var titleError: String?
     @State private var descError: String?
     @State private var priceError: String?
@@ -138,6 +141,8 @@ struct CreateOfferView: View {
                             .font(BrindooFont.caption)
                             .foregroundStyle(Color.brindooTextSecondary)
                     }
+
+                    OfferPackagesEditor(packages: $packages, isDisabled: isLoading)
 
                     if let generalError {
                         HStack(spacing: BrindooSpacing.xs) {
@@ -334,6 +339,23 @@ struct CreateOfferView: View {
         if priceVal == nil || (priceVal ?? 0) <= 0 {
             priceError = "Inserisci un prezzo valido"; hasError = true
         }
+
+        // Pacchetti: si considerano solo quelli con nome e prezzo compilati;
+        // un prezzo non numerico blocca la pubblicazione.
+        var validPackages: [(name: String, description: String?, price: Double)] = []
+        for draft in packages {
+            let name = draft.name.trimmingCharacters(in: .whitespaces)
+            let priceText = draft.price.trimmingCharacters(in: .whitespaces)
+            guard !name.isEmpty || !priceText.isEmpty else { continue }
+            let value = Double(priceText.replacingOccurrences(of: ",", with: "."))
+            if name.isEmpty || value == nil || value! <= 0 {
+                generalError = "Completa nome e prezzo di ogni pacchetto (o rimuovilo)."
+                hasError = true
+                break
+            }
+            let desc = draft.description.trimmingCharacters(in: .whitespaces)
+            validPackages.append((name: name, description: desc.isEmpty ? nil : desc, price: value!))
+        }
         if hasError { return }
 
         isLoading = true
@@ -350,7 +372,7 @@ struct CreateOfferView: View {
                 imageUrl = try await StorageService.shared.uploadOfferImage(coverImage)
             }
 
-            _ = try await ServiceOfferService.shared.createOffer(
+            let created = try await ServiceOfferService.shared.createOffer(
                 title: tTitle,
                 description: tDesc,
                 coverageArea: coverageAreaText,
@@ -358,6 +380,18 @@ struct CreateOfferView: View {
                 categoryIds: Array(selectedCategoryIds),
                 imageUrl: imageUrl
             )
+
+            // Pacchetti in ordine di prezzo crescente (best-effort:
+            // l'offerta esiste già, un errore qui non blocca la pubblicazione).
+            if !validPackages.isEmpty {
+                let sorted = validPackages.sorted { $0.price < $1.price }
+                do {
+                    try await OfferPackageService.shared.savePackages(offerId: created.id, packages: sorted)
+                } catch {
+                    BrindooLog.error("Salvataggio pacchetti: \(error)")
+                }
+            }
+
             showSuccess = true
         } catch let limitError as BrindooLimitError {
             limitMessage = limitError.errorDescription ?? "Limite raggiunto."
