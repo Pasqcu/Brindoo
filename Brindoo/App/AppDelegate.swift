@@ -26,6 +26,8 @@ final class AppDelegate: NSObject, UIApplicationDelegate {
         UNUserNotificationCenter.current().delegate = self
         // Registra le categorie di notifiche con azioni rapide (rispondi, accetta, ecc.)
         NotificationCategoriesRegistrar.registerCategories()
+        // Raccoglie i rapporti di crash di sistema per la diagnostica.
+        BrindooCrashWatcher.shared.start()
         return true
     }
 
