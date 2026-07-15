@@ -82,4 +82,24 @@ final class SeventhRoundLogicTests: XCTestCase {
         let display = package(price: 99.5).priceDisplay
         XCTAssertTrue(display.contains("99,50"))
     }
+
+    // MARK: - Conto alla rovescia evento
+
+    func test_contoAllaRovescia_giorniMancanti() {
+        // 2026-07-15 12:00 UTC → all'evento del 20/07 mancano 5 giorni.
+        let now = Date(timeIntervalSince1970: 1_784_116_800)
+        XCTAssertEqual(EventCountdownRow.daysUntil("2026-07-20", from: now), 5)
+        XCTAssertEqual(EventCountdownRow.daysUntil("2026-07-15", from: now), 0)
+    }
+
+    func test_contoAllaRovescia_dataPassata_negativa() {
+        let now = Date(timeIntervalSince1970: 1_784_116_800)
+        let days = EventCountdownRow.daysUntil("2026-07-10", from: now)
+        XCTAssertNotNil(days)
+        XCTAssertLessThan(days!, 0)
+    }
+
+    func test_contoAllaRovescia_formatoNonValido() {
+        XCTAssertNil(EventCountdownRow.daysUntil("20/07/2026"))
+    }
 }

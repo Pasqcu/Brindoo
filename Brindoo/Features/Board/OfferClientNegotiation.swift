@@ -9,6 +9,67 @@
 
 import SwiftUI
 
+// MARK: - Conto alla rovescia evento
+
+/// "Mancano 12 giorni all'evento" + suggerimento contestuale.
+/// Non mostra nulla per date passate o non valide.
+struct EventCountdownRow: View {
+    /// Data dell'evento, formato "yyyy-MM-dd".
+    let eventDay: String
+
+    var body: some View {
+        if let days = Self.daysUntil(eventDay), days >= 0 {
+            HStack(alignment: .top, spacing: BrindooSpacing.xs) {
+                Image(systemName: days == 0 ? "party.popper.fill" : "hourglass")
+                    .font(.system(size: 14, weight: .semibold))
+                    .foregroundStyle(Color.brindooCoral)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(countdownText(days: days))
+                        .font(BrindooFont.bodySmall.weight(.semibold))
+                        .foregroundStyle(Color.brindooCoral)
+                    Text(tip(days: days))
+                        .font(BrindooFont.caption)
+                        .foregroundStyle(Color.brindooTextSecondary)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+                Spacer(minLength: 0)
+            }
+            .padding(BrindooSpacing.sm)
+            .background(Color.brindooCoral.opacity(0.08))
+            .clipShape(RoundedRectangle(cornerRadius: BrindooRadius.sm))
+        }
+    }
+
+    private func countdownText(days: Int) -> String {
+        switch days {
+        case 0:  return "L'evento è oggi!"
+        case 1:  return "Manca 1 giorno all'evento"
+        default: return "Mancano \(days) giorni all'evento"
+        }
+    }
+
+    private func tip(days: Int) -> String {
+        switch days {
+        case 0:       return "In bocca al lupo! Dopo l'evento potrai lasciare una recensione."
+        case 1...7:   return "Manca poco: conferma orari e ultimi dettagli in chat."
+        case 8...30:  return "Definisci per tempo orari, luogo e dettagli in chat."
+        default:      return "Tutto con calma: tieni d'occhio i dettagli man mano che si avvicina."
+        }
+    }
+
+    /// Giorni da oggi alla data (nil se il formato non è valido).
+    static func daysUntil(_ day: String, from now: Date = Date()) -> Int? {
+        let f = DateFormatter()
+        f.dateFormat = "yyyy-MM-dd"
+        f.timeZone = TimeZone(identifier: "UTC")
+        guard let target = f.date(from: day) else { return nil }
+        var calendar = Calendar.current
+        calendar.timeZone = TimeZone(identifier: "UTC") ?? calendar.timeZone
+        let start = calendar.startOfDay(for: now)
+        return calendar.dateComponents([.day], from: start, to: target).day
+    }
+}
+
 struct ClientNegotiationSection: View {
     let offer: ServiceOffer
     let proposal: OfferProposal?
@@ -133,6 +194,11 @@ struct ClientNegotiationSection: View {
 
             if let eventDate = proposal.eventDateDisplay {
                 EventDateRow(dateText: eventDate)
+            }
+
+            // Accordo chiuso con data futura: conto alla rovescia + suggerimento.
+            if proposal.status == .accepted, let day = proposal.eventDate {
+                EventCountdownRow(eventDay: day)
             }
 
             if let lastMessage = proposal.lastMessage, !lastMessage.isEmpty {

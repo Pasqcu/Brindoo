@@ -33,6 +33,13 @@ final class FavoriteOrganizersViewModel: BrindooViewModel {
 struct FavoriteOrganizersView: View {
     @State private var vm = FavoriteOrganizersViewModel()
 
+    // Confronto fianco a fianco (2-3 preferiti)
+    @State private var compareMode = false
+    @State private var selectedIds: Set<UUID> = []
+    @State private var showCompare = false
+
+    private let maxCompared = 3
+
     var body: some View {
         Group {
             switch vm.state {
@@ -50,16 +57,32 @@ struct FavoriteOrganizersView: View {
             case .loaded(let list):
                 List {
                     ForEach(list) { profile in
-                        NavigationLink {
-                            OrganizerDetailView(organizer: profile)
-                        } label: {
-                            row(for: profile)
-                        }
-                        .swipeActions {
-                            Button(role: .destructive) {
-                                Task { await vm.remove(profile.id) }
+                        if compareMode {
+                            Button {
+                                toggleSelection(profile.id)
                             } label: {
-                                Label("Rimuovi", systemImage: BrindooIcon.heart)
+                                HStack(spacing: BrindooSpacing.sm) {
+                                    Image(systemName: selectedIds.contains(profile.id)
+                                          ? "checkmark.circle.fill" : "circle")
+                                        .font(.system(size: 22))
+                                        .foregroundStyle(selectedIds.contains(profile.id)
+                                                         ? Color.brindooCoral : Color.brindooTextTertiary)
+                                    row(for: profile)
+                                }
+                            }
+                            .buttonStyle(.plain)
+                        } else {
+                            NavigationLink {
+                                OrganizerDetailView(organizer: profile)
+                            } label: {
+                                row(for: profile)
+                            }
+                            .swipeActions {
+                                Button(role: .destructive) {
+                                    Task { await vm.remove(profile.id) }
+                                } label: {
+                                    Label("Rimuovi", systemImage: BrindooIcon.heart)
+                                }
                             }
                         }
                     }
@@ -77,8 +100,56 @@ struct FavoriteOrganizersView: View {
             }
         }
         .navigationTitle("Preferiti")
+        .toolbar {
+            // Il confronto ha senso solo con almeno 2 salvati.
+            if case .loaded(let list) = vm.state, list.count >= 2 {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button(compareMode ? "Annulla" : "Confronta") {
+                        compareMode.toggle()
+                        if !compareMode { selectedIds.removeAll() }
+                    }
+                    .font(BrindooFont.bodyMedium.weight(.medium))
+                    .foregroundStyle(Color.brindooCoral)
+                }
+            }
+        }
+        .safeAreaInset(edge: .bottom) {
+            if compareMode {
+                BrindooButton(
+                    selectedIds.count < 2
+                        ? "Scegli almeno 2 professionisti"
+                        : "Confronta (\(selectedIds.count))",
+                    style: .primary,
+                    size: .large,
+                    isDisabled: selectedIds.count < 2
+                ) {
+                    showCompare = true
+                }
+                .padding(.horizontal, BrindooSpacing.lg)
+                .padding(.vertical, BrindooSpacing.sm)
+                .background(
+                    Color.brindooBackground
+                        .shadow(color: .black.opacity(0.08), radius: 8, x: 0, y: -2)
+                )
+            }
+        }
+        .sheet(isPresented: $showCompare) {
+            if case .loaded(let list) = vm.state {
+                CompareOrganizersView(
+                    organizers: list.filter { selectedIds.contains($0.id) }
+                )
+            }
+        }
         .task { await vm.load() }
         .refreshable { await vm.refresh() }
+    }
+
+    private func toggleSelection(_ id: UUID) {
+        if selectedIds.contains(id) {
+            selectedIds.remove(id)
+        } else if selectedIds.count < maxCompared {
+            selectedIds.insert(id)
+        }
     }
 
     private func row(for profile: Profile) -> some View {
