@@ -12,11 +12,14 @@ struct ChatListView: View {
 
     @Environment(SessionStore.self) private var session
 
-    @State private var conversations: [Conversation] = []
+    @State private var state: LoadState<[Conversation]> = .loading
     @State private var otherProfiles: [UUID: Profile] = [:]
     @State private var unreadCounts: [UUID: Int] = [:]
-    @State private var isLoading: Bool = true
-    @State private var errorMessage: String?
+
+    private var conversations: [Conversation] {
+        get { state.value ?? [] }
+        nonmutating set { state = newValue.isEmpty ? .empty : .loaded(newValue) }
+    }
 
     @State private var conversationToDelete: Conversation?
     @State private var conversationToBlock: (conversation: Conversation, otherUserId: UUID)?
@@ -76,7 +79,7 @@ struct ChatListView: View {
 
     @ViewBuilder
     private var content: some View {
-        if isLoading && conversations.isEmpty {
+        if state.isLoading {
             ScrollView {
                 LazyVStack(spacing: BrindooSpacing.sm) {
                     ForEach(0..<7, id: \.self) { _ in BrindooSkeletonCard() }
@@ -84,20 +87,9 @@ struct ChatListView: View {
                 .padding(BrindooSpacing.md)
             }
             .disabled(true)
-        } else if let errorMessage, conversations.isEmpty {
-            VStack(spacing: BrindooSpacing.md) {
-                Spacer()
-                Image(systemName: "exclamationmark.triangle.fill")
-                    .font(.system(size: 48))
-                    .foregroundStyle(Color.brindooWarning)
-                Text(errorMessage)
-                    .font(BrindooFont.bodyMedium)
-                    .foregroundStyle(Color.brindooTextSecondary)
-                BrindooButton("Riprova", style: .secondary) {
-                    Task { await refresh() }
-                }
-                .frame(maxWidth: 200)
-                Spacer()
+        } else if case .error(let message) = state {
+            BrindooErrorState(message: message) {
+                Task { await refresh() }
             }
         } else if conversations.isEmpty {
             emptyView
@@ -108,21 +100,11 @@ struct ChatListView: View {
 
     @ViewBuilder
     private var emptyView: some View {
-        VStack(spacing: BrindooSpacing.md) {
-            Spacer()
-            ZStack {
-                Circle().fill(Color.brindooCoral.opacity(0.1)).frame(width: 100, height: 100)
-                Image(systemName: "bubble.left.and.bubble.right")
-                    .font(.system(size: 44))
-                    .foregroundStyle(Color.brindooCoral)
-            }
-            Text("Nessuna conversazione")
-                .font(BrindooFont.titleMedium)
-            Text("Le tue chat appariranno qui")
-                .font(BrindooFont.bodyMedium)
-                .foregroundStyle(Color.brindooTextSecondary)
-            Spacer()
-        }
+        BrindooEmptyState(
+            icon: "bubble.left.and.bubble.right",
+            title: "Nessuna conversazione",
+            message: "Le tue chat appariranno qui"
+        )
     }
 
     @ViewBuilder
@@ -249,21 +231,20 @@ struct ChatListView: View {
     }
 
     private func loadInitial() async {
-        isLoading = true
+        if state.value == nil { state = .loading }
         await refresh()
-        isLoading = false
     }
 
     private func refresh() async {
-        errorMessage = nil
         do {
             let convs = try await ConversationService.shared.fetchMyConversations()
             unreadCounts = try await ConversationService.shared.fetchUnreadCounts()
             await loadOtherProfiles(for: convs)
             conversations = convs
         } catch {
-            errorMessage = "Impossibile caricare le chat"
-            print("❌ \(error)")
+            BrindooLog.error("Errore caricamento chat: \(error)")
+            // Se una lista è già a schermo non la copriamo con l'errore.
+            if state.value == nil { state = .error("Impossibile caricare le chat") }
         }
     }
 
@@ -292,7 +273,7 @@ struct ChatListView: View {
             try await ConversationService.shared.softDelete(conversation: conversation)
             conversations.removeAll { $0.id == conversation.id }
         } catch {
-            print("❌ \(error)")
+            BrindooLog.error("\(error)")
         }
     }
 
@@ -304,7 +285,7 @@ struct ChatListView: View {
                 conversations.removeAll { $0.id == conv.id }
             }
         } catch {
-            print("❌ \(error)")
+            BrindooLog.error("\(error)")
         }
     }
 
@@ -315,7 +296,7 @@ struct ChatListView: View {
             try await ConversationService.shared.setPinned(conversation: conversation, pinned: newPinned)
             await refresh()
         } catch {
-            print("❌ \(error)")
+            BrindooLog.error("\(error)")
         }
     }
 
@@ -338,7 +319,7 @@ struct ChatListView: View {
             }
             await refresh()
         } catch {
-            print("❌ \(error)")
+            BrindooLog.error("\(error)")
         }
     }
 }

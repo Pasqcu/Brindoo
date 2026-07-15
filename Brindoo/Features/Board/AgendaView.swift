@@ -13,10 +13,11 @@ struct AgendaView: View {
     @Environment(SessionStore.self) private var session
     @EnvironmentObject private var toastCenter: BrindooToastCenter
 
-    @State private var proposals: [OfferProposal] = []
+    @State private var state: LoadState<[OfferProposal]> = .loading
     @State private var offerMap: [UUID: ServiceOffer] = [:]
     @State private var profileMap: [UUID: Profile] = [:]
-    @State private var isLoading: Bool = true
+
+    private var proposals: [OfferProposal] { state.value ?? [] }
 
     private static let dayParser: DateFormatter = {
         let f = DateFormatter()
@@ -54,7 +55,7 @@ struct AgendaView: View {
 
     var body: some View {
         Group {
-            if isLoading {
+            if state.isLoading {
                 ScrollView {
                     LazyVStack(spacing: BrindooSpacing.sm) {
                         ForEach(0..<5, id: \.self) { _ in BrindooSkeletonCard() }
@@ -62,6 +63,10 @@ struct AgendaView: View {
                     .padding(BrindooSpacing.md)
                 }
                 .disabled(true)
+            } else if case .error(let message) = state {
+                BrindooErrorState(message: message) {
+                    Task { await loadData() }
+                }
             } else if entries.isEmpty {
                 emptyView
             } else {
@@ -90,25 +95,11 @@ struct AgendaView: View {
 
     @ViewBuilder
     private var emptyView: some View {
-        VStack(spacing: BrindooSpacing.md) {
-            Spacer()
-            ZStack {
-                Circle()
-                    .fill(Color.brindooCoral.opacity(0.1))
-                    .frame(width: 100, height: 100)
-                Image(systemName: "calendar")
-                    .font(.system(size: 44))
-                    .foregroundStyle(Color.brindooCoral)
-            }
-            Text("Nessun evento in agenda")
-                .font(BrindooFont.titleMedium)
-            Text("Quando una trattativa si conclude con una data, l'evento compare qui.")
-                .font(BrindooFont.bodyMedium)
-                .foregroundStyle(Color.brindooTextSecondary)
-                .multilineTextAlignment(.center)
-                .padding(.horizontal, BrindooSpacing.xl)
-            Spacer()
-        }
+        BrindooEmptyState(
+            icon: "calendar",
+            title: "Nessun evento in agenda",
+            message: "Quando una trattativa si conclude con una data, l'evento compare qui."
+        )
     }
 
     @ViewBuilder
@@ -259,14 +250,19 @@ struct AgendaView: View {
     // MARK: - Loading
 
     private func loadData() async {
-        isLoading = proposals.isEmpty
-        defer { isLoading = false }
+        // Se una lista è già a schermo, l'aggiornamento avviene in silenzio.
+        if state.value == nil { state = .loading }
         do {
-            proposals = try await OfferProposalService.shared.fetchMyOngoingProposals()
+            let fetched = try await OfferProposalService.shared.fetchMyOngoingProposals()
+            state = fetched.isEmpty ? .empty : .loaded(fetched)
             await loadRelated()
         } catch {
-            toastCenter.show(BrindooToast("Impossibile caricare l'agenda", message: "Controlla la connessione e riprova.", style: .error))
-            print("❌ \(error)")
+            BrindooLog.error("Errore caricamento agenda: \(error)")
+            if state.value == nil {
+                state = .error("Impossibile caricare l'agenda")
+            } else {
+                toastCenter.show(BrindooToast("Impossibile aggiornare l'agenda", message: "Controlla la connessione e riprova.", style: .error))
+            }
         }
     }
 

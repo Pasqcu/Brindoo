@@ -86,7 +86,7 @@ struct AvailabilityView: View {
             selected = Set(dates.map { calendar.dateComponents([.year, .month, .day], from: $0) })
         } catch {
             self.error = "Impossibile caricare il calendario."
-            print("❌ \(error)")
+            BrindooLog.error("\(error)")
         }
     }
 
@@ -100,7 +100,7 @@ struct AvailabilityView: View {
             dismiss()
         } catch {
             self.error = "Impossibile salvare. Riprova."
-            print("❌ \(error)")
+            BrindooLog.error("\(error)")
         }
     }
 }

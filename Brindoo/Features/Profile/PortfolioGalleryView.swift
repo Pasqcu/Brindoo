@@ -16,9 +16,13 @@ struct PortfolioGalleryView: View {
     let organizerId: UUID
     let isOwner: Bool
     
-    @State private var items: [PortfolioItem] = []
-    @State private var isLoading: Bool = true
+    @State private var state: LoadState<[PortfolioItem]> = .loading
     @State private var errorMessage: String?
+
+    private var items: [PortfolioItem] {
+        get { state.value ?? [] }
+        nonmutating set { state = newValue.isEmpty ? .empty : .loaded(newValue) }
+    }
     
     @State private var pickerItems: [PhotosPickerItem] = []
     @State private var isUploading: Bool = false
@@ -39,11 +43,15 @@ struct PortfolioGalleryView: View {
     
     var body: some View {
         Group {
-            if isLoading {
+            if state.isLoading {
                 VStack {
                     Spacer()
                     ProgressView().tint(.brindooCoral)
                     Spacer()
+                }
+            } else if case .error(let message) = state {
+                BrindooErrorState(message: message) {
+                    Task { await loadPortfolio() }
                 }
             } else if items.isEmpty {
                 emptyView
@@ -287,14 +295,16 @@ struct PortfolioGalleryView: View {
     // MARK: - Caricamento
     
     private func loadPortfolio() async {
-        isLoading = true
-        defer { isLoading = false }
-        
+        if state.value == nil { state = .loading }
         do {
             items = try await PortfolioService.shared.fetchPortfolio(organizerId: organizerId)
         } catch {
-            errorMessage = "Impossibile caricare il portfolio"
-            print("❌ \(error)")
+            BrindooLog.error("Errore caricamento portfolio: \(error)")
+            if state.value == nil {
+                state = .error("Impossibile caricare il portfolio")
+            } else {
+                errorMessage = "Impossibile aggiornare il portfolio"
+            }
         }
     }
     
@@ -324,7 +334,7 @@ struct PortfolioGalleryView: View {
                 showLimitPaywall = true
                 break
             } catch {
-                print("❌ Errore upload foto \(index): \(error)")
+                BrindooLog.error("Errore upload foto \(index): \(error)")
             }
         }
 
@@ -341,7 +351,7 @@ struct PortfolioGalleryView: View {
             items.removeAll { $0.id == item.id }
         } catch {
             errorMessage = "Impossibile eliminare la foto"
-            print("❌ \(error)")
+            BrindooLog.error("\(error)")
         }
     }
 }

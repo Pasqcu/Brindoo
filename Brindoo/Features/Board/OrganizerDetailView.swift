@@ -620,15 +620,15 @@ struct OrganizerDetailView: View {
     private func loadData() async {
         do {
             categories = try await OrganizerCategoriesService.shared.fetchDetailed(organizerId: organizer.id)
-        } catch { print("❌ \(error)") }
+        } catch { BrindooLog.error("\(error)") }
 
         do {
             portfolioItems = try await PortfolioService.shared.fetchPortfolio(organizerId: organizer.id)
-        } catch { print("❌ \(error)") }
+        } catch { BrindooLog.error("\(error)") }
 
         do {
             reviewSummary = try await ReviewService.shared.fetchSummary(organizerId: organizer.id)
-        } catch { print("❌ \(error)") }
+        } catch { BrindooLog.error("\(error)") }
 
         // Conteggio recensioni verificate: alimenta il distintivo "eventi verificati".
         if let reviews = try? await ReviewService.shared.fetchReviews(organizerId: organizer.id) {
@@ -647,7 +647,7 @@ struct OrganizerDetailView: View {
                 conv = try await ConversationService.shared.findOrCreateConversationAsOrganizer(clientId: organizer.id)
             }
             navigateToChat = conv
-        } catch { print("❌ \(error)") }
+        } catch { BrindooLog.error("\(error)") }
     }
 
     private func block() async {
@@ -655,14 +655,14 @@ struct OrganizerDetailView: View {
             try await BlockService.shared.block(userId: organizer.id)
             isBlocked = true
             dismiss()
-        } catch { print("❌ \(error)") }
+        } catch { BrindooLog.error("\(error)") }
     }
 
     private func unblock() async {
         do {
             try await BlockService.shared.unblock(userId: organizer.id)
             isBlocked = false
-        } catch { print("❌ \(error)") }
+        } catch { BrindooLog.error("\(error)") }
     }
 
     private func toggleFavorite() async {
@@ -679,7 +679,7 @@ struct OrganizerDetailView: View {
             isFavorite = willBeFavorite
             BrindooHaptics.impact(willBeFavorite ? .medium : .light)
         } catch {
-            print("❌ toggleFavorite: \(error)")
+            BrindooLog.error("toggleFavorite: \(error)")
         }
     }
 }

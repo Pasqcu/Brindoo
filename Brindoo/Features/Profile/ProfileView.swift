@@ -478,16 +478,16 @@ struct ProfileView: View {
         if isOrganizer {
             do {
                 organizerCategories = try await OrganizerCategoriesService.shared.fetchDetailed(organizerId: userId)
-            } catch { print("❌ \(error)") }
+            } catch { BrindooLog.error("\(error)") }
 
             do {
                 reviewSummary = try await ReviewService.shared.fetchSummary(organizerId: userId)
-            } catch { print("❌ \(error)") }
+            } catch { BrindooLog.error("\(error)") }
 
             do {
                 let items = try await PortfolioService.shared.fetchPortfolio(organizerId: userId)
                 portfolioCount = items.count
-            } catch { print("❌ \(error)") }
+            } catch { BrindooLog.error("\(error)") }
 
             // Per la barra "profilo completo": quante offerte attive ha.
             if let offers = try? await ServiceOfferService.shared.fetchMyOffers() {

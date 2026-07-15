@@ -12,15 +12,14 @@ struct OrganizerStatsView: View {
 
     @Environment(SessionStore.self) private var session
 
-    @State private var stats: AnalyticsService.OrganizerStats?
-    @State private var isLoading: Bool = true
+    @State private var state: LoadState<AnalyticsService.OrganizerStats> = .loading
 
     private var isPro: Bool { session.currentProfile?.isPro ?? false }
 
     var body: some View {
         ScrollView {
             VStack(spacing: BrindooSpacing.lg) {
-                if isLoading {
+                if state.isLoading {
                     LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: BrindooSpacing.md) {
                         ForEach(0..<4, id: \.self) { _ in
                             BrindooSkeleton(cornerRadius: BrindooRadius.md)
@@ -28,7 +27,11 @@ struct OrganizerStatsView: View {
                         }
                     }
                     .disabled(true)
-                } else if let stats {
+                } else if case .error(let message) = state {
+                    BrindooErrorState(message: message) {
+                        Task { await load() }
+                    }
+                } else if let stats = state.value {
                     grid(stats)
                     responseTimeCard(stats)
                     footer
@@ -138,12 +141,14 @@ struct OrganizerStatsView: View {
     }
 
     private func load() async {
-        isLoading = true
-        defer { isLoading = false }
+        if state.value == nil { state = .loading }
         do {
-            stats = try await AnalyticsService.shared.fetchMyStats()
+            state = .loaded(try await AnalyticsService.shared.fetchMyStats())
         } catch {
-            print("❌ \(error)")
+            BrindooLog.error("Errore caricamento statistiche: \(error)")
+            if state.value == nil {
+                state = .error("Impossibile caricare le statistiche")
+            }
         }
     }
 }

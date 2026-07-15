@@ -333,7 +333,7 @@ struct WriteReviewView: View {
             } else {
                 generalError = "Impossibile salvare la recensione. Riprova."
             }
-            print("❌ \(error)")
+            BrindooLog.error("\(error)")
         }
     }
     
@@ -349,7 +349,7 @@ struct WriteReviewView: View {
             dismiss()
         } catch {
             generalError = "Impossibile eliminare la recensione"
-            print("❌ \(error)")
+            BrindooLog.error("\(error)")
         }
     }
 }

@@ -12,28 +12,6 @@
 
 import SwiftUI
 
-enum BoardSortMode: String, CaseIterable, Identifiable {
-    case recommended, recent, nameAsc
-    var id: String { rawValue }
-    var label: String {
-        switch self {
-        case .recommended: return "Consigliati"
-        case .recent:      return "Più recenti"
-        case .nameAsc:     return "Nome (A-Z)"
-        }
-    }
-}
-
-/// Ultima lista mostrata in bacheca, salvata su disco per l'apertura istantanea.
-struct BoardSnapshot: Codable {
-    let organizers: [Profile]
-    let offers: [UUID: [ServiceOffer]]
-    let categories: [UUID: [ServiceCategory]]
-    let ratings: [UUID: OrganizerRating]
-    let areaSlugs: Set<String>
-    let savedAt: Date
-}
-
 struct BoardView: View {
 
     @Environment(SessionStore.self) private var session
@@ -44,83 +22,55 @@ struct BoardView: View {
     /// a un organizzatore di vedere l'anteprima della bacheca pubblica.
     var clientPreview: Bool = false
 
-    // Stato condiviso
-    @State private var categories: [ServiceCategory] = []
-    @State private var selectedCategoryIds: Set<UUID> = []
-    @State private var selectedAreaSlugs: Set<String> = []
-    @State private var searchText: String = ""
-    @State private var isLoading: Bool = true
-    @State private var errorMessage: String?
+    /// Parte dati (caricamenti a pagine, filtri, cache): vive nel ViewModel.
+    @State private var vm = BoardViewModel()
+
+    // Stato di sola interfaccia (pannelli, primo avvio)
     @State private var showAreaPicker: Bool = false
-
-    // Cliente: professionisti con offerte annidate, caricati a pagine
-    @State private var organizers: [Profile] = []
-    @State private var organizerCategoriesMap: [UUID: [ServiceCategory]] = [:]
-    @State private var organizerOffersMap: [UUID: [ServiceOffer]] = [:]
-    @State private var canLoadMore: Bool = false
-    @State private var isLoadingMore: Bool = false
-    @State private var pageOffset: Int = 0
-    private let pageSize = 20
-
-    // Organizer: proprie offerte
-    @State private var myOffers: [ServiceOffer] = []
-    @State private var myOfferCategoriesMap: [UUID: [ServiceCategory]] = [:]
     @State private var showCreateOffer: Bool = false
     @State private var duplicateTemplate: OfferTemplate?
     @State private var showCompleteProfile: Bool = false
-    @State private var hasOrganizerCategories: Bool = true
-
     @AppStorage("brindoo.client.welcomeSeen") private var welcomeSeen: Bool = false
     @State private var showWelcome: Bool = false
-    @State private var sortMode: BoardSortMode = .recommended
-    @State private var organizerRatings: [UUID: OrganizerRating] = [:]
-    @State private var minRating: Int = 0      // 0 = qualsiasi
-    @State private var maxPrice: Double = 0     // 0 = nessun limite
-    @State private var eventDate: Date? = nil   // nil = qualsiasi giorno
     @State private var showFilters: Bool = false
 
-    private var hasExtraFilters: Bool { minRating > 0 || maxPrice > 0 || eventDate != nil }
+    // Scorciatoie verso il ViewModel: il corpo della vista resta invariato.
+    private var categories: [ServiceCategory] { vm.categories }
+    private var organizers: [Profile] { vm.organizers }
+    private var sortedOrganizers: [Profile] { vm.sortedOrganizers }
+    private var boostedOrganizers: [Profile] { vm.boostedOrganizers }
+    private var organizerCategoriesMap: [UUID: [ServiceCategory]] { vm.organizerCategoriesMap }
+    private var organizerOffersMap: [UUID: [ServiceOffer]] { vm.organizerOffersMap }
+    private var organizerRatings: [UUID: OrganizerRating] { vm.organizerRatings }
+    private var canLoadMore: Bool { vm.canLoadMore }
+    private var pageOffset: Int { vm.pageOffset }
+    private var myOffers: [ServiceOffer] { vm.myOffers }
+    private var myOfferCategoriesMap: [UUID: [ServiceCategory]] { vm.myOfferCategoriesMap }
+    private var isLoading: Bool { vm.isLoading }
+    private var errorMessage: String? { vm.errorMessage }
+    private var hasOrganizerCategories: Bool { vm.hasOrganizerCategories }
+    private var hasExtraFilters: Bool { vm.hasExtraFilters }
+    private var hasActiveFilters: Bool { vm.hasActiveFilters }
+    private var hasContentFilters: Bool { vm.hasContentFilters }
+    private var lastSearchedText: String { vm.lastSearchedText }
+    private var eventDate: Date? { vm.eventDate }
+    private var sortMode: BoardSortMode { vm.sortMode }
 
-    private func minOfferPrice(for id: UUID) -> Double? {
-        organizerOffersMap[id]?.map(\.price).min()
+    private var searchText: String {
+        get { vm.searchText }
+        nonmutating set { vm.searchText = newValue }
     }
-
-    private var sortedOrganizers: [Profile] {
-        var list = organizers
-
-        if minRating > 0 {
-            list = list.filter { (organizerRatings[$0.id]?.avgRating ?? 0) >= Double(minRating) }
-        }
-        if maxPrice > 0 {
-            list = list.filter {
-                if let p = minOfferPrice(for: $0.id) { return p <= maxPrice }
-                return false
-            }
-        }
-
-        switch sortMode {
-        case .recommended: return list
-        case .recent:      return list.sorted { $0.createdAt > $1.createdAt }
-        case .nameAsc:     return list.sorted { ($0.fullName ?? "").localizedCaseInsensitiveCompare($1.fullName ?? "") == .orderedAscending }
-        }
+    private var selectedCategoryIds: Set<UUID> {
+        get { vm.selectedCategoryIds }
+        nonmutating set { vm.selectedCategoryIds = newValue }
+    }
+    private var selectedAreaSlugs: Set<String> {
+        get { vm.selectedAreaSlugs }
+        nonmutating set { vm.selectedAreaSlugs = newValue }
     }
 
     private var isClient: Bool {
         clientPreview || session.currentProfile?.role == .client
-    }
-
-    private var hasActiveFilters: Bool {
-        !selectedCategoryIds.isEmpty || !selectedAreaSlugs.isEmpty || !searchText.isEmpty || eventDate != nil
-    }
-
-    /// Filtri "di contenuto" (categoria/ricerca): l'area provincia non conta,
-    /// così la vetrina e l'intestazione restano visibili anche con una provincia scelta.
-    private var hasContentFilters: Bool {
-        !selectedCategoryIds.isEmpty || !searchText.isEmpty
-    }
-
-    private var boostedOrganizers: [Profile] {
-        organizers.filter { $0.isBoosted }
     }
 
     private let lazioProvinces = LazioProvince.allCases
@@ -195,13 +145,14 @@ struct BoardView: View {
                 }
                 ToolbarItem(placement: .topBarTrailing) {
                     Menu {
-                        Picker("Ordina", selection: $sortMode) {
+                        Picker("Ordina", selection: Bindable(vm).sortMode) {
                             ForEach(BoardSortMode.allCases) { mode in
                                 Text(mode.label).tag(mode)
                             }
                         }
                     } label: {
-                        Image(systemName: "arrow.up.arrow.down")
+                        // La variante "piena" segnala un ordinamento diverso da quello di default.
+                        Image(systemName: sortMode == .recommended ? "arrow.up.arrow.down.circle" : "arrow.up.arrow.down.circle.fill")
                             .font(.system(size: 17, weight: .semibold))
                             .foregroundStyle(Color.brindooCoral)
                     }
@@ -227,7 +178,7 @@ struct BoardView: View {
                 CreateOfferView(template: template.offer, templateCategoryIds: template.categoryIds)
             }
             .sheet(isPresented: $showAreaPicker) {
-                AreaPickerSheet(selected: $selectedAreaSlugs) {
+                AreaPickerSheet(selected: Bindable(vm).selectedAreaSlugs) {
                     Task { await loadOrganizers() }
                 }
                 .presentationDetents([.medium, .large])
@@ -239,7 +190,7 @@ struct BoardView: View {
                 EditProfileView()
             }
             .sheet(isPresented: $showFilters) {
-                BoardFiltersSheet(minRating: $minRating, maxPrice: $maxPrice, eventDate: $eventDate)
+                BoardFiltersSheet(minRating: Bindable(vm).minRating, maxPrice: Bindable(vm).maxPrice, eventDate: Bindable(vm).eventDate)
                     .presentationDetents([.medium, .large])
                     .presentationDragIndicator(.visible)
             }
@@ -259,6 +210,14 @@ struct BoardView: View {
             .refreshable { await reload() }
             .onChange(of: eventDate) { _, _ in
                 Task { await loadOrganizers() }
+            }
+            .task(id: searchText) {
+                // Ricerca "dal vivo": aggiorna la lista mentre si scrive,
+                // con una breve pausa per non interrogare il server a ogni lettera.
+                guard isClient, !isLoading, searchText != lastSearchedText else { return }
+                try? await Task.sleep(for: .milliseconds(400))
+                guard !Task.isCancelled, searchText != lastSearchedText else { return }
+                await loadOrganizers()
             }
             .coachMark(
                 isClient ? .boardClient : .boardOrganizer,
@@ -368,8 +327,7 @@ struct BoardView: View {
 
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: BrindooSpacing.xs) {
-                    areaFilterButton
-                    Divider().frame(height: 22)
+                    clearFiltersChip
                     ForEach(categories) { category in
                         let isSelected = selectedCategoryIds.contains(category.id)
                         let tint = category.tint
@@ -398,33 +356,43 @@ struct BoardView: View {
                 .padding(.horizontal, BrindooSpacing.md)
             }
 
-            if !selectedCategoryIds.isEmpty || !selectedAreaSlugs.isEmpty || eventDate != nil {
-                HStack {
-                    Text(activeFiltersSummary)
-                        .font(BrindooFont.caption)
-                        .foregroundStyle(Color.brindooTextSecondary)
-                    Spacer()
-                    Button {
-                        selectedCategoryIds.removeAll()
-                        selectedAreaSlugs.removeAll()
-                        eventDate = nil
-                        Task { await loadOrganizers() }
-                    } label: {
-                        Text("Pulisci")
-                            .font(BrindooFont.caption.weight(.medium))
-                            .foregroundStyle(Color.brindooCoral)
-                    }
-                }
-                .padding(.horizontal, BrindooSpacing.md)
-            }
         }
         .padding(.bottom, BrindooSpacing.sm)
+    }
+
+    /// Chip compatto "Pulisci" in testa alla riga categorie:
+    /// sostituisce la vecchia fascia di riepilogo filtri.
+    @ViewBuilder
+    private var clearFiltersChip: some View {
+        if !selectedCategoryIds.isEmpty || !selectedAreaSlugs.isEmpty || eventDate != nil {
+            Button {
+                selectedCategoryIds.removeAll()
+                selectedAreaSlugs.removeAll()
+                vm.eventDate = nil
+                Task { await loadOrganizers() }
+            } label: {
+                HStack(spacing: BrindooSpacing.xxs) {
+                    Image(systemName: "xmark")
+                        .font(.system(size: 11, weight: .semibold))
+                    Text("Pulisci")
+                        .font(BrindooFont.bodySmall.weight(.medium))
+                }
+                .foregroundStyle(Color.brindooCoral)
+                .padding(.horizontal, BrindooSpacing.sm)
+                .padding(.vertical, BrindooSpacing.xs)
+                .background(Color.brindooCoral.opacity(0.1))
+                .clipShape(Capsule())
+            }
+            .accessibilityLabel("Pulisci filtri")
+        }
     }
 
     @ViewBuilder
     private var provinceChipsBar: some View {
         ScrollView(.horizontal, showsIndicators: false) {
             HStack(spacing: BrindooSpacing.xs) {
+                areaFilterButton
+                Divider().frame(height: 22)
                 provinceChip(title: "Tutto il Lazio", isOn: selectedAreaSlugs.isEmpty) {
                     selectedAreaSlugs.removeAll()
                     Task { await loadOrganizers() }
@@ -456,23 +424,6 @@ struct BoardView: View {
         .buttonStyle(.plain)
     }
 
-    private var activeFiltersSummary: String {
-        var parts: [String] = []
-        if !selectedCategoryIds.isEmpty {
-            parts.append("\(selectedCategoryIds.count) categorie")
-        }
-        if !selectedAreaSlugs.isEmpty {
-            parts.append("\(selectedAreaSlugs.count) aree")
-        }
-        if let eventDate {
-            let f = DateFormatter()
-            f.locale = Locale(identifier: "it_IT")
-            f.dateFormat = "d MMM"
-            parts.append("liberi il \(f.string(from: eventDate))")
-        }
-        return parts.joined(separator: " · ")
-    }
-
     @ViewBuilder
     private var areaFilterButton: some View {
         let isActive = !selectedAreaSlugs.isEmpty
@@ -500,7 +451,7 @@ struct BoardView: View {
             Image(systemName: "magnifyingglass")
                 .foregroundStyle(Color.brindooTextSecondary)
 
-            TextField("Cerca professionista", text: $searchText)
+            TextField("Cerca professionista", text: Bindable(vm).searchText)
                 .font(BrindooFont.bodyLarge)
                 .autocorrectionDisabled()
                 .textInputAutocapitalization(.never)
@@ -509,8 +460,8 @@ struct BoardView: View {
 
             if !searchText.isEmpty {
                 Button {
+                    // La ricarica parte dal task di ricerca "dal vivo".
                     searchText = ""
-                    Task { await loadOrganizers() }
                 } label: {
                     Image(systemName: "xmark.circle.fill")
                         .foregroundStyle(Color.brindooTextSecondary)
@@ -536,6 +487,27 @@ struct BoardView: View {
                     : "Non ci sono ancora professionisti disponibili",
                 showClear: hasActiveFilters
             )
+        } else if sortedOrganizers.isEmpty {
+            // I filtri extra (stelle/prezzo) tagliano tutto il caricato:
+            // continua a caricare pagine finché trova un profilo valido
+            // o le pagine finiscono, per non mostrare un vuoto ingannevole.
+            if canLoadMore {
+                VStack(spacing: BrindooSpacing.md) {
+                    ProgressView()
+                    Text("Cerco altri profili che rispettano i filtri…")
+                        .font(BrindooFont.bodySmall)
+                        .foregroundStyle(Color.brindooTextSecondary)
+                }
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .task(id: pageOffset) { await loadMoreOrganizers() }
+            } else {
+                emptyView(
+                    icon: "line.3.horizontal.decrease.circle",
+                    title: "Nessun risultato",
+                    subtitle: "Nessun profilo rispetta i filtri scelti",
+                    showClear: true
+                )
+            }
         } else {
             ScrollView {
                 LazyVStack(spacing: BrindooSpacing.md) {
@@ -616,7 +588,7 @@ struct BoardView: View {
                 Image(systemName: "sparkles")
                     .font(.system(size: 14, weight: .semibold))
                     .foregroundStyle(Color.brindooCoral)
-                Text("\(organizers.count)\(canLoadMore ? "+" : "") professionisti consigliati per te")
+                Text("\(sortedOrganizers.count)\(canLoadMore ? "+" : "") professionisti consigliati per te")
                     .font(BrindooFont.bodySmall.weight(.medium))
                     .foregroundStyle(Color.brindooTextSecondary)
                 Spacer()
@@ -665,28 +637,13 @@ struct BoardView: View {
     @ViewBuilder
     private var organizerList: some View {
         if myOffers.isEmpty {
-            VStack(spacing: BrindooSpacing.md) {
-                Spacer()
-                ZStack {
-                    Circle()
-                        .fill(Color.brindooCoral.opacity(0.1))
-                        .frame(width: 100, height: 100)
-                    Image(systemName: "tag")
-                        .font(.system(size: 44))
-                        .foregroundStyle(Color.brindooCoral)
-                }
-                Text("Nessuna offerta")
-                    .font(BrindooFont.titleMedium)
-                Text("Pubblica la tua prima offerta per farti trovare dai clienti")
-                    .font(BrindooFont.bodyMedium)
-                    .foregroundStyle(Color.brindooTextSecondary)
-                    .multilineTextAlignment(.center)
-                    .padding(.horizontal, BrindooSpacing.xl)
-                BrindooButton("Crea offerta", style: .primary) {
-                    showCreateOffer = true
-                }
-                .frame(maxWidth: 240)
-                Spacer()
+            BrindooEmptyState(
+                icon: "tag",
+                title: "Nessuna offerta",
+                message: "Pubblica la tua prima offerta per farti trovare dai clienti",
+                actionTitle: "Crea offerta"
+            ) {
+                showCreateOffer = true
             }
         } else {
             ScrollView {
@@ -732,42 +689,26 @@ struct BoardView: View {
 
     // MARK: - Empty / error
 
+    private func clearAllFilters() {
+        vm.clearAllFilters()
+    }
+
     @ViewBuilder
     private func emptyView(icon: String, title: String, subtitle: String, showClear: Bool) -> some View {
         VStack(spacing: BrindooSpacing.md) {
-            Spacer()
-            ZStack {
-                Circle()
-                    .fill(BrindooGradient.coralSoft.opacity(0.18))
-                    .frame(width: 100, height: 100)
-                Image(systemName: icon)
-                    .font(.system(size: 44))
-                    .foregroundStyle(Color.brindooCoral)
-            }
-            Text(title).font(BrindooFont.titleMedium)
-            Text(subtitle)
-                .font(BrindooFont.bodyMedium)
-                .foregroundStyle(Color.brindooTextSecondary)
-                .multilineTextAlignment(.center)
-                .padding(.horizontal, BrindooSpacing.xl)
-
-            if showClear {
-                BrindooButton("Rimuovi filtri", style: .secondary) {
-                    selectedCategoryIds.removeAll()
-                    selectedAreaSlugs.removeAll()
-                    searchText = ""
-                    eventDate = nil
-                    Task { await loadOrganizers() }
-                }
-                .frame(maxWidth: 200)
-            }
+            BrindooEmptyState(
+                icon: icon,
+                title: title,
+                message: subtitle,
+                actionTitle: showClear ? "Rimuovi filtri" : nil,
+                action: showClear ? { clearAllFilters() } : nil
+            )
 
             Text("Brindoo sta arrivando in tutto il Lazio. Aiutaci a crescere!")
                 .font(BrindooFont.caption)
                 .foregroundStyle(Color.brindooTextSecondary)
                 .multilineTextAlignment(.center)
                 .padding(.horizontal, BrindooSpacing.xl)
-                .padding(.top, BrindooSpacing.xs)
 
             ShareLink(item: Self.inviteMessage) {
                 Label("Invita un professionista", systemImage: "person.badge.plus")
@@ -778,7 +719,7 @@ struct BoardView: View {
                     .background(Color.brindooCoral)
                     .clipShape(RoundedRectangle(cornerRadius: BrindooRadius.md))
             }
-            Spacer()
+            .padding(.bottom, BrindooSpacing.xl)
         }
     }
 
@@ -802,37 +743,18 @@ struct BoardView: View {
         }
     }
 
-    // MARK: - Loading
+    // MARK: - Loading (delegato al ViewModel)
 
     private func loadInitial() async {
-        isLoading = true
-        do {
-            categories = try await CategoryService.shared.fetchCategories()
-        } catch { print("❌ \(error)") }
-        await BlockService.shared.loadBlocks()
-        await checkOrganizerCategoriesIfNeeded()
-
-        // Parti già "vicino a casa": filtra sulla provincia dell'utente.
-        if isClient && !clientPreview, selectedAreaSlugs.isEmpty,
-           let prov = session.currentProfile?.province {
-            selectedAreaSlugs = [provinceSlug(prov)]
+        vm.configure(
+            isClient: isClient,
+            clientPreview: clientPreview,
+            userID: session.userID,
+            province: session.currentProfile?.province
+        ) { toast in
+            toastCenter.show(toast)
         }
-
-        // Bacheca istantanea: mostra subito l'ultima lista salvata (se combacia
-        // con i filtri iniziali), poi aggiorna comunque dalla rete.
-        if isClient && !clientPreview,
-           let snapshot = await LocalCacheStore.shared.load(BoardSnapshot.self, for: BrindooCacheKey.boardSnapshot),
-           snapshot.areaSlugs == selectedAreaSlugs,
-           !snapshot.organizers.isEmpty {
-            organizers = snapshot.organizers
-            organizerOffersMap = snapshot.offers
-            organizerCategoriesMap = snapshot.categories
-            organizerRatings = snapshot.ratings
-            isLoading = false
-        }
-
-        await reload()
-        isLoading = false
+        await vm.loadInitial()
 
         // Primo passo guidato per il cliente (una sola volta).
         if isClient && !clientPreview && !welcomeSeen && !categories.isEmpty {
@@ -840,193 +762,9 @@ struct BoardView: View {
         }
     }
 
-    /// Verifica se l'organizer ha almeno una categoria. Se l'utente non è
-    /// organizer o non ha mai cliccato "Diventa Professionista" non fa nulla.
-    private func checkOrganizerCategoriesIfNeeded() async {
-        guard !isClient,
-              ProfessionalOnboardingHint.isPending,
-              let userId = session.userID else { return }
-        let cats = (try? await OrganizerService.shared.fetchOrganizerCategories(organizerID: userId)) ?? []
-        hasOrganizerCategories = !cats.isEmpty
-        if !cats.isEmpty {
-            ProfessionalOnboardingHint.clear()
-        }
-    }
-
-    private func reload() async {
-        errorMessage = nil
-        if isClient {
-            await loadOrganizers()
-        } else {
-            await loadMyOffers()
-        }
-    }
-
-    /// Una pagina di professionisti già filtrata per data evento (se attiva).
-    private func fetchPage(offset: Int, busyIds: Set<UUID>) async throws -> (profiles: [Profile], hasMore: Bool) {
-        let page = try await OrganizerService.shared.fetchOrganizers(
-            categoryIds: selectedCategoryIds,
-            areaFilters: selectedAreaSlugs,
-            searchText: searchText.isEmpty ? nil : searchText,
-            includeCurrentUser: clientPreview,
-            limit: pageSize,
-            offset: offset
-        )
-        return (applyDateFilter(page.profiles, busyIds: busyIds), page.hasMore)
-    }
-
-    /// Esclude chi è occupato o in vacanza nella data evento selezionata.
-    private func applyDateFilter(_ profiles: [Profile], busyIds: Set<UUID>) -> [Profile] {
-        guard let eventDate else { return profiles }
-        let day = Calendar.current.startOfDay(for: eventDate)
-        return profiles.filter { p in
-            if busyIds.contains(p.id) { return false }
-            if let vacation = p.vacationUntil,
-               day <= Calendar.current.startOfDay(for: vacation) {
-                return false
-            }
-            return true
-        }
-    }
-
-    private func fetchBusyIdsIfNeeded() async -> Set<UUID> {
-        guard let eventDate else { return [] }
-        return (try? await AvailabilityService.shared.fetchBusyOrganizerIds(on: eventDate)) ?? []
-    }
-
-    /// Ricarica da zero la prima pagina (e continua finché non trova almeno
-    /// un risultato visibile o le pagine finiscono, per non mostrare un
-    /// "nessun risultato" ingannevole con il filtro data attivo).
-    private func loadOrganizers() async {
-        do {
-            let busyIds = await fetchBusyIdsIfNeeded()
-            var collected: [Profile] = []
-            var offset = 0
-            var hasMore = true
-
-            repeat {
-                let page = try await fetchPage(offset: offset, busyIds: busyIds)
-                offset += pageSize
-                hasMore = page.hasMore
-                collected.append(contentsOf: page.profiles)
-            } while collected.isEmpty && hasMore && offset < pageSize * 5
-
-            await loadRelated(for: collected)
-            organizers = collected
-            pageOffset = offset
-            canLoadMore = hasMore
-
-            await saveSnapshotIfEligible()
-        } catch {
-            // Se abbiamo la lista dalla cache, non coprirla con la schermata d'errore.
-            if organizers.isEmpty {
-                errorMessage = "Impossibile caricare i professionisti"
-            }
-            print("❌ \(error)")
-        }
-    }
-
-    /// Salva la lista corrente per l'apertura istantanea (solo la vista
-    /// "di default": niente ricerca, categorie o filtri extra).
-    private func saveSnapshotIfEligible() async {
-        guard isClient, !clientPreview,
-              searchText.isEmpty, selectedCategoryIds.isEmpty,
-              minRating == 0, maxPrice == 0, eventDate == nil,
-              !organizers.isEmpty else { return }
-
-        let ids = Set(organizers.map(\.id))
-        let snapshot = BoardSnapshot(
-            organizers: organizers,
-            offers: organizerOffersMap.filter { ids.contains($0.key) },
-            categories: organizerCategoriesMap.filter { ids.contains($0.key) },
-            ratings: organizerRatings.filter { ids.contains($0.key) },
-            areaSlugs: selectedAreaSlugs,
-            savedAt: Date()
-        )
-        await LocalCacheStore.shared.save(snapshot, for: BrindooCacheKey.boardSnapshot)
-    }
-
-    /// Aggiunge la pagina successiva in fondo alla lista.
-    private func loadMoreOrganizers() async {
-        guard canLoadMore, !isLoadingMore else { return }
-        isLoadingMore = true
-        defer { isLoadingMore = false }
-
-        do {
-            let busyIds = await fetchBusyIdsIfNeeded()
-            var appended: [Profile] = []
-            var offset = pageOffset
-            var hasMore = true
-
-            repeat {
-                let page = try await fetchPage(offset: offset, busyIds: busyIds)
-                offset += pageSize
-                hasMore = page.hasMore
-                appended.append(contentsOf: page.profiles)
-            } while appended.isEmpty && hasMore && offset < pageOffset + pageSize * 5
-
-            let known = Set(organizers.map(\.id))
-            let fresh = appended.filter { !known.contains($0.id) }
-            await loadRelated(for: fresh)
-            organizers.append(contentsOf: fresh)
-            pageOffset = offset
-            canLoadMore = hasMore
-        } catch {
-            canLoadMore = false
-            toastCenter.show(BrindooToast("Impossibile caricare altri profili", message: "Trascina in basso per riprovare.", style: .error))
-            print("❌ \(error)")
-        }
-    }
-
-    /// Carica offerte, categorie e valutazioni dei professionisti indicati.
-    private func loadRelated(for profiles: [Profile]) async {
-        await loadOffersForOrganizers(profiles)
-        await loadCategoriesForOrganizers(profiles)
-        if !profiles.isEmpty,
-           let ratings = try? await ReviewService.shared.fetchRatings(organizerIds: profiles.map { $0.id }) {
-            organizerRatings.merge(ratings) { _, new in new }
-        }
-    }
-
-    private func loadCategoriesForOrganizers(_ profiles: [Profile]) async {
-        // Una sola richiesta per tutta la pagina (non una per professionista).
-        let missing = profiles.map(\.id).filter { organizerCategoriesMap[$0] == nil }
-        guard !missing.isEmpty else { return }
-        let map = (try? await OrganizerService.shared.fetchOrganizerCategoriesMap(organizerIds: missing)) ?? [:]
-        for id in missing {
-            organizerCategoriesMap[id] = map[id] ?? []
-        }
-    }
-
-    private func loadOffersForOrganizers(_ profiles: [Profile]) async {
-        let ids = profiles.map { $0.id }
-        guard !ids.isEmpty else { return }
-        do {
-            let grouped = try await ServiceOfferService.shared.fetchActiveOffers(forOrganizers: ids)
-            organizerOffersMap.merge(grouped) { _, new in new }
-        } catch {
-            print("❌ \(error)")
-        }
-    }
-
-    private func loadMyOffers() async {
-        do {
-            let result = try await ServiceOfferService.shared.fetchMyOffers()
-            myOffers = result
-            await loadCategoriesForMyOffers(result)
-        } catch {
-            errorMessage = "Impossibile caricare le offerte"
-            print("❌ \(error)")
-        }
-    }
-
-    private func loadCategoriesForMyOffers(_ offers: [ServiceOffer]) async {
-        // Una sola richiesta per tutte le offerte.
-        let missing = offers.map(\.id).filter { myOfferCategoriesMap[$0] == nil }
-        guard !missing.isEmpty else { return }
-        let map = (try? await ServiceOfferService.shared.fetchOfferCategoriesMap(offerIds: missing)) ?? [:]
-        for id in missing {
-            myOfferCategoriesMap[id] = map[id] ?? []
-        }
-    }
+    private func checkOrganizerCategoriesIfNeeded() async { await vm.checkOrganizerCategoriesIfNeeded() }
+    private func reload() async { await vm.reload() }
+    private func loadOrganizers() async { await vm.loadOrganizers() }
+    private func loadMoreOrganizers() async { await vm.loadMoreOrganizers() }
+    private func loadMyOffers() async { await vm.loadMyOffers() }
 }

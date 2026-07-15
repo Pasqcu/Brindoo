@@ -180,7 +180,7 @@ struct DeleteAccountView: View {
             // Il SessionStore rileverà il signOut e tornerà a OnboardingView automaticamente
         } catch {
             errorMessage = "Impossibile eliminare l'account. Riprova più tardi o contatta il supporto."
-            print("❌ \(error)")
+            BrindooLog.error("\(error)")
         }
     }
 }

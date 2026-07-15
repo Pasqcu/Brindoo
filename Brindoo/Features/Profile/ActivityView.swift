@@ -165,23 +165,11 @@ struct ActivityView: View {
 
     @ViewBuilder
     private var emptyView: some View {
-        VStack(spacing: BrindooSpacing.md) {
-            Spacer()
-            ZStack {
-                Circle().fill(BrindooGradient.coralSoft.opacity(0.18)).frame(width: 100, height: 100)
-                Image(systemName: "bell.badge")
-                    .font(.system(size: 40))
-                    .foregroundStyle(Color.brindooCoral)
-            }
-            Text("Tutto tranquillo")
-                .font(BrindooFont.titleMedium)
-            Text("Qui troverai trattative da gestire, eventi in arrivo e messaggi non letti.")
-                .font(BrindooFont.bodyMedium)
-                .foregroundStyle(Color.brindooTextSecondary)
-                .multilineTextAlignment(.center)
-                .padding(.horizontal, BrindooSpacing.xl)
-            Spacer()
-        }
+        BrindooEmptyState(
+            icon: "bell.badge",
+            title: "Tutto tranquillo",
+            message: "Qui troverai trattative da gestire, eventi in arrivo e messaggi non letti."
+        )
     }
 
     @ViewBuilder

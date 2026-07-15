@@ -608,11 +608,11 @@ struct OfferDetailView: View {
     private func loadData() async {
         do {
             categories = try await ServiceOfferService.shared.fetchOfferCategories(offerId: offer.id)
-        } catch { print("❌ \(error)") }
+        } catch { BrindooLog.error("\(error)") }
 
         do {
             organizerProfile = try await ProfileService.shared.fetchProfile(userID: offer.organizerId)
-        } catch { print("❌ \(error)") }
+        } catch { BrindooLog.error("\(error)") }
 
         // Cliente: carica la sua trattativa attiva + stato preferito + traccia view.
         if canClientInteract {
@@ -621,7 +621,7 @@ struct OfferDetailView: View {
                 if let p = myProposal {
                     myProposalLastRound = try await OfferProposalService.shared.fetchLastRound(proposalId: p.id)
                 }
-            } catch { print("❌ \(error)") }
+            } catch { BrindooLog.error("\(error)") }
 
             isFavorite = (try? await OfferFavoriteService.shared.isFavorite(offerId: offer.id)) ?? false
 
@@ -634,7 +634,7 @@ struct OfferDetailView: View {
             do {
                 receivedProposals = try await OfferProposalService.shared.fetchProposals(forOffer: offer.id)
                 await loadClientsAndRounds(for: receivedProposals)
-            } catch { print("❌ \(error)") }
+            } catch { BrindooLog.error("\(error)") }
         }
     }
 
@@ -649,7 +649,7 @@ struct OfferDetailView: View {
             }
         } catch {
             isFavorite = !target // rollback
-            print("❌ \(error)")
+            BrindooLog.error("\(error)")
         }
     }
 
@@ -682,7 +682,7 @@ struct OfferDetailView: View {
             await loadData()
         } catch {
             actionError = "Impossibile inviare la proposta."
-            print("❌ \(error)")
+            BrindooLog.error("\(error)")
         }
     }
 
@@ -709,7 +709,7 @@ struct OfferDetailView: View {
             }
         } catch {
             actionError = "Impossibile accettare."
-            print("❌ \(error)")
+            BrindooLog.error("\(error)")
         }
     }
 
@@ -726,7 +726,7 @@ struct OfferDetailView: View {
             await loadData()
         } catch {
             toastCenter.show(BrindooToast("Impossibile spostare la data", message: "Controlla la connessione e riprova.", style: .error))
-            print("❌ \(error)")
+            BrindooLog.error("\(error)")
         }
     }
 
@@ -766,7 +766,7 @@ struct OfferDetailView: View {
             }
         } catch {
             actionError = "Impossibile aggiornare l'appuntamento."
-            print("❌ \(error)")
+            BrindooLog.error("\(error)")
         }
     }
 
@@ -777,7 +777,7 @@ struct OfferDetailView: View {
             await loadData()
         } catch {
             actionError = "Impossibile rifiutare."
-            print("❌ \(error)")
+            BrindooLog.error("\(error)")
         }
     }
 
@@ -788,7 +788,7 @@ struct OfferDetailView: View {
             await loadData()
         } catch {
             actionError = "Impossibile ritirare."
-            print("❌ \(error)")
+            BrindooLog.error("\(error)")
         }
     }
 
@@ -800,7 +800,7 @@ struct OfferDetailView: View {
             dismiss()
         } catch {
             actionError = "Impossibile nascondere."
-            print("❌ \(error)")
+            BrindooLog.error("\(error)")
         }
     }
 
@@ -814,7 +814,7 @@ struct OfferDetailView: View {
             onChange?()
         } catch {
             toastCenter.show(BrindooToast("Impossibile aggiornare l'offerta", message: "Controlla la connessione e riprova.", style: .error))
-            print("❌ \(error)")
+            BrindooLog.error("\(error)")
         }
     }
 
@@ -825,7 +825,7 @@ struct OfferDetailView: View {
             dismiss()
         } catch {
             toastCenter.show(BrindooToast("Impossibile eliminare l'offerta", message: "Controlla la connessione e riprova.", style: .error))
-            print("❌ \(error)")
+            BrindooLog.error("\(error)")
         }
     }
 
@@ -841,7 +841,7 @@ struct OfferDetailView: View {
             navigateToChat = conv
         } catch {
             toastCenter.show(BrindooToast("Impossibile aprire la chat", message: "Controlla la connessione e riprova.", style: .error))
-            print("❌ \(error)")
+            BrindooLog.error("\(error)")
         }
     }
 }

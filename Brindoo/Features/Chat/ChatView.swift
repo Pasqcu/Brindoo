@@ -450,7 +450,7 @@ struct ChatView: View {
                 visibleAfter: visibleAfter
             )
         } catch {
-            print("❌ \(error)")
+            BrindooLog.error("\(error)")
         }
     }
     
@@ -588,7 +588,7 @@ struct ChatView: View {
             replyingTo = nil
             await ChatDraftStore.shared.clear(conversation.id)
         } catch {
-            print("❌ \(error)")
+            BrindooLog.error("\(error)")
         }
     }
     
@@ -606,7 +606,7 @@ struct ChatView: View {
             editingMessage = nil
             await ChatDraftStore.shared.clear(conversation.id)
         } catch {
-            print("❌ \(error)")
+            BrindooLog.error("\(error)")
         }
     }
     
@@ -625,7 +625,7 @@ struct ChatView: View {
                 }
             }
         } catch {
-            print("❌ loadPickedImage: \(error)")
+            BrindooLog.error("loadPickedImage: \(error)")
             await MainActor.run {
                 photoPickerItem = nil
                 sendErrorMessage = "Errore nel caricamento della foto: \(error.localizedDescription)"
@@ -644,7 +644,7 @@ struct ChatView: View {
                 isBomb: isBomb
             )
         } catch {
-            print("❌ sendImage: \(error)")
+            BrindooLog.error("sendImage: \(error)")
             sendErrorMessage = "Invio foto fallito: \(error.localizedDescription)"
         }
     }
@@ -653,7 +653,7 @@ struct ChatView: View {
         do {
             try await MessageService.shared.deleteMessage(messageId: message.id)
         } catch {
-            print("❌ \(error)")
+            BrindooLog.error("\(error)")
         }
     }
     
@@ -662,7 +662,7 @@ struct ChatView: View {
             try await ConversationService.shared.softDelete(conversation: conversation)
             dismiss()
         } catch {
-            print("❌ \(error)")
+            BrindooLog.error("\(error)")
         }
     }
     
@@ -672,7 +672,7 @@ struct ChatView: View {
             try await ConversationService.shared.softDelete(conversation: conversation)
             dismiss()
         } catch {
-            print("❌ \(error)")
+            BrindooLog.error("\(error)")
         }
     }
     
@@ -681,7 +681,7 @@ struct ChatView: View {
             try await BlockService.shared.unblock(userId: otherUser.id)
             isBlocked = false
         } catch {
-            print("❌ \(error)")
+            BrindooLog.error("\(error)")
         }
     }
 }

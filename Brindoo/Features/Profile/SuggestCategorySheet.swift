@@ -188,7 +188,7 @@ struct SuggestCategorySheet: View {
             success = true
         } catch {
             generalError = "Impossibile inviare la proposta. Riprova."
-            print("❌ \(error)")
+            BrindooLog.error("\(error)")
         }
     }
 }

@@ -13,12 +13,15 @@ struct ReviewsListView: View {
     
     @Environment(SessionStore.self) private var session
     
-    @State private var reviews: [Review] = []
+    @State private var state: LoadState<[Review]> = .loading
     @State private var rating: OrganizerRating?
     @State private var clientsMap: [UUID: Profile] = [:]
     @State private var myReview: Review?
-    
-    @State private var isLoading: Bool = true
+
+    private var reviews: [Review] {
+        get { state.value ?? [] }
+        nonmutating set { state = newValue.isEmpty ? .empty : .loaded(newValue) }
+    }
     @State private var showWriteReview: Bool = false
     @State private var reviewToReport: Review?
     @State private var reviewToReply: Review?
@@ -38,7 +41,7 @@ struct ReviewsListView: View {
     
     var body: some View {
         Group {
-            if isLoading {
+            if state.isLoading {
                 ScrollView {
                     LazyVStack(spacing: BrindooSpacing.md) {
                         ForEach(0..<5, id: \.self) { _ in BrindooSkeletonCard() }
@@ -46,6 +49,10 @@ struct ReviewsListView: View {
                     .padding(BrindooSpacing.lg)
                 }
                 .disabled(true)
+            } else if case .error(let message) = state {
+                BrindooErrorState(message: message) {
+                    Task { await loadAllData() }
+                }
             } else {
                 content
             }
@@ -203,28 +210,13 @@ struct ReviewsListView: View {
     
     @ViewBuilder
     private var emptyView: some View {
-        VStack(spacing: BrindooSpacing.md) {
-            ZStack {
-                Circle()
-                    .fill(Color.brindooCoral.opacity(0.1))
-                    .frame(width: 80, height: 80)
-                Image(systemName: "star")
-                    .font(.system(size: 36))
-                    .foregroundStyle(Color.brindooCoral)
-            }
-            
-            Text("Nessuna recensione")
-                .font(BrindooFont.titleSmall)
-            
-            Text(canWriteReview
-                 ? "Sii il primo a recensire questo organizzatore"
-                 : "Le recensioni dei clienti appariranno qui")
-                .font(BrindooFont.bodyMedium)
-                .foregroundStyle(Color.brindooTextSecondary)
-                .multilineTextAlignment(.center)
-        }
-        .frame(maxWidth: .infinity)
-        .padding(.vertical, BrindooSpacing.xl)
+        BrindooEmptyState(
+            icon: "star",
+            title: "Nessuna recensione",
+            message: canWriteReview
+                ? "Sii il primo a recensire questo organizzatore"
+                : "Le recensioni dei clienti appariranno qui"
+        )
     }
     
     // MARK: - Card recensione
@@ -379,13 +371,12 @@ struct ReviewsListView: View {
     // MARK: - Caricamento
     
     private func loadAllData() async {
-        isLoading = true
-        defer { isLoading = false }
-        
+        if state.value == nil { state = .loading }
+
         async let ratingTask = ReviewService.shared.fetchRating(organizerId: organizer.id)
         async let reviewsTask = ReviewService.shared.fetchReviews(organizerId: organizer.id)
         async let myReviewTask = ReviewService.shared.myReviewFor(organizerId: organizer.id)
-        
+
         do {
             self.rating = try await ratingTask
             self.reviews = try await reviewsTask
@@ -399,7 +390,10 @@ struct ReviewsListView: View {
             // Carica i profili dei clienti che hanno recensito
             await loadClients(for: reviews)
         } catch {
-            print("❌ Errore caricamento recensioni: \(error)")
+            BrindooLog.error("Errore caricamento recensioni: \(error)")
+            if state.value == nil {
+                state = .error("Impossibile caricare le recensioni")
+            }
         }
     }
     
@@ -495,7 +489,7 @@ struct ReplyToReviewSheet: View {
             dismiss()
         } catch {
             self.error = "Impossibile pubblicare la risposta. Riprova."
-            print("❌ \(error)")
+            BrindooLog.error("\(error)")
         }
     }
 }

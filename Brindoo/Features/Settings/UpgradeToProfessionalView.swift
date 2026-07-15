@@ -215,7 +215,7 @@ struct UpgradeToProfessionalView: View {
             showCelebration = true
         } catch {
             generalError = "Impossibile completare il passaggio. Riprova."
-            print("❌ Upgrade: \(error)")
+            BrindooLog.error("Upgrade: \(error)")
         }
     }
 }

@@ -508,7 +508,7 @@ struct SettingsView: View {
                 session.updateLocalProfile(profile)
             }
         } catch {
-            print("❌ \(error)")
+            BrindooLog.error("\(error)")
         }
     }
 
@@ -604,7 +604,7 @@ struct SettingsView: View {
         do {
             try await ProfileService.shared.updateReadReceipts(enabled: enabled)
         } catch {
-            print("❌ \(error)")
+            BrindooLog.error("\(error)")
         }
     }
 }
@@ -691,6 +691,6 @@ struct BlockedUsersView: View {
         do {
             try await BlockService.shared.unblock(userId: userId)
             profiles.removeAll { $0.id == userId }
-        } catch { print("❌ \(error)") }
+        } catch { BrindooLog.error("\(error)") }
     }
 }

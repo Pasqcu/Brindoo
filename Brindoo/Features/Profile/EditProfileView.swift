@@ -685,7 +685,7 @@ struct EditProfileView: View {
                     initialCategoryDescriptions = descs
                 }
             } catch {
-                print("❌ Errore caricamento categorie: \(error)")
+                BrindooLog.error("Errore caricamento categorie: \(error)")
             }
         }
     }
@@ -774,7 +774,7 @@ struct EditProfileView: View {
         } catch {
             isUploadingAvatar = false
             generalError = "Impossibile salvare. Riprova più tardi."
-            print("❌ \(error)")
+            BrindooLog.error("\(error)")
         }
     }
 
@@ -791,7 +791,7 @@ struct EditProfileView: View {
             onPostUpgradeExit?(true)
         } catch {
             generalError = "Impossibile annullare l'operazione. Riprova."
-            print("❌ cancelUpgrade: \(error)")
+            BrindooLog.error("cancelUpgrade: \(error)")
         }
     }
 }

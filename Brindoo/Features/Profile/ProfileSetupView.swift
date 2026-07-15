@@ -374,7 +374,7 @@ struct ProfileSetupView: View {
 
         } catch {
             generalError = "Impossibile salvare il profilo. Controlla la connessione e riprova."
-            print("❌ Errore salvataggio profilo: \(error)")
+            BrindooLog.error("Errore salvataggio profilo: \(error)")
         }
     }
 }

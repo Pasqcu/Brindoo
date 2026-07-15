@@ -255,7 +255,7 @@ struct NegotiateOfferView: View {
             dismiss()
         } catch {
             generalError = "Impossibile inviare la proposta. Riprova."
-            print("❌ \(error)")
+            BrindooLog.error("\(error)")
         }
     }
 }

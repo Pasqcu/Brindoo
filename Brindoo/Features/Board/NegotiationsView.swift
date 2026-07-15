@@ -18,10 +18,11 @@ struct NegotiationsView: View {
     @Environment(SessionStore.self) private var session
     @EnvironmentObject private var toastCenter: BrindooToastCenter
 
-    @State private var proposals: [OfferProposal] = []
+    @State private var state: LoadState<[OfferProposal]> = .loading
     @State private var offerMap: [UUID: ServiceOffer] = [:]
     @State private var profileMap: [UUID: Profile] = [:]
-    @State private var isLoading: Bool = true
+
+    private var proposals: [OfferProposal] { state.value ?? [] }
     @State private var chatTarget: ChatTarget?
     @State private var reviewTarget: Profile?
 
@@ -53,7 +54,7 @@ struct NegotiationsView: View {
 
     var body: some View {
         Group {
-            if isLoading {
+            if state.isLoading {
                 ScrollView {
                     LazyVStack(spacing: BrindooSpacing.sm) {
                         ForEach(0..<6, id: \.self) { _ in BrindooSkeletonCard() }
@@ -61,6 +62,10 @@ struct NegotiationsView: View {
                     .padding(BrindooSpacing.md)
                 }
                 .disabled(true)
+            } else if case .error(let message) = state {
+                BrindooErrorState(message: message) {
+                    Task { await loadData() }
+                }
             } else if proposals.isEmpty {
                 emptyView
             } else {
@@ -125,25 +130,11 @@ struct NegotiationsView: View {
 
     @ViewBuilder
     private var emptyView: some View {
-        VStack(spacing: BrindooSpacing.md) {
-            Spacer()
-            ZStack {
-                Circle()
-                    .fill(Color.brindooCoral.opacity(0.1))
-                    .frame(width: 100, height: 100)
-                Image(systemName: "arrow.left.arrow.right")
-                    .font(.system(size: 44))
-                    .foregroundStyle(Color.brindooCoral)
-            }
-            Text("Nessuna trattativa")
-                .font(BrindooFont.titleMedium)
-            Text("Le proposte e controproposte sulle offerte appariranno qui")
-                .font(BrindooFont.bodyMedium)
-                .foregroundStyle(Color.brindooTextSecondary)
-                .multilineTextAlignment(.center)
-                .padding(.horizontal, BrindooSpacing.xl)
-            Spacer()
-        }
+        BrindooEmptyState(
+            icon: "arrow.left.arrow.right",
+            title: "Nessuna trattativa",
+            message: "Le proposte e controproposte sulle offerte appariranno qui"
+        )
     }
 
     @ViewBuilder
@@ -243,7 +234,7 @@ struct NegotiationsView: View {
             }
             chatTarget = ChatTarget(id: conv.id, conversation: conv, other: other)
         } catch {
-            print("❌ \(error)")
+            BrindooLog.error("\(error)")
         }
     }
 
@@ -303,18 +294,23 @@ struct NegotiationsView: View {
     // MARK: - Loading
 
     private func loadData() async {
-        isLoading = true
-        defer { isLoading = false }
+        // Se una lista è già a schermo, l'aggiornamento avviene in silenzio.
+        if state.value == nil { state = .loading }
         do {
-            proposals = try await OfferProposalService.shared.fetchMyOngoingProposals()
-            await loadRelated()
+            let fetched = try await OfferProposalService.shared.fetchMyOngoingProposals()
+            await loadRelated(for: fetched)
+            state = fetched.isEmpty ? .empty : .loaded(fetched)
         } catch {
-            toastCenter.show(BrindooToast("Impossibile caricare le trattative", message: "Controlla la connessione e riprova.", style: .error))
-            print("❌ \(error)")
+            BrindooLog.error("Errore caricamento trattative: \(error)")
+            if state.value == nil {
+                state = .error("Impossibile caricare le trattative")
+            } else {
+                toastCenter.show(BrindooToast("Impossibile aggiornare le trattative", message: "Controlla la connessione e riprova.", style: .error))
+            }
         }
     }
 
-    private func loadRelated() async {
+    private func loadRelated(for proposals: [OfferProposal]) async {
         // Due sole richieste (offerte + profili), non una per trattativa.
         let offerIds = Set(proposals.map { $0.offerId }).filter { offerMap[$0] == nil }
         var profileIds = Set(proposals.flatMap { [$0.clientId, $0.organizerId] })

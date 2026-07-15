@@ -3,25 +3,35 @@
 //  Brindoo
 //
 //  Lista delle offerte salvate dal cliente corrente.
+//  Usa LoadState: caricamento / vuoto / errore / lista gestiti in modo standard.
 //
 
 import SwiftUI
 
 struct FavoriteOffersView: View {
 
-    @State private var offers: [ServiceOffer] = []
+    @State private var state: LoadState<[ServiceOffer]> = .loading
     @State private var organizers: [UUID: Profile] = [:]
     @State private var categories: [UUID: [ServiceCategory]] = [:]
-    @State private var isLoading: Bool = true
 
     var body: some View {
         Group {
-            if isLoading {
+            switch state {
+            case .idle, .loading:
                 VStack { Spacer(); ProgressView().tint(.brindooCoral); Spacer() }
-            } else if offers.isEmpty {
+            case .empty:
                 emptyView
-            } else {
-                list
+            case .error(let message):
+                BrindooEmptyState(
+                    icon: "exclamationmark.triangle",
+                    title: message,
+                    message: "Controlla la connessione e riprova.",
+                    actionTitle: "Riprova"
+                ) {
+                    Task { await load() }
+                }
+            case .loaded(let offers):
+                list(offers)
             }
         }
         .background(Color.brindooBackground)
@@ -33,27 +43,15 @@ struct FavoriteOffersView: View {
 
     @ViewBuilder
     private var emptyView: some View {
-        VStack(spacing: BrindooSpacing.md) {
-            Spacer()
-            ZStack {
-                Circle().fill(Color.brindooCoral.opacity(0.1)).frame(width: 100, height: 100)
-                Image(systemName: "heart")
-                    .font(.system(size: 44))
-                    .foregroundStyle(Color.brindooCoral)
-            }
-            Text("Nessuna offerta salvata")
-                .font(BrindooFont.titleMedium)
-            Text("Tocca il cuore su un'offerta per salvarla qui")
-                .font(BrindooFont.bodyMedium)
-                .foregroundStyle(Color.brindooTextSecondary)
-                .multilineTextAlignment(.center)
-                .padding(.horizontal, BrindooSpacing.xl)
-            Spacer()
-        }
+        BrindooEmptyState(
+            icon: "heart",
+            title: "Nessuna offerta salvata",
+            message: "Tocca il cuore su un'offerta per salvarla qui"
+        )
     }
 
     @ViewBuilder
-    private var list: some View {
+    private func list(_ offers: [ServiceOffer]) -> some View {
         ScrollView {
             LazyVStack(spacing: BrindooSpacing.md) {
                 ForEach(offers) { offer in
@@ -78,17 +76,21 @@ struct FavoriteOffersView: View {
     }
 
     private func load() async {
-        isLoading = true
-        defer { isLoading = false }
+        if state.value == nil { state = .loading }
         do {
-            offers = try await OfferFavoriteService.shared.fetchMyFavorites()
-            await loadRelated()
+            let offers = try await OfferFavoriteService.shared.fetchMyFavorites()
+            await loadRelated(for: offers)
+            state = offers.isEmpty ? .empty : .loaded(offers)
         } catch {
-            print("❌ \(error)")
+            BrindooLog.error("Errore caricamento preferiti: \(error)")
+            // Se una lista era già a schermo non la copriamo con l'errore.
+            if state.value == nil {
+                state = .error("Impossibile caricare le offerte salvate")
+            }
         }
     }
 
-    private func loadRelated() async {
+    private func loadRelated(for offers: [ServiceOffer]) async {
         await withTaskGroup(of: Void.self) { group in
             for offer in offers {
                 if organizers[offer.organizerId] == nil {

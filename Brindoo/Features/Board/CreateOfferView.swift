@@ -182,7 +182,7 @@ struct CreateOfferView: View {
             .task {
                 do {
                     allCategories = try await CategoryService.shared.fetchCategories()
-                } catch { print("❌ \(error)") }
+                } catch { BrindooLog.error("\(error)") }
             }
             .onChange(of: coverPickerItem) { _, item in
                 guard let item else { return }
@@ -364,7 +364,7 @@ struct CreateOfferView: View {
             showLimitPaywall = true
         } catch {
             generalError = "Errore nella pubblicazione. Riprova."
-            print("❌ \(error)")
+            BrindooLog.error("\(error)")
         }
     }
 }
