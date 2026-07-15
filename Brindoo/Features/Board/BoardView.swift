@@ -33,6 +33,7 @@ struct BoardView: View {
     @AppStorage("brindoo.client.welcomeSeen") private var welcomeSeen: Bool = false
     @State private var showWelcome: Bool = false
     @State private var showFilters: Bool = false
+    @State private var showClientRequests: Bool = false
 
     // Scorciatoie verso il ViewModel: il corpo della vista resta invariato.
     private var categories: [ServiceCategory] { vm.categories }
@@ -120,6 +121,20 @@ struct BoardView: View {
         .navigationTitle(clientPreview ? "Anteprima bacheca" : "Bacheca")
         .navigationBarTitleDisplayMode(clientPreview ? .inline : .large)
         .toolbar {
+            if !clientPreview {
+                // Bacheca inversa: il cliente pubblica cosa cerca,
+                // il professionista sfoglia le richieste aperte.
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button {
+                        showClientRequests = true
+                    } label: {
+                        Image(systemName: "megaphone")
+                            .font(.system(size: 16, weight: .semibold))
+                            .foregroundStyle(Color.brindooCoral)
+                    }
+                    .accessibilityLabel(isClient ? "Le mie richieste" : "Richieste dei clienti")
+                }
+            }
             if !isClient {
                 ToolbarItem(placement: .topBarTrailing) {
                     Button {
@@ -167,6 +182,9 @@ struct BoardView: View {
                 }
             }
         }
+            .navigationDestination(isPresented: $showClientRequests) {
+                ClientRequestsView()
+            }
             .sheet(isPresented: $showCreateOffer, onDismiss: {
                 Task { await loadMyOffers() }
             }) {
