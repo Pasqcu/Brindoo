@@ -28,6 +28,8 @@ struct OfferDetailView: View {
 
     @State private var categories: [ServiceCategory] = []
     @State private var organizerProfile: Profile?
+    /// Foto del portfolio dell'organizzatore mostrate nella galleria in alto.
+    @State private var portfolioUrls: [String] = []
     @State private var navigateToChat: Conversation?
     @State private var chatPartner: Profile?
 
@@ -85,24 +87,19 @@ struct OfferDetailView: View {
         isClient && !isOwnOffer && currentStatus == .active
     }
 
+    /// Copertina dell'offerta seguita dalle foto del portfolio (senza doppioni).
+    private var galleryUrls: [String] {
+        var urls: [String] = []
+        if let cover = offer.imageUrl { urls.append(cover) }
+        for u in portfolioUrls where !urls.contains(u) { urls.append(u) }
+        return urls
+    }
+
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: BrindooSpacing.lg) {
-                if let imageUrl = offer.imageUrl, let url = URL(string: imageUrl) {
-                    AsyncImage(url: url) { phase in
-                        switch phase {
-                        case .success(let image):
-                            image.resizable().scaledToFill()
-                        case .empty:
-                            BrindooSkeleton(cornerRadius: BrindooRadius.md)
-                        default:
-                            Color.brindooSurface
-                        }
-                    }
-                    .frame(maxWidth: .infinity)
-                    .frame(height: 200)
-                    .clipped()
-                    .clipShape(RoundedRectangle(cornerRadius: BrindooRadius.md))
+                if !galleryUrls.isEmpty {
+                    OfferPhotoGallery(urls: galleryUrls)
                 }
 
                 OfferHeaderSection(
@@ -327,6 +324,11 @@ struct OfferDetailView: View {
         do {
             organizerProfile = try await ProfileService.shared.fetchProfile(userID: offer.organizerId)
         } catch { BrindooLog.error("\(error)") }
+
+        // Foto del portfolio per la galleria (best-effort, massimo 6).
+        if let items = try? await PortfolioService.shared.fetchPortfolio(organizerId: offer.organizerId) {
+            portfolioUrls = items.prefix(6).map { $0.imageUrl }
+        }
 
         // Cliente: carica la sua trattativa attiva + stato preferito + traccia view.
         if canClientInteract {

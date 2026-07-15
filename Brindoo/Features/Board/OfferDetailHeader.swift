@@ -8,6 +8,39 @@
 
 import SwiftUI
 
+// MARK: - Galleria foto (copertina offerta + portfolio dell'organizzatore)
+
+struct OfferPhotoGallery: View {
+    /// URL delle immagini da mostrare, in ordine (la copertina per prima).
+    let urls: [String]
+
+    var body: some View {
+        TabView {
+            ForEach(urls, id: \.self) { urlString in
+                if let url = URL(string: urlString) {
+                    AsyncImage(url: url) { phase in
+                        switch phase {
+                        case .success(let image):
+                            image.resizable().scaledToFill()
+                        case .empty:
+                            BrindooSkeleton(cornerRadius: 0)
+                        default:
+                            Color.brindooSurface
+                        }
+                    }
+                    .frame(maxWidth: .infinity)
+                    .frame(height: 240)
+                    .clipped()
+                }
+            }
+        }
+        .tabViewStyle(.page(indexDisplayMode: urls.count > 1 ? .automatic : .never))
+        .frame(height: 240)
+        .clipShape(RoundedRectangle(cornerRadius: BrindooRadius.md))
+        .accessibilityLabel(urls.count > 1 ? "Galleria foto, \(urls.count) immagini" : "Foto dell'offerta")
+    }
+}
+
 // MARK: - Intestazione (titolo, stato, link al profilo organizzatore)
 
 struct OfferHeaderSection: View {
@@ -51,6 +84,21 @@ struct OfferHeaderSection: View {
                     }
                 }
                 .buttonStyle(.plain)
+
+                // Segnale di fiducia: velocità di risposta in chat, ben visibile.
+                if let speed = profile.responseSpeed {
+                    HStack(spacing: 4) {
+                        Image(systemName: speed.iconName)
+                            .font(.system(size: 11, weight: .semibold))
+                        Text(speed.label)
+                            .font(BrindooFont.caption.weight(.semibold))
+                    }
+                    .foregroundStyle(Color.brindooSuccess)
+                    .padding(.horizontal, BrindooSpacing.sm)
+                    .padding(.vertical, 4)
+                    .background(Color.brindooSuccess.opacity(0.1))
+                    .clipShape(Capsule())
+                }
             }
         }
     }

@@ -48,7 +48,7 @@ struct OfferCard: View {
                         }
                     }
                     .frame(maxWidth: .infinity)
-                    .frame(height: 150)
+                    .frame(height: 180)
                     .clipped()
 
                     BrindooGradient.glassOverlay
@@ -65,7 +65,7 @@ struct OfferCard: View {
                         .clipShape(Capsule())
                         .padding(BrindooSpacing.xs)
                 }
-                .frame(height: 150)
+                .frame(height: 180)
                 .clipShape(RoundedRectangle(cornerRadius: BrindooRadius.sm))
             }
 

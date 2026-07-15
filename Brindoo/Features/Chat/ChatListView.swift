@@ -103,7 +103,9 @@ struct ChatListView: View {
         BrindooEmptyState(
             icon: "bubble.left.and.bubble.right",
             title: "Nessuna conversazione",
-            message: "Le tue chat appariranno qui"
+            message: "Le tue chat appariranno qui",
+            actionTitle: "Esplora la bacheca",
+            action: { DeepLinkRouter.shared.selectedTab = 0 }
         )
     }
 

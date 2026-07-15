@@ -46,7 +46,9 @@ struct FavoriteOffersView: View {
         BrindooEmptyState(
             icon: "heart",
             title: "Nessuna offerta salvata",
-            message: "Tocca il cuore su un'offerta per salvarla qui"
+            message: "Tocca il cuore su un'offerta per salvarla qui",
+            actionTitle: "Esplora la bacheca",
+            action: { DeepLinkRouter.shared.selectedTab = 0 }
         )
     }
 

@@ -21,6 +21,14 @@ struct SettingsView: View {
     @State private var readReceiptsEnabled: Bool = true
     @State private var pushEnabled: Bool = true
 
+    // Diagnostica (rapporto errori da inviare al supporto)
+    @State private var diagnosticsPayload: DiagnosticsPayload?
+
+    private struct DiagnosticsPayload: Identifiable {
+        let id = UUID()
+        let url: URL
+    }
+
     // Vacanza (solo organizzatori Pro)
     @State private var vacationOn: Bool = false
     @State private var vacationUntil: Date = Calendar.current.date(byAdding: .day, value: 7, to: Date()) ?? Date()
@@ -201,6 +209,22 @@ struct SettingsView: View {
                                     SettingsRow(icon: "exclamationmark.bubble", iconColor: .brindooCoral, title: "Segnala un problema")
                                 }
                             }
+
+                            Divider().padding(.leading, 56)
+
+                            Button {
+                                if let url = BrindooDiagnostics.reportFileURL() {
+                                    diagnosticsPayload = DiagnosticsPayload(url: url)
+                                }
+                            } label: {
+                                SettingsRow(
+                                    icon: "stethoscope",
+                                    iconColor: .brindooCoral,
+                                    title: "Invia diagnostica",
+                                    subtitle: "Condividi il rapporto errori col supporto"
+                                )
+                            }
+                            .buttonStyle(.plain)
                         }
                         .background(Color.brindooSurface)
                         .clipShape(RoundedRectangle(cornerRadius: BrindooRadius.md))
@@ -297,6 +321,10 @@ struct SettingsView: View {
             }
             .sheet(isPresented: $showChangeEmail) {
                 ChangeEmailView()
+            }
+            .sheet(item: $diagnosticsPayload) { payload in
+                ActivityShareSheet(items: [payload.url])
+                    .presentationDetents([.medium, .large])
             }
             .alert("Esci dall'account?", isPresented: $showSignOutConfirm) {
                 Button("Annulla", role: .cancel) {}
