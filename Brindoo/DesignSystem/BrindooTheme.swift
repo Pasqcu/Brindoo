@@ -37,14 +37,26 @@ extension Color {
     /// Bordi e separatori
     static let brindooBorder = Color(.separator)
     
-    /// Verde successo (prenotazione confermata)
-    static let brindooSuccess = Color(red: 0.20, green: 0.70, blue: 0.45)
-    
-    /// Rosso errore (rifiuto, cancellazione)
-    static let brindooError = Color(red: 0.90, green: 0.30, blue: 0.30)
-    
-    /// Giallo warning (in attesa, pending)
-    static let brindooWarning = Color(red: 0.95, green: 0.70, blue: 0.20)
+    /// Verde successo (prenotazione confermata). Più luminoso in modalità scura.
+    static let brindooSuccess = Color(UIColor { trait in
+        trait.userInterfaceStyle == .dark
+            ? UIColor(red: 0.30, green: 0.80, blue: 0.55, alpha: 1)
+            : UIColor(red: 0.20, green: 0.70, blue: 0.45, alpha: 1)
+    })
+
+    /// Rosso errore (rifiuto, cancellazione). Più luminoso in modalità scura.
+    static let brindooError = Color(UIColor { trait in
+        trait.userInterfaceStyle == .dark
+            ? UIColor(red: 1.00, green: 0.45, blue: 0.45, alpha: 1)
+            : UIColor(red: 0.90, green: 0.30, blue: 0.30, alpha: 1)
+    })
+
+    /// Giallo warning (in attesa, pending). Più luminoso in modalità scura.
+    static let brindooWarning = Color(UIColor { trait in
+        trait.userInterfaceStyle == .dark
+            ? UIColor(red: 1.00, green: 0.78, blue: 0.35, alpha: 1)
+            : UIColor(red: 0.95, green: 0.70, blue: 0.20, alpha: 1)
+    })
 
     /// Colore distintivo per una categoria di servizio (in base allo slug).
     /// Aiuta a orientare l'occhio nella bacheca senza appiattire tutto sul corallo.

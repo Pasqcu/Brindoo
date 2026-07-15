@@ -61,6 +61,22 @@ struct BrindooEmptyState: View {
     }
 }
 
+/// Stato d'errore standard con "Riprova": da usare con LoadState.error.
+struct BrindooErrorState: View {
+    let message: String
+    var retry: () -> Void
+
+    var body: some View {
+        BrindooEmptyState(
+            icon: "exclamationmark.triangle",
+            title: message,
+            message: "Controlla la connessione e riprova.",
+            actionTitle: "Riprova",
+            action: retry
+        )
+    }
+}
+
 #Preview {
     BrindooEmptyState(
         icon: BrindooIcon.heart,
