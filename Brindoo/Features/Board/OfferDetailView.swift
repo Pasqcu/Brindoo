@@ -51,9 +51,6 @@ struct OfferDetailView: View {
     // Preferiti
     @State private var isFavorite: Bool = false
 
-    // Recensione post-evento
-    @State private var showWriteReview: Bool = false
-
     // Cartolina di condivisione
     @State private var isPreparingShare: Bool = false
     @State private var shareItems: SharePayload?
@@ -108,17 +105,21 @@ struct OfferDetailView: View {
                     .clipShape(RoundedRectangle(cornerRadius: BrindooRadius.md))
                 }
 
-                headerSection
+                OfferHeaderSection(
+                    offer: offer,
+                    currentStatus: currentStatus,
+                    organizerProfile: organizerProfile
+                )
 
                 Divider()
 
                 if !categories.isEmpty {
-                    categoriesSection
+                    OfferCategoriesSection(categories: categories)
                 }
 
-                infoSection
+                OfferInfoSection(offer: offer)
 
-                descriptionSection
+                OfferDescriptionSection(text: offer.description)
 
                 if let error = actionError {
                     errorBanner(error)
@@ -126,7 +127,23 @@ struct OfferDetailView: View {
 
                 if canClientInteract {
                     Divider()
-                    clientNegotiationSection
+                    ClientNegotiationSection(
+                        offer: offer,
+                        proposal: myProposal,
+                        organizerProfile: organizerProfile,
+                        onAcceptAtPrice: { Task { await acceptAtOrganizerPrice() } },
+                        onProposeNew: { showNegotiateSheet = .openAsClient(offer: offer) },
+                        onHide: { Task { await dismissOffer() } },
+                        onAccept: { p in Task { await acceptProposal(p) } },
+                        onReject: { p in Task { await rejectProposal(p) } },
+                        onCounter: { p in showNegotiateSheet = .counter(proposal: p, role: .client, offer: offer) },
+                        onWithdraw: { p in Task { await withdrawProposal(p) } },
+                        onOpenChat: { org in Task { await openChat(with: org) } },
+                        onMarkBooking: { p, status in Task { await markBooking(p, status) } },
+                        onMoveDate: { p in moveDateTarget = p },
+                        onAddToCalendar: { p in Task { await addToCalendar(p) } },
+                        onReviewSubmitted: { Task { await loadData() } }
+                    )
                 }
 
                 if isOwnOffer {
@@ -239,129 +256,6 @@ struct OfferDetailView: View {
         }
     }
 
-    // MARK: - Header / info / descrizione
-
-    @ViewBuilder
-    private var headerSection: some View {
-        VStack(alignment: .leading, spacing: BrindooSpacing.xs) {
-            HStack {
-                Text(offer.title)
-                    .font(BrindooFont.titleLarge)
-                Spacer()
-                statusBadge
-            }
-
-            if let profile = organizerProfile {
-                NavigationLink {
-                    OrganizerDetailView(organizer: profile)
-                } label: {
-                    HStack(spacing: BrindooSpacing.xs) {
-                        AvatarView(url: profile.avatarUrl, name: profile.fullName, size: 32)
-                        VStack(alignment: .leading, spacing: 0) {
-                            HStack(spacing: 4) {
-                                Text(profile.fullName ?? "Organizzatore")
-                                    .font(BrindooFont.bodyMedium.weight(.medium))
-                                if profile.isPro {
-                                    Image(systemName: "checkmark.seal.fill")
-                                        .font(.system(size: 11))
-                                        .foregroundStyle(Color.brindooCoral)
-                                }
-                            }
-                            Text("Vedi profilo")
-                                .font(BrindooFont.caption)
-                                .foregroundStyle(Color.brindooCoral)
-                        }
-                        Spacer()
-                        Image(systemName: "chevron.right")
-                            .font(.system(size: 12, weight: .semibold))
-                            .foregroundStyle(Color.brindooTextSecondary)
-                    }
-                }
-                .buttonStyle(.plain)
-            }
-        }
-    }
-
-    @ViewBuilder
-    private var statusBadge: some View {
-        let (color, text): (Color, String) = {
-            switch currentStatus {
-            case .active: return (.brindooSuccess, "Attiva")
-            case .paused: return (.brindooTextSecondary, "In pausa")
-            }
-        }()
-        HStack(spacing: 4) {
-            Circle().fill(color).frame(width: 6, height: 6)
-            Text(text)
-                .font(.system(size: 11, weight: .semibold))
-                .foregroundStyle(color)
-        }
-        .padding(.horizontal, 8)
-        .padding(.vertical, 4)
-        .background(color.opacity(0.1))
-        .clipShape(Capsule())
-    }
-
-    @ViewBuilder
-    private var categoriesSection: some View {
-        VStack(alignment: .leading, spacing: BrindooSpacing.xs) {
-            Text("Categorie").font(BrindooFont.titleSmall)
-            FlowLayoutView(spacing: BrindooSpacing.xs) {
-                ForEach(categories) { cat in
-                    HStack(spacing: 4) {
-                        Image(systemName: cat.icon).font(.system(size: 12))
-                        Text(cat.name).font(BrindooFont.bodySmall.weight(.medium))
-                    }
-                    .padding(.horizontal, BrindooSpacing.sm)
-                    .padding(.vertical, BrindooSpacing.xs)
-                    .foregroundStyle(Color.brindooCoral)
-                    .background(Color.brindooCoral.opacity(0.1))
-                    .clipShape(Capsule())
-                }
-            }
-        }
-    }
-
-    @ViewBuilder
-    private var infoSection: some View {
-        VStack(spacing: BrindooSpacing.xs) {
-            infoRow(icon: "mappin.and.ellipse", title: "Zona", value: offer.coverageArea)
-            infoRow(icon: "eurosign.circle", title: "Prezzo richiesto", value: offer.priceDisplay)
-        }
-        .padding(BrindooSpacing.md)
-        .background(Color.brindooSurface)
-        .clipShape(RoundedRectangle(cornerRadius: BrindooRadius.md))
-    }
-
-    @ViewBuilder
-    private func infoRow(icon: String, title: String, value: String) -> some View {
-        HStack {
-            HStack(spacing: BrindooSpacing.xs) {
-                Image(systemName: icon)
-                    .font(.system(size: 14))
-                    .foregroundStyle(Color.brindooCoral)
-                Text(title)
-                    .font(BrindooFont.bodySmall)
-                    .foregroundStyle(Color.brindooTextSecondary)
-            }
-            Spacer()
-            Text(value)
-                .font(BrindooFont.bodyMedium.weight(.medium))
-        }
-    }
-
-    @ViewBuilder
-    private var descriptionSection: some View {
-        VStack(alignment: .leading, spacing: BrindooSpacing.xs) {
-            Text("Descrizione")
-                .font(BrindooFont.titleSmall)
-            Text(offer.description)
-                .font(BrindooFont.bodyMedium)
-                .foregroundStyle(Color.brindooTextSecondary)
-                .fixedSize(horizontal: false, vertical: true)
-        }
-    }
-
     @ViewBuilder
     private func errorBanner(_ message: String) -> some View {
         HStack(spacing: BrindooSpacing.xs) {
@@ -373,186 +267,6 @@ struct OfferDetailView: View {
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(Color.brindooError.opacity(0.1))
         .clipShape(RoundedRectangle(cornerRadius: BrindooRadius.sm))
-    }
-
-    // MARK: - Cliente: 3 azioni iniziali oppure stato trattativa
-
-    @ViewBuilder
-    private var clientNegotiationSection: some View {
-        if let proposal = myProposal {
-            existingProposalCard(proposal)
-        } else {
-            initialClientActions
-        }
-    }
-
-    @ViewBuilder
-    private var initialClientActions: some View {
-        VStack(spacing: BrindooSpacing.sm) {
-            Text("Cosa vuoi fare?")
-                .font(BrindooFont.titleSmall)
-                .frame(maxWidth: .infinity, alignment: .leading)
-
-            BrindooButton(
-                "Accetta a \(offer.priceDisplay)",
-                style: .primary,
-                size: .large,
-                icon: "checkmark"
-            ) {
-                Task { await acceptAtOrganizerPrice() }
-            }
-
-            BrindooButton(
-                "Fai una proposta",
-                style: .secondary,
-                size: .medium,
-                icon: "arrow.left.arrow.right"
-            ) {
-                showNegotiateSheet = .openAsClient(offer: offer)
-            }
-
-            Button {
-                Task { await dismissOffer() }
-            } label: {
-                Label("Nascondi questa offerta", systemImage: "eye.slash")
-                    .font(BrindooFont.bodySmall.weight(.medium))
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, BrindooSpacing.sm)
-                    .foregroundStyle(Color.brindooTextSecondary)
-            }
-            .buttonStyle(.plain)
-        }
-    }
-
-    @ViewBuilder
-    private func existingProposalCard(_ proposal: OfferProposal) -> some View {
-        VStack(alignment: .leading, spacing: BrindooSpacing.sm) {
-            HStack {
-                Text("Trattativa in corso")
-                    .font(BrindooFont.titleSmall)
-                Spacer()
-                ProposalStatusPill(status: proposal.status)
-            }
-
-            // Mostra "ultima controproposta" — chi ha proposto cosa.
-            HStack(spacing: BrindooSpacing.sm) {
-                Image(systemName: proposal.lastProposer == .organizer ? "person.badge.shield.checkmark" : "person.fill")
-                    .font(.system(size: 18))
-                    .foregroundStyle(.white)
-                    .frame(width: 36, height: 36)
-                    .background(Color.brindooCoral)
-                    .clipShape(Circle())
-                VStack(alignment: .leading, spacing: 2) {
-                    Text(proposal.lastProposer == .organizer ? "Controproposta organizzatore" : "La tua proposta")
-                        .font(BrindooFont.bodySmall.weight(.semibold))
-                    Text(proposal.currentPriceDisplay)
-                        .font(BrindooFont.titleMedium)
-                        .foregroundStyle(Color.brindooCoral)
-                }
-                Spacer()
-                Text(proposal.updatedAtDisplay)
-                    .font(BrindooFont.caption)
-                    .foregroundStyle(Color.brindooTextSecondary)
-            }
-
-            if let eventDate = proposal.eventDateDisplay {
-                EventDateRow(dateText: eventDate)
-            }
-
-            if let lastMessage = proposal.lastMessage, !lastMessage.isEmpty {
-                Text("\"\(lastMessage)\"")
-                    .font(BrindooFont.bodySmall)
-                    .foregroundStyle(Color.brindooTextSecondary)
-                    .fixedSize(horizontal: false, vertical: true)
-            }
-
-            clientProposalActions(proposal)
-        }
-        .padding(BrindooSpacing.md)
-        .background(Color.brindooSurface)
-        .clipShape(RoundedRectangle(cornerRadius: BrindooRadius.md))
-    }
-
-    @ViewBuilder
-    private func clientProposalActions(_ proposal: OfferProposal) -> some View {
-        if proposal.status == .accepted, let org = organizerProfile {
-            VStack(spacing: BrindooSpacing.sm) {
-                BookingStatusRow(proposal: proposal)
-
-                BrindooButton("Apri chat", style: .primary, size: .medium, icon: "bubble.left.and.bubble.right.fill") {
-                    Task { await openChat(with: org) }
-                }
-
-                if proposal.effectiveBooking == .completed {
-                    BrindooButton("Lascia una recensione", style: .secondary, size: .medium, icon: "star.fill") {
-                        showWriteReview = true
-                    }
-                }
-
-                BookingActionButtons(
-                    proposal: proposal,
-                    onMark: { status in Task { await markBooking(proposal, status) } },
-                    onMoveDate: { moveDateTarget = proposal },
-                    onAddToCalendar: proposal.eventDate == nil ? nil : { Task { await addToCalendar(proposal) } }
-                )
-            }
-            .sheet(isPresented: $showWriteReview) {
-                WriteReviewView(organizer: org, existingReview: nil) {
-                    Task { await loadData() }
-                }
-            }
-        } else if proposal.status == .pending {
-            if proposal.lastProposer == .organizer {
-                // Palla al cliente: può accettare, controproporre o rifiutare la controproposta.
-                VStack(spacing: BrindooSpacing.sm) {
-                    HStack(spacing: BrindooSpacing.sm) {
-                        Button { Task { await rejectProposal(proposal) } } label: {
-                            Label("Rifiuta", systemImage: "xmark")
-                                .font(BrindooFont.bodySmall.weight(.semibold))
-                                .frame(maxWidth: .infinity)
-                                .padding(.vertical, 10)
-                                .foregroundStyle(Color.brindooError)
-                                .background(Color.brindooError.opacity(0.1))
-                                .clipShape(RoundedRectangle(cornerRadius: BrindooRadius.sm))
-                        }
-                        .buttonStyle(.plain)
-
-                        Button { Task { await acceptProposal(proposal) } } label: {
-                            Label("Accetta", systemImage: "checkmark")
-                                .font(BrindooFont.bodySmall.weight(.semibold))
-                                .frame(maxWidth: .infinity)
-                                .padding(.vertical, 10)
-                                .foregroundStyle(.white)
-                                .background(Color.brindooSuccess)
-                                .clipShape(RoundedRectangle(cornerRadius: BrindooRadius.sm))
-                        }
-                        .buttonStyle(.plain)
-                    }
-
-                    BrindooButton(
-                        "Controproponi",
-                        style: .secondary,
-                        size: .medium,
-                        icon: "arrow.left.arrow.right"
-                    ) {
-                        showNegotiateSheet = .counter(proposal: proposal, role: .client, offer: offer)
-                    }
-                }
-            } else {
-                // L'utente sta aspettando una risposta dall'organizzatore.
-                Text("In attesa di risposta dall'organizzatore.")
-                    .font(BrindooFont.bodySmall)
-                    .foregroundStyle(Color.brindooTextSecondary)
-
-                BrindooButton(
-                    "Ritira proposta",
-                    style: .tertiary,
-                    size: .medium
-                ) {
-                    Task { await withdrawProposal(proposal) }
-                }
-            }
-        }
     }
 
     // MARK: - Lato organizzatore: gestione + proposte ricevute

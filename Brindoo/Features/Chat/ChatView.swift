@@ -53,22 +53,32 @@ struct ChatView: View {
     var body: some View {
         VStack(spacing: 0) {
             if let proposal = linkedProposal {
-                negotiationBanner(proposal)
+                ChatNegotiationBanner(proposal: proposal)
             }
 
             messagesScroll
-            
+
             if isBlocked {
-                blockedBanner
+                ChatBlockedBanner { Task { await unblock() } }
             } else {
                 if otherIsTyping {
-                    typingIndicator
+                    ChatTypingIndicator(
+                        userName: otherUser.fullName ?? "Utente",
+                        isAnimating: otherIsTyping
+                    )
                 }
-                if let editingMessage {
-                    editBanner(editingMessage)
+                if editingMessage != nil {
+                    ChatEditBanner {
+                        editingMessage = nil
+                        inputText = ""
+                    }
                 }
                 if let replyingTo {
-                    replyBanner(replyingTo)
+                    ChatReplyBanner(
+                        message: replyingTo,
+                        replyToName: replyingTo.senderId == session.userID ? "te stesso" : otherUser.fullName ?? "utente",
+                        onClose: { self.replyingTo = nil }
+                    )
                 }
                 composer
             }
@@ -253,7 +263,7 @@ struct ChatView: View {
                     ForEach(messages) { message in
                         let isOwn = message.senderId == session.userID
                         if message.messageType == .system {
-                            systemNote(message)
+                            ChatSystemNote(text: message.content)
                                 .id(message.id)
                         } else {
                         MessageBubble(
@@ -311,92 +321,6 @@ struct ChatView: View {
         return messages.first { $0.id == id }
     }
 
-    /// Nota "di sistema" centrata (es. data evento spostata).
-    @ViewBuilder
-    private func systemNote(_ message: Message) -> some View {
-        Text(message.content)
-            .font(BrindooFont.caption.weight(.medium))
-            .foregroundStyle(Color.brindooTextSecondary)
-            .multilineTextAlignment(.center)
-            .padding(.horizontal, BrindooSpacing.md)
-            .padding(.vertical, BrindooSpacing.xs)
-            .background(Color.brindooSurface)
-            .clipShape(Capsule())
-            .frame(maxWidth: .infinity)
-            .padding(.vertical, BrindooSpacing.xxs)
-    }
-    
-    // MARK: - Banners
-    
-    @ViewBuilder
-    private var blockedBanner: some View {
-        VStack(spacing: BrindooSpacing.xs) {
-            HStack(spacing: BrindooSpacing.xs) {
-                Image(systemName: "hand.raised.slash.fill")
-                Text("Utente bloccato")
-                    .font(BrindooFont.bodyMedium.weight(.medium))
-            }
-            .foregroundStyle(Color.brindooError)
-            
-            Button {
-                Task { await unblock() }
-            } label: {
-                Text("Sblocca")
-                    .font(BrindooFont.bodySmall.weight(.semibold))
-                    .foregroundStyle(Color.brindooCoral)
-            }
-        }
-        .frame(maxWidth: .infinity)
-        .padding(BrindooSpacing.md)
-        .background(Color.brindooError.opacity(0.08))
-    }
-    
-    @ViewBuilder
-    private func replyBanner(_ message: Message) -> some View {
-        HStack(spacing: BrindooSpacing.sm) {
-            Rectangle().fill(Color.brindooCoral).frame(width: 3)
-            VStack(alignment: .leading, spacing: 2) {
-                Text("Rispondi a \(message.senderId == session.userID ? "te stesso" : otherUser.fullName ?? "utente")")
-                    .font(BrindooFont.caption.weight(.semibold))
-                    .foregroundStyle(Color.brindooCoral)
-                Text(message.messageType == .image ? "📷 Foto" : message.content)
-                    .font(BrindooFont.caption)
-                    .foregroundStyle(Color.brindooTextSecondary)
-                    .lineLimit(1)
-            }
-            Spacer()
-            Button { replyingTo = nil } label: {
-                Image(systemName: "xmark.circle.fill")
-                    .foregroundStyle(Color.brindooTextSecondary)
-            }
-        }
-        .padding(.horizontal, BrindooSpacing.md)
-        .padding(.vertical, BrindooSpacing.xs)
-        .background(Color.brindooSurface)
-    }
-    
-    @ViewBuilder
-    private func editBanner(_ message: Message) -> some View {
-        HStack(spacing: BrindooSpacing.sm) {
-            Image(systemName: "pencil")
-                .foregroundStyle(Color.brindooCoral)
-            Text("Modifica messaggio")
-                .font(BrindooFont.caption.weight(.semibold))
-                .foregroundStyle(Color.brindooCoral)
-            Spacer()
-            Button {
-                editingMessage = nil
-                inputText = ""
-            } label: {
-                Image(systemName: "xmark.circle.fill")
-                    .foregroundStyle(Color.brindooTextSecondary)
-            }
-        }
-        .padding(.horizontal, BrindooSpacing.md)
-        .padding(.vertical, BrindooSpacing.xs)
-        .background(Color.brindooSurface)
-    }
-    
     // MARK: - Composer
     
     @ViewBuilder
@@ -499,30 +423,6 @@ struct ChatView: View {
         }
     }
 
-    @ViewBuilder
-    private var typingIndicator: some View {
-        HStack(spacing: BrindooSpacing.xs) {
-            ForEach(0..<3, id: \.self) { i in
-                Circle()
-                    .fill(Color.brindooTextSecondary)
-                    .frame(width: 6, height: 6)
-                    .opacity(0.6)
-                    .scaleEffect(otherIsTyping ? 1.0 : 0.4)
-                    .animation(
-                        .easeInOut(duration: 0.6).repeatForever().delay(Double(i) * 0.18),
-                        value: otherIsTyping
-                    )
-            }
-            Text("\(otherUser.fullName ?? "Utente") sta scrivendo…")
-                .font(BrindooFont.caption)
-                .foregroundStyle(Color.brindooTextSecondary)
-            Spacer()
-        }
-        .padding(.horizontal, BrindooSpacing.md)
-        .padding(.vertical, BrindooSpacing.xs)
-        .transition(.opacity)
-    }
-    
     private func markRead() async {
         try? await MessageService.shared.markMessagesAsRead(conversationId: conversation.id)
         // Quando l'utente apre la chat azzera anche il flag manuale "da leggere"
@@ -540,35 +440,6 @@ struct ChatView: View {
         linkedProposal = all.first {
             $0.clientId == otherUser.id || $0.organizerId == otherUser.id
         }
-    }
-
-    @ViewBuilder
-    private func negotiationBanner(_ proposal: OfferProposal) -> some View {
-        Button {
-            DeepLinkRouter.shared.selectedTab = 1 // Trattative
-        } label: {
-            HStack(spacing: BrindooSpacing.xs) {
-                Image(systemName: "arrow.left.arrow.right")
-                    .font(.system(size: 14, weight: .semibold))
-                VStack(alignment: .leading, spacing: 0) {
-                    Text(proposal.status == .accepted ? "Trattativa conclusa" : "Trattativa in corso")
-                        .font(BrindooFont.caption.weight(.semibold))
-                    Text(proposal.currentPriceDisplay)
-                        .font(BrindooFont.caption)
-                        .foregroundStyle(Color.brindooTextSecondary)
-                }
-                Spacer()
-                Text("Apri")
-                    .font(BrindooFont.caption.weight(.semibold))
-                Image(systemName: "chevron.right")
-                    .font(.system(size: 11, weight: .semibold))
-            }
-            .foregroundStyle(Color.brindooCoral)
-            .padding(.horizontal, BrindooSpacing.md)
-            .padding(.vertical, BrindooSpacing.xs)
-            .background(Color.brindooCoral.opacity(0.08))
-        }
-        .buttonStyle(.plain)
     }
 
     private func sendText() async {
