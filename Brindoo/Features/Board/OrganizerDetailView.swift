@@ -15,6 +15,8 @@ struct OrganizerDetailView: View {
 
     @State private var categories: [OrganizerCategoryDetail] = []
     @State private var portfolioItems: [PortfolioItem] = []
+    /// Giorni occupati del professionista ("yyyy-MM-dd"), per il calendario.
+    @State private var unavailableDays: Set<String> = []
     @State private var reviewSummary: ReviewSummary?
     @State private var navigateToChat: Conversation?
     @State private var isStartingChat: Bool = false
@@ -219,6 +221,15 @@ struct OrganizerDetailView: View {
         }
 
         coverageSection
+
+        // Disponibilità: i clienti vedono i giorni occupati prima di scrivere.
+        if !isViewingOwn && !unavailableDays.isEmpty {
+            VStack(alignment: .leading, spacing: BrindooSpacing.xs) {
+                Text("Disponibilità")
+                    .font(BrindooFont.titleSmall)
+                AvailabilityCalendarView(unavailableDays: unavailableDays)
+            }
+        }
 
         if (organizer.bio ?? "").isEmpty && categories.isEmpty {
             tabEmptyHint(icon: "person.text.rectangle",
@@ -633,6 +644,12 @@ struct OrganizerDetailView: View {
         // Conteggio recensioni verificate: alimenta il distintivo "eventi verificati".
         if let reviews = try? await ReviewService.shared.fetchReviews(organizerId: organizer.id) {
             verifiedReviewCount = reviews.filter(\.isVerified).count
+        }
+
+        // Giorni occupati per il calendario disponibilità (best-effort).
+        if !isViewingOwn {
+            unavailableDays = (try? await AvailabilityService.shared
+                .fetchUnavailableDays(organizerId: organizer.id)) ?? []
         }
     }
 
