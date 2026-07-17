@@ -83,21 +83,3 @@ enum BrindooIcon {
     static let cloudOffline = "icloud.slash"
 }
 
-/// Wrapper colorato per le icone con dimensione standard
-struct BrindooIconView: View {
-    let name: String
-    let size: CGFloat
-    let color: Color
-
-    init(_ name: String, size: CGFloat = 18, color: Color = .brindooTextPrimary) {
-        self.name = name
-        self.size = size
-        self.color = color
-    }
-
-    var body: some View {
-        Image(systemName: name)
-            .font(.system(size: size, weight: .semibold))
-            .foregroundStyle(color)
-    }
-}
