@@ -87,6 +87,15 @@ final class NinthRoundLogicTests: XCTestCase {
         }
     }
 
+    // MARK: - FAQ
+
+    func test_faq_limiteEIdentita() {
+        XCTAssertEqual(ProfileFAQ.maxCount, 5)
+        let a = ProfileFAQ(question: "Porti l'attrezzatura?", answer: "Sì")
+        let b = ProfileFAQ(question: "Porti l'attrezzatura?", answer: "No")
+        XCTAssertNotEqual(a.id, b.id)
+    }
+
     // MARK: - Mesi di punta
 
     func test_mesiDiPunta() {
