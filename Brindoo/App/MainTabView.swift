@@ -68,6 +68,36 @@ struct MainTabView: View {
         }
         .tint(.brindooCoral)
         .environment(router)
+        // Consenso legale con prova sul server: prima i Termini (tutti),
+        // poi la dichiarazione del professionista. Bloccanti finché non firmati.
+        .task(id: session.currentProfile?.id) {
+            // Chi ha già accettato nell'onboarding su questo dispositivo non
+            // deve rifirmare: registriamo la prova sul server in silenzio.
+            // Il pannello resta per i casi rimanenti (nuovo dispositivo,
+            // Termini aggiornati).
+            guard let p = session.currentProfile, p.needsTermsAcceptance,
+                  p.termsVersion == nil,
+                  !(UserDefaults.standard.string(forKey: "brindoo.legal.acceptedTermsAt") ?? "").isEmpty
+            else { return }
+            if let updated = try? await ProfileService.shared.recordTermsAcceptance() {
+                session.updateLocalProfile(updated)
+            }
+        }
+        .fullScreenCover(isPresented: Binding(
+            get: { session.currentProfile?.needsTermsAcceptance == true },
+            set: { _ in }
+        )) {
+            LegalConsentGate()
+        }
+        .fullScreenCover(isPresented: Binding(
+            get: {
+                guard let p = session.currentProfile else { return false }
+                return !p.needsTermsAcceptance && p.needsProfessionalDeclaration
+            },
+            set: { _ in }
+        )) {
+            ProfessionalDeclarationGate()
+        }
         .task(id: router.selectedTab) { await refreshBadges() }
         .onChange(of: scenePhase) { _, newPhase in
             // Al rientro in app i conteggi (e il numerino sull'icona)

@@ -91,6 +91,8 @@ enum AgreementSummary {
         lines.append("Regole di annullamento:")
         lines.append(CancellationPolicy.summaryText)
         lines.append(CancellationPolicy.note)
+        lines.append("")
+        lines.append("Brindoo mette in contatto le parti e non è parte dell'accordo.")
         return lines.joined(separator: "\n")
     }
 }

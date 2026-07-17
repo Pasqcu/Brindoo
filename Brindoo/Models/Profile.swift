@@ -77,6 +77,11 @@ struct Profile: Identifiable, Codable, Hashable, Equatable {
     let faqs: [ProfileFAQ]
     /// True se l'amministrazione ha verificato l'identità del professionista.
     let identityVerified: Bool
+    /// Prova del consenso: quando e quale versione dei Termini è stata accettata.
+    let termsAcceptedAt: Date?
+    let termsVersion: String?
+    /// Quando il professionista ha confermato la dichiarazione di responsabilità.
+    let professionalDeclarationAt: Date?
     let createdAt: Date
     let updatedAt: Date
 
@@ -98,6 +103,9 @@ struct Profile: Identifiable, Codable, Hashable, Equatable {
         case responseMinutes = "response_minutes"
         case faqs
         case identityVerified = "identity_verified"
+        case termsAcceptedAt = "terms_accepted_at"
+        case termsVersion = "terms_version"
+        case professionalDeclarationAt = "professional_declaration_at"
         case createdAt = "created_at"
         case updatedAt = "updated_at"
     }
@@ -120,6 +128,9 @@ struct Profile: Identifiable, Codable, Hashable, Equatable {
         responseMinutes = try c.decodeIfPresent(Int.self, forKey: .responseMinutes)
         faqs = try c.decodeIfPresent([ProfileFAQ].self, forKey: .faqs) ?? []
         identityVerified = try c.decodeIfPresent(Bool.self, forKey: .identityVerified) ?? false
+        termsAcceptedAt = try c.decodeIfPresent(Date.self, forKey: .termsAcceptedAt)
+        termsVersion = try c.decodeIfPresent(String.self, forKey: .termsVersion)
+        professionalDeclarationAt = try c.decodeIfPresent(Date.self, forKey: .professionalDeclarationAt)
 
         // vacation_until è memorizzato come date (YYYY-MM-DD).
         if let dateString = try c.decodeIfPresent(String.self, forKey: .vacationUntil),
@@ -156,6 +167,9 @@ struct Profile: Identifiable, Codable, Hashable, Equatable {
         try c.encodeIfPresent(responseMinutes, forKey: .responseMinutes)
         try c.encode(faqs, forKey: .faqs)
         try c.encode(identityVerified, forKey: .identityVerified)
+        try c.encodeIfPresent(termsAcceptedAt, forKey: .termsAcceptedAt)
+        try c.encodeIfPresent(termsVersion, forKey: .termsVersion)
+        try c.encodeIfPresent(professionalDeclarationAt, forKey: .professionalDeclarationAt)
         try c.encode(createdAt, forKey: .createdAt)
         try c.encode(updatedAt, forKey: .updatedAt)
     }

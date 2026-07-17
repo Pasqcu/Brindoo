@@ -178,6 +178,11 @@ struct PortfolioGalleryView: View {
                 }
                 .padding(.top, BrindooSpacing.md)
                 .disabled(isUploading)
+
+                Text("Caricando le foto dichiari di averne i diritti.")
+                    .font(BrindooFont.caption)
+                    .foregroundStyle(Color.brindooTextSecondary)
+                    .padding(.top, BrindooSpacing.xs)
             }
             
             Spacer()

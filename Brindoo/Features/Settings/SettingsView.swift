@@ -95,6 +95,15 @@ struct SettingsView: View {
                     // MARK: - Privacy & Chat
                     SettingsSection(title: "Privacy & Chat") {
                         VStack(spacing: 0) {
+                            NavigationLink {
+                                GdprRightsView()
+                            } label: {
+                                SettingsRow(icon: "checkmark.shield", iconColor: .brindooCoral, title: "I tuoi dati e diritti", subtitle: "GDPR: copia dei dati, correzione, cancellazione")
+                            }
+                            .buttonStyle(.plain)
+
+                            Divider().padding(.leading, 56)
+
                             SettingsToggleRow(
                                 icon: "checkmark.message.fill",
                                 iconColor: .brindooCoral,
@@ -187,6 +196,15 @@ struct SettingsView: View {
                     // MARK: - Assistenza
                     SettingsSection(title: "Assistenza") {
                         VStack(spacing: 0) {
+                            NavigationLink {
+                                AppGuideView()
+                            } label: {
+                                SettingsRow(icon: "book", iconColor: .brindooCoral, title: "Guida all'app", subtitle: "Come si usa, scheda per scheda")
+                            }
+                            .buttonStyle(.plain)
+
+                            Divider().padding(.leading, 56)
+
                             NavigationLink {
                                 HelpView()
                             } label: {

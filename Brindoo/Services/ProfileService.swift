@@ -214,6 +214,44 @@ final class ProfileService {
             .value
     }
 
+    /// Registra sul server l'accettazione dei Termini (data + versione corrente).
+    func recordTermsAcceptance() async throws -> Profile {
+        guard let userID = SupabaseManager.shared.currentUserID else {
+            throw NSError(domain: "Profile", code: 401)
+        }
+        struct Payload: Encodable {
+            let terms_accepted_at: String
+            let terms_version: String
+        }
+        return try await client
+            .from("profiles")
+            .update(Payload(
+                terms_accepted_at: ISO8601DateFormatter().string(from: Date()),
+                terms_version: LegalVersion.current
+            ))
+            .eq("id", value: userID)
+            .select()
+            .single()
+            .execute()
+            .value
+    }
+
+    /// Registra la dichiarazione di responsabilità del professionista.
+    func recordProfessionalDeclaration() async throws -> Profile {
+        guard let userID = SupabaseManager.shared.currentUserID else {
+            throw NSError(domain: "Profile", code: 401)
+        }
+        struct Payload: Encodable { let professional_declaration_at: String }
+        return try await client
+            .from("profiles")
+            .update(Payload(professional_declaration_at: ISO8601DateFormatter().string(from: Date())))
+            .eq("id", value: userID)
+            .select()
+            .single()
+            .execute()
+            .value
+    }
+
     /// Aggiornamento read receipts
     func updateReadReceipts(enabled: Bool) async throws {
         guard let userID = SupabaseManager.shared.currentUserID else { return }

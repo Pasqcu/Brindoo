@@ -227,6 +227,10 @@ struct CreateOfferView: View {
                 .font(BrindooFont.bodySmall.weight(.medium))
                 .foregroundStyle(Color.brindooTextSecondary)
 
+            Text("Caricando una foto dichiari di averne i diritti.")
+                .font(BrindooFont.caption)
+                .foregroundStyle(Color.brindooTextSecondary)
+
             PhotosPicker(selection: $coverPickerItem, matching: .images) {
                 ZStack {
                     if let coverImage {

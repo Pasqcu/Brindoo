@@ -22,6 +22,10 @@ chat in tempo reale, recensioni verificate, agenda eventi. Backend Supabase.
   badge "identità verificata" assegnato dall'amministrazione
 - **Extra**: piano Pro (StoreKit), Boost, referral, preventivo guidato,
   Live Activity per le trattative, notifiche push
+- **Legale e GDPR**: accettazione Termini con prova sul server (data +
+  versione, riproposta se i Termini cambiano), dichiarazione di
+  responsabilità del professionista, esportazione dei propri dati,
+  pagina diritti GDPR e guida all'uso nelle Impostazioni
 
 ## Struttura
 
