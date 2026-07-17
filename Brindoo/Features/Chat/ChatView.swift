@@ -87,66 +87,20 @@ struct ChatView: View {
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .principal) {
-                Button {
+                ChatHeaderView(user: otherUser, isOnline: otherIsTyping) {
                     navigateToProfile = true
-                } label: {
-                    HStack(spacing: BrindooSpacing.xs) {
-                        AvatarView(url: otherUser.avatarUrl, name: otherUser.fullName, size: 32)
-                        VStack(alignment: .leading, spacing: 0) {
-                            Text(otherUser.displayName)
-                                .font(BrindooFont.bodyMedium.weight(.semibold))
-                                .foregroundStyle(Color.brindooTextPrimary)
-                            if otherUser.isPro {
-                                Text("Pro")
-                                    .font(BrindooFont.caption)
-                                    .foregroundStyle(Color.brindooCoral)
-                            }
-                        }
-                    }
                 }
-                .buttonStyle(.plain)
             }
 
             ToolbarItem(placement: .topBarTrailing) {
-                Menu {
-                    Button {
-                        navigateToProfile = true
-                    } label: {
-                        Label("Visualizza profilo", systemImage: "person.circle")
-                    }
-
-                    Button(role: .destructive) {
-                        showDeleteConvConfirm = true
-                    } label: {
-                        Label("Elimina conversazione", systemImage: "trash")
-                    }
-
-                    if !isBlocked {
-                        Button(role: .destructive) {
-                            showBlockConfirm = true
-                        } label: {
-                            Label("Blocca utente", systemImage: "hand.raised.slash")
-                        }
-                    } else {
-                        Button {
-                            Task { await unblock() }
-                        } label: {
-                            Label("Sblocca utente", systemImage: "hand.raised")
-                        }
-                    }
-
-                    Divider()
-
-                    Button(role: .destructive) {
-                        showReportUser = true
-                    } label: {
-                        Label("Segnala utente", systemImage: "exclamationmark.bubble")
-                    }
-                } label: {
-                    Image(systemName: "ellipsis")
-                        .foregroundStyle(Color.brindooTextPrimary)
-                }
-                .accessibilityLabel("Opzioni conversazione")
+                ChatOptionsMenu(
+                    isBlocked: isBlocked,
+                    onViewProfile: { navigateToProfile = true },
+                    onDeleteConversation: { showDeleteConvConfirm = true },
+                    onBlock: { showBlockConfirm = true },
+                    onUnblock: { Task { await unblock() } },
+                    onReport: { showReportUser = true }
+                )
             }
         }
         .task {
@@ -254,71 +208,30 @@ struct ChatView: View {
     }
     
     // MARK: - Messages scroll
-    
+
     @ViewBuilder
     private var messagesScroll: some View {
-        ScrollViewReader { proxy in
-            ScrollView {
-                LazyVStack(spacing: BrindooSpacing.xs) {
-                    ForEach(messages) { message in
-                        let isOwn = message.senderId == session.userID
-                        if message.messageType == .system {
-                            ChatSystemNote(text: message.content)
-                                .id(message.id)
-                        } else {
-                        MessageBubble(
-                            message: message,
-                            isOwn: isOwn,
-                            repliedTo: repliedToMessage(for: message),
-                            otherUserReadReceiptsEnabled: otherUser.readReceiptsEnabled,
-                            myReadReceiptsEnabled: session.currentProfile?.readReceiptsEnabled ?? true,
-                            onTapImage: { url in
-                                fullScreenImage = (url, message)
-                            },
-                            onTapBomb: {
-                                bombViewerMessage = message
-                            },
-                            onReply: {
-                                replyingTo = message
-                                editingMessage = nil
-                            },
-                            onEdit: {
-                                guard isOwn, message.isEditable else { return }
-                                editingMessage = message
-                                inputText = message.content
-                                replyingTo = nil
-                            },
-                            onDelete: {
-                                messageToDelete = message
-                            },
-                            onReport: {
-                                messageToReport = message
-                            }
-                        )
-                        .id(message.id)
-                        }
-                    }
-                }
-                .padding(.horizontal, BrindooSpacing.sm)
-                .padding(.vertical, BrindooSpacing.sm)
-            }
-            .onChange(of: messages.count) { _, _ in
-                if let last = messages.last {
-                    withAnimation { proxy.scrollTo(last.id, anchor: .bottom) }
-                }
-            }
-            .onAppear {
-                if let last = messages.last {
-                    proxy.scrollTo(last.id, anchor: .bottom)
-                }
-            }
-            .refreshable { await loadMessages() }
-        }
-    }
-    
-    private func repliedToMessage(for message: Message) -> Message? {
-        guard let id = message.repliedToId else { return nil }
-        return messages.first { $0.id == id }
+        ChatMessagesList(
+            messages: messages,
+            currentUserId: session.userID,
+            otherUser: otherUser,
+            myReadReceiptsEnabled: session.currentProfile?.readReceiptsEnabled ?? true,
+            onTapImage: { url, message in fullScreenImage = (url, message) },
+            onTapBomb: { message in bombViewerMessage = message },
+            onReply: { message in
+                replyingTo = message
+                editingMessage = nil
+            },
+            onEdit: { message in
+                guard message.senderId == session.userID, message.isEditable else { return }
+                editingMessage = message
+                inputText = message.content
+                replyingTo = nil
+            },
+            onDelete: { message in messageToDelete = message },
+            onReport: { message in messageToReport = message },
+            onRefresh: { await loadMessages() }
+        )
     }
 
     // MARK: - Composer
