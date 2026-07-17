@@ -16,7 +16,8 @@ import UIKit
 
 /// Tiene su disco le ultime righe di errore, così un problema segnalato
 /// dall'utente arriva al supporto con il contesto di cosa è andato storto.
-final class BrindooLogStore: @unchecked Sendable {
+// Nonisolated: riceve righe da qualunque thread, la coda interna serializza.
+nonisolated final class BrindooLogStore: @unchecked Sendable {
 
     static let shared = BrindooLogStore()
 
@@ -24,7 +25,7 @@ final class BrindooLogStore: @unchecked Sendable {
     /// Oltre questa soglia il file viene dimezzato (si tiene la parte recente).
     private let maxBytes = 200_000
 
-    private lazy var fileURL: URL? = {
+    private let fileURL: URL? = {
         guard let dir = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first
         else { return nil }
         try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
