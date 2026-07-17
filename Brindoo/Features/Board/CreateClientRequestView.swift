@@ -19,6 +19,7 @@ struct CreateClientRequestView: View {
 
     @State private var hasEventDate: Bool = false
     @State private var eventDate: Date = Calendar.current.date(byAdding: .day, value: 14, to: Date()) ?? Date()
+    @State private var isUrgent: Bool = false
 
     @State private var allCategories: [ServiceCategory] = []
     @State private var selectedCategoryId: UUID?
@@ -104,6 +105,28 @@ struct CreateClientRequestView: View {
                             .environment(\.locale, Locale(identifier: "it_IT"))
                             .font(BrindooFont.bodyMedium)
                         }
+                    }
+                    .padding(BrindooSpacing.md)
+                    .background(Color.brindooSurface)
+                    .clipShape(RoundedRectangle(cornerRadius: BrindooRadius.md))
+
+                    // Urgenza (facoltativa)
+                    VStack(alignment: .leading, spacing: BrindooSpacing.xs) {
+                        Toggle(isOn: $isUrgent) {
+                            HStack(spacing: 6) {
+                                Image(systemName: "flame.fill")
+                                    .font(.system(size: 14))
+                                    .foregroundStyle(Color.brindooError)
+                                Text("Richiesta urgente")
+                                    .font(BrindooFont.bodyMedium)
+                            }
+                        }
+                        .tint(Color.brindooError)
+                        .disabled(isSaving)
+
+                        Text("L'evento è vicino: la richiesta risalta in cima alla bacheca dei professionisti.")
+                            .font(BrindooFont.caption)
+                            .foregroundStyle(Color.brindooTextSecondary)
                     }
                     .padding(BrindooSpacing.md)
                     .background(Color.brindooSurface)
@@ -229,7 +252,8 @@ struct CreateClientRequestView: View {
                 area: trimmedArea,
                 eventDate: eventDateString,
                 budget: budgetValue,
-                categoryId: selectedCategoryId
+                categoryId: selectedCategoryId,
+                urgent: isUrgent
             )
             BrindooHaptics.notify(.success)
             dismiss()

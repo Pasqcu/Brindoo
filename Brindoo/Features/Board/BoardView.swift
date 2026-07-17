@@ -148,6 +148,17 @@ struct BoardView: View {
                 }
             }
             if isClient {
+                // Preventivo guidato: tre domande e subito le offerte adatte.
+                ToolbarItem(placement: .topBarTrailing) {
+                    NavigationLink {
+                        GuidedQuoteView()
+                    } label: {
+                        Image(systemName: "wand.and.stars")
+                            .font(.system(size: 16, weight: .semibold))
+                            .foregroundStyle(Color.brindooCoral)
+                    }
+                    .accessibilityLabel("Preventivo guidato")
+                }
                 ToolbarItem(placement: .topBarTrailing) {
                     Button {
                         showFilters = true

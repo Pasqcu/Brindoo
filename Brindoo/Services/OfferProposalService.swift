@@ -374,6 +374,16 @@ final class OfferProposalService {
             .execute()
     }
 
+    /// Segna (o toglie) l'acconto versato su una trattativa accettata.
+    func setDepositPaid(proposalId: UUID, paid: Bool) async throws {
+        struct U: Encodable { let deposit_paid: Bool }
+        try await client
+            .from("offer_proposals")
+            .update(U(deposit_paid: paid))
+            .eq("id", value: proposalId)
+            .execute()
+    }
+
     private func insertRound(
         proposalId: UUID,
         role: ProposerRole,

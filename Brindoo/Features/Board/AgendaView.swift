@@ -16,6 +16,7 @@ struct AgendaView: View {
     @State private var state: LoadState<[OfferProposal]> = .loading
     @State private var offerMap: [UUID: ServiceOffer] = [:]
     @State private var profileMap: [UUID: Profile] = [:]
+    @State private var checklistEntry: Entry?
 
     private var proposals: [OfferProposal] { state.value ?? [] }
 
@@ -75,6 +76,15 @@ struct AgendaView: View {
                         if !upcoming.isEmpty {
                             section(title: "In arrivo", icon: "calendar.badge.clock",
                                     color: .brindooCoral, entries: upcoming)
+
+                            Text("Tieni premuto un evento per acconto e checklist.")
+                                .font(BrindooFont.caption)
+                                .foregroundStyle(Color.brindooTextSecondary)
+                                .frame(maxWidth: .infinity, alignment: .leading)
+
+                            if session.currentProfile?.role == .client {
+                                completeEventCard
+                            }
                         }
                         if !past.isEmpty {
                             section(title: "Passati", icon: "checkmark.circle",
@@ -89,8 +99,55 @@ struct AgendaView: View {
         .background(Color.brindooBackground)
         .navigationTitle("Agenda eventi")
         .navigationBarTitleDisplayMode(.inline)
+        .sheet(item: $checklistEntry) { entry in
+            EventChecklistView(
+                proposalId: entry.proposal.id,
+                eventDate: entry.date,
+                offerTitle: offerMap[entry.proposal.offerId]?.title ?? "Evento"
+            )
+        }
         .task { await loadData() }
         .refreshable { await loadData() }
+    }
+
+    /// Invito a completare l'evento con altri servizi per la stessa data.
+    @ViewBuilder
+    private var completeEventCard: some View {
+        NavigationLink {
+            GuidedQuoteView(prefilledDate: upcoming.first?.date)
+        } label: {
+            HStack(spacing: BrindooSpacing.sm) {
+                Image(systemName: "sparkles")
+                    .font(.system(size: 18))
+                    .foregroundStyle(Color.brindooCoral)
+                    .frame(width: 36, height: 36)
+                    .background(Color.brindooCoral.opacity(0.1))
+                    .clipShape(Circle())
+
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Completa il tuo evento")
+                        .font(BrindooFont.bodyMedium.weight(.semibold))
+                        .foregroundStyle(Color.brindooTextPrimary)
+                    Text("Ti serve altro per la stessa data? Musica, foto, catering…")
+                        .font(BrindooFont.caption)
+                        .foregroundStyle(Color.brindooTextSecondary)
+                }
+
+                Spacer()
+
+                Image(systemName: "chevron.right")
+                    .font(.system(size: 11, weight: .semibold))
+                    .foregroundStyle(Color.brindooTextSecondary)
+            }
+            .padding(BrindooSpacing.md)
+            .background(Color.brindooSurface)
+            .clipShape(RoundedRectangle(cornerRadius: BrindooRadius.md))
+            .overlay(
+                RoundedRectangle(cornerRadius: BrindooRadius.md)
+                    .strokeBorder(Color.brindooCoral.opacity(0.3), lineWidth: 1)
+            )
+        }
+        .buttonStyle(.plain)
     }
 
     @ViewBuilder
@@ -147,6 +204,23 @@ struct AgendaView: View {
                 rowContent(entry, offer: nil, other: other)
             }
         }
+        .contextMenu {
+            Button {
+                Task { await toggleDeposit(entry) }
+            } label: {
+                Label(
+                    proposal.isDepositPaid ? "Acconto: segna come non versato" : "Segna acconto versato",
+                    systemImage: "eurosign.circle"
+                )
+            }
+            if entry.date >= Calendar.current.startOfDay(for: Date()) {
+                Button {
+                    checklistEntry = entry
+                } label: {
+                    Label("Checklist evento", systemImage: "checklist")
+                }
+            }
+        }
     }
 
     @ViewBuilder
@@ -192,6 +266,16 @@ struct AgendaView: View {
                         .font(BrindooFont.caption.weight(.semibold))
                 }
                 .foregroundStyle(proposal.effectiveBooking == .completed ? Color.brindooSuccess : Color.brindooCoral)
+
+                if proposal.isDepositPaid {
+                    HStack(spacing: 3) {
+                        Image(systemName: "eurosign.circle.fill")
+                            .font(.system(size: 10))
+                        Text("Acconto versato")
+                            .font(BrindooFont.caption.weight(.semibold))
+                    }
+                    .foregroundStyle(Color.brindooSuccess)
+                }
             }
 
             Spacer()
@@ -244,6 +328,20 @@ struct AgendaView: View {
                 message: (error as? CalendarServiceError)?.errorDescription ?? "Riprova.",
                 style: .error
             ))
+        }
+    }
+
+    /// Registra o toglie l'acconto versato sull'evento.
+    private func toggleDeposit(_ entry: Entry) async {
+        do {
+            try await OfferProposalService.shared.setDepositPaid(
+                proposalId: entry.proposal.id,
+                paid: !entry.proposal.isDepositPaid
+            )
+            BrindooHaptics.notify(.success)
+            await loadData()
+        } catch {
+            toastCenter.show(BrindooToast("Impossibile aggiornare l'acconto", style: .error))
         }
     }
 

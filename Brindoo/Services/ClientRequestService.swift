@@ -49,7 +49,8 @@ final class ClientRequestService {
         area: String,
         eventDate: String?,
         budget: Double?,
-        categoryId: UUID?
+        categoryId: UUID?,
+        urgent: Bool = false
     ) async throws -> ClientRequest {
         guard let userId = SupabaseManager.shared.currentUserID else {
             throw URLError(.userAuthenticationRequired)
@@ -63,6 +64,7 @@ final class ClientRequestService {
             let event_date: String?
             let budget: Double?
             let category_id: UUID?
+            let urgent: Bool
         }
 
         return try await client
@@ -74,7 +76,8 @@ final class ClientRequestService {
                 area: area,
                 event_date: eventDate,
                 budget: budget,
-                category_id: categoryId
+                category_id: categoryId,
+                urgent: urgent
             ))
             .select()
             .single()

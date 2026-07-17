@@ -77,6 +77,8 @@ struct OfferProposal: Identifiable, Codable, Hashable, Equatable {
     let eventDate: String?
     /// Stato dell'appuntamento dopo l'accettazione (facoltativo).
     let bookingStatus: BookingStatus?
+    /// True se le parti hanno registrato il versamento dell'acconto.
+    var depositPaid: Bool? = nil
     let createdAt: Date
     let updatedAt: Date
 
@@ -91,9 +93,12 @@ struct OfferProposal: Identifiable, Codable, Hashable, Equatable {
         case status
         case eventDate = "event_date"
         case bookingStatus = "booking_status"
+        case depositPaid = "deposit_paid"
         case createdAt = "created_at"
         case updatedAt = "updated_at"
     }
+
+    var isDepositPaid: Bool { depositPaid ?? false }
 
     /// Stato effettivo dell'appuntamento (default: confermato se accettata).
     var effectiveBooking: BookingStatus {

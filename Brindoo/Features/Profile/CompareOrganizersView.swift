@@ -52,6 +52,9 @@ struct CompareOrganizersView: View {
                                 Text("\(rating.reviewCount) recensioni")
                                     .font(BrindooFont.caption)
                                     .foregroundStyle(Color.brindooTextSecondary)
+                                if bestRatingId == profile.id {
+                                    bestTag
+                                }
                             }
                         } else {
                             placeholderDash
@@ -75,9 +78,14 @@ struct CompareOrganizersView: View {
 
                     labeledRow("Prezzo da") { profile in
                         if let price = minPrices[profile.id] {
-                            Text(priceDisplay(price))
-                                .font(BrindooFont.bodyMedium.weight(.semibold))
-                                .foregroundStyle(Color.brindooCoral)
+                            VStack(spacing: 2) {
+                                Text(priceDisplay(price))
+                                    .font(BrindooFont.bodyMedium.weight(.semibold))
+                                    .foregroundStyle(Color.brindooCoral)
+                                if bestPriceId == profile.id {
+                                    bestTag
+                                }
+                            }
                         } else {
                             placeholderDash
                         }
@@ -149,6 +157,31 @@ struct CompareOrganizersView: View {
         }
         .padding(.vertical, BrindooSpacing.sm)
         Divider()
+    }
+
+    // MARK: - Migliore della riga
+
+    /// Valutazione più alta (solo se c'è più di un valore da confrontare).
+    private var bestRatingId: UUID? {
+        guard ratings.count > 1 else { return nil }
+        return ratings.max { $0.value.avgRating < $1.value.avgRating }?.key
+    }
+
+    /// Prezzo di partenza più basso (solo se c'è più di un valore).
+    private var bestPriceId: UUID? {
+        guard minPrices.count > 1 else { return nil }
+        return minPrices.min { $0.value < $1.value }?.key
+    }
+
+    private var bestTag: some View {
+        Text("Migliore")
+            .font(.system(size: 9, weight: .bold))
+            .textCase(.uppercase)
+            .padding(.horizontal, 6)
+            .padding(.vertical, 2)
+            .foregroundStyle(Color.brindooSuccess)
+            .background(Color.brindooSuccess.opacity(0.12))
+            .clipShape(Capsule())
     }
 
     private var placeholderDash: some View {

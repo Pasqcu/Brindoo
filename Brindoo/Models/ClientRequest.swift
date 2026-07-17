@@ -35,6 +35,8 @@ struct ClientRequest: Identifiable, Codable, Hashable, Equatable {
     let budget: Double?
     let categoryId: UUID?
     let status: ClientRequestStatus
+    /// True se l'evento è imminente e il cliente cerca risposte rapide.
+    var urgent: Bool? = nil
     let createdAt: Date
     let updatedAt: Date
 
@@ -48,9 +50,12 @@ struct ClientRequest: Identifiable, Codable, Hashable, Equatable {
         case budget
         case categoryId = "category_id"
         case status
+        case urgent
         case createdAt = "created_at"
         case updatedAt = "updated_at"
     }
+
+    var isUrgent: Bool { urgent ?? false }
 
     /// "20 settembre 2026" — data dell'evento leggibile, se presente.
     var eventDateDisplay: String? {

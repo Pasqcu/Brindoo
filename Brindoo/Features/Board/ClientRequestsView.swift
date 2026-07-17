@@ -155,7 +155,12 @@ struct ClientRequestsView: View {
             if isClient {
                 requests = try await ClientRequestService.shared.fetchMyRequests()
             } else {
+                // Le richieste urgenti risalgono in cima, a parità vince la più recente.
                 requests = try await ClientRequestService.shared.fetchOpenRequests()
+                    .sorted {
+                        if $0.isUrgent != $1.isUrgent { return $0.isUrgent }
+                        return $0.createdAt > $1.createdAt
+                    }
                 await loadClientProfiles()
             }
         } catch {
@@ -237,6 +242,9 @@ struct ClientRequestCard: View {
                     .foregroundStyle(Color.brindooTextPrimary)
                     .lineLimit(2)
                     .frame(maxWidth: .infinity, alignment: .leading)
+                if request.isUrgent && request.status == .open {
+                    urgentPill
+                }
                 statusPill
             }
 
@@ -300,6 +308,18 @@ struct ClientRequestCard: View {
             RoundedRectangle(cornerRadius: BrindooRadius.md)
                 .strokeBorder(Color.brindooBorder, lineWidth: 1)
         )
+    }
+
+    private var urgentPill: some View {
+        HStack(spacing: 3) {
+            Image(systemName: "flame.fill").font(.system(size: 9))
+            Text("Urgente").font(.system(size: 11, weight: .semibold))
+        }
+        .padding(.horizontal, 8)
+        .padding(.vertical, 4)
+        .foregroundStyle(Color.brindooError)
+        .background(Color.brindooError.opacity(0.12))
+        .clipShape(Capsule())
     }
 
     @ViewBuilder
