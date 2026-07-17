@@ -60,4 +60,30 @@ enum BrindooFormat {
     static func italianDate(fromDay string: String) -> String? {
         day(from: string).map { italianDateFormatter.string(from: $0) }
     }
+
+    // MARK: - Tempo relativo
+
+    private static let relativeAbbrev: RelativeDateTimeFormatter = {
+        let f = RelativeDateTimeFormatter()
+        f.locale = Locale(identifier: "it_IT")
+        f.unitsStyle = .abbreviated
+        return f
+    }()
+
+    private static let relativeFull: RelativeDateTimeFormatter = {
+        let f = RelativeDateTimeFormatter()
+        f.locale = Locale(identifier: "it_IT")
+        f.unitsStyle = .full
+        return f
+    }()
+
+    /// "2 g fa" — forma breve per card e righe compatte.
+    static func timeAgoShort(_ date: Date) -> String {
+        relativeAbbrev.localizedString(for: date, relativeTo: Date())
+    }
+
+    /// "2 giorni fa" — forma estesa.
+    static func timeAgo(_ date: Date) -> String {
+        relativeFull.localizedString(for: date, relativeTo: Date())
+    }
 }

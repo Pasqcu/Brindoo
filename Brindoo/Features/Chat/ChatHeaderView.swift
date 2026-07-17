@@ -33,7 +33,7 @@ struct ChatHeaderView: View {
                         if user.isPro {
                             Image(systemName: BrindooIcon.crown)
                                 .font(.system(size: 11, weight: .bold))
-                                .foregroundStyle(Color(red: 0.93, green: 0.55, blue: 0.20))
+                                .foregroundStyle(Color.brindooProGold)
                         }
                         if user.identityVerified {
                             VerifiedCheckIcon(size: 11)

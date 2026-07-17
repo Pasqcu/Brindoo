@@ -353,9 +353,6 @@ struct ClientRequestCard: View {
     }
 
     private func timeAgo(_ date: Date) -> String {
-        let formatter = RelativeDateTimeFormatter()
-        formatter.locale = Locale(identifier: "it_IT")
-        formatter.unitsStyle = .abbreviated
-        return formatter.localizedString(for: date, relativeTo: Date())
+        BrindooFormat.timeAgoShort(date)
     }
 }

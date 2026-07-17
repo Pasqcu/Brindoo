@@ -123,10 +123,7 @@ struct OfferProposal: Identifiable, Codable, Hashable, Equatable {
     }
 
     var updatedAtDisplay: String {
-        let f = RelativeDateTimeFormatter()
-        f.locale = Locale(identifier: "it_IT")
-        f.unitsStyle = .abbreviated
-        return f.localizedString(for: updatedAt, relativeTo: Date())
+        BrindooFormat.timeAgoShort(updatedAt)
     }
 
     /// True se l'utente passato deve rispondere (la palla è dalla sua parte).

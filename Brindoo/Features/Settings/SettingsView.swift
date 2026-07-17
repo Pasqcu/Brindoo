@@ -176,7 +176,7 @@ struct SettingsView: View {
                             NavigationLink {
                                 ReferralView()
                             } label: {
-                                SettingsRow(icon: BrindooIcon.gift, iconColor: Color(red: 0.93, green: 0.55, blue: 0.20), title: "Invita amici", subtitle: "1 mese Pro per ogni amico")
+                                SettingsRow(icon: BrindooIcon.gift, iconColor: Color.brindooProGold, title: "Invita amici", subtitle: "1 mese Pro per ogni amico")
                             }
                             .buttonStyle(.plain)
                         }

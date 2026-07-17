@@ -51,6 +51,9 @@ extension Color {
             : UIColor(red: 0.90, green: 0.30, blue: 0.30, alpha: 1)
     })
 
+    /// Oro/arancio del piano Pro (corona e accenti premium).
+    static let brindooProGold = Color(red: 0.93, green: 0.55, blue: 0.20)
+
     /// Giallo warning (in attesa, pending). Più luminoso in modalità scura.
     static let brindooWarning = Color(UIColor { trait in
         trait.userInterfaceStyle == .dark

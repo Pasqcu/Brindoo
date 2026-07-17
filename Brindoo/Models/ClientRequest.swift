@@ -60,13 +60,8 @@ struct ClientRequest: Identifiable, Codable, Hashable, Equatable {
     /// "20 settembre 2026" — data dell'evento leggibile, se presente.
     var eventDateDisplay: String? {
         guard let eventDate else { return nil }
-        guard let date = BrindooFormat.day(from: eventDate) else { return nil }
-        let f = DateFormatter()
-        f.locale = Locale(identifier: "it_IT")
-        f.dateFormat = "d MMMM yyyy"
-        return f.string(from: date)
+        return BrindooFormat.italianDate(fromDay: eventDate)
     }
-
     /// "800 €" — budget leggibile, se presente.
     var budgetDisplay: String? {
         guard let budget else { return nil }

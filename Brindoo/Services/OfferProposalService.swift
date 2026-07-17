@@ -338,16 +338,7 @@ final class OfferProposalService {
 
         // Nota automatica in chat per l'altra parte (best effort).
         guard let me = SupabaseManager.shared.currentUserID else { return }
-        let display: String = {
-            let parser = DateFormatter()
-            parser.dateFormat = "yyyy-MM-dd"
-            parser.timeZone = TimeZone(identifier: "UTC")
-            guard let d = parser.date(from: newDate) else { return newDate }
-            let out = DateFormatter()
-            out.locale = Locale(identifier: "it_IT")
-            out.dateFormat = "d MMMM yyyy"
-            return out.string(from: d)
-        }()
+        let display = BrindooFormat.italianDate(fromDay: newDate) ?? newDate
         let conv: Conversation?
         if me == proposal.clientId {
             conv = try? await ConversationService.shared

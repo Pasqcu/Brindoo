@@ -48,10 +48,7 @@ struct Review: Codable, Identifiable, Equatable, Hashable {
 
     /// "5 minuti fa", "2 giorni fa", ecc.
     var createdAtDisplay: String {
-        let f = RelativeDateTimeFormatter()
-        f.locale = Locale(identifier: "it_IT")
-        f.unitsStyle = .full
-        return f.localizedString(for: createdAt, relativeTo: Date())
+        BrindooFormat.timeAgo(createdAt)
     }
 }
 
