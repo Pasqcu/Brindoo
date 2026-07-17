@@ -146,6 +146,9 @@ struct ClientNegotiationSection: View {
                 onProposeNew()
             }
 
+            // Il cliente conosce le condizioni PRIMA di impegnarsi.
+            CancellationPolicyRow()
+
             Button {
                 onHide()
             } label: {
@@ -231,6 +234,21 @@ struct ClientNegotiationSection: View {
                     }
                 }
 
+                // Promemoria scritto dell'accordo: prezzo, data, acconto e regole.
+                ShareLink(item: AgreementSummary.text(
+                    offer: offer,
+                    organizerName: org.displayName,
+                    proposal: proposal
+                )) {
+                    Label("Condividi riepilogo accordo", systemImage: "doc.text")
+                        .font(BrindooFont.bodySmall.weight(.medium))
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, BrindooSpacing.sm)
+                        .foregroundStyle(Color.brindooCoral)
+                }
+
+                CancellationPolicyRow()
+
                 BookingActionButtons(
                     proposal: proposal,
                     onMark: { status in onMarkBooking(proposal, status) },
@@ -279,6 +297,8 @@ struct ClientNegotiationSection: View {
                     ) {
                         onCounter(proposal)
                     }
+
+                    CancellationPolicyRow()
                 }
             } else {
                 // L'utente sta aspettando una risposta dall'organizzatore.

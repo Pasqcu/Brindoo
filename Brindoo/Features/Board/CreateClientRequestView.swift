@@ -104,6 +104,8 @@ struct CreateClientRequestView: View {
                             )
                             .environment(\.locale, Locale(identifier: "it_IT"))
                             .font(BrindooFont.bodyMedium)
+
+                            SeasonalityHintRow(date: eventDate)
                         }
                     }
                     .padding(BrindooSpacing.md)

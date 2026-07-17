@@ -121,6 +121,8 @@ struct GuidedQuoteView: View {
                 Text("Escludiamo chi risulta già occupato quel giorno.")
                     .font(BrindooFont.caption)
                     .foregroundStyle(Color.brindooTextSecondary)
+
+                SeasonalityHintRow(date: eventDate)
             }
         }
         .padding(BrindooSpacing.md)

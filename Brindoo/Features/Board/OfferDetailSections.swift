@@ -332,6 +332,19 @@ struct ReceivedProposalsSection: View {
                     onMoveDate: { onMoveDate(proposal) },
                     onAddToCalendar: proposal.eventDate == nil ? nil : { onAddToCalendar(proposal) }
                 )
+
+                // Promemoria scritto dell'accordo anche per il professionista.
+                ShareLink(item: AgreementSummary.text(
+                    offer: offer,
+                    organizerName: nil,
+                    proposal: proposal
+                )) {
+                    Label("Condividi riepilogo accordo", systemImage: "doc.text")
+                        .font(BrindooFont.bodySmall.weight(.medium))
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, BrindooSpacing.sm)
+                        .foregroundStyle(Color.brindooCoral)
+                }
             }
         } else if proposal.status == .pending, proposal.lastProposer == .client {
             VStack(spacing: BrindooSpacing.sm) {
