@@ -72,6 +72,9 @@ struct OfferHeaderSection: View {
                                         .font(.system(size: 11))
                                         .foregroundStyle(Color.brindooCoral)
                                 }
+                                if profile.identityVerified {
+                                    VerifiedCheckIcon(size: 11)
+                                }
                             }
                             Text("Vedi profilo")
                                 .font(BrindooFont.caption)

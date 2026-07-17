@@ -82,6 +82,9 @@ struct OfferCard: View {
                                     .font(.system(size: 11))
                                     .foregroundStyle(Color.brindooCoral)
                             }
+                            if organizer.identityVerified {
+                                VerifiedCheckIcon(size: 11)
+                            }
                         }
                         Text(timeAgo(offer.createdAt))
                             .font(BrindooFont.caption)
