@@ -10,7 +10,9 @@
 import Foundation
 import os
 
-enum BrindooLog {
+// Nonisolated: si registra da qualunque thread (es. listener StoreKit),
+// il registro su file è già protetto dalla sua coda interna.
+nonisolated enum BrindooLog {
 
     private static let logger = Logger(subsystem: "com.pasqcu.brindoo", category: "app")
 

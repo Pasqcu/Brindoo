@@ -227,7 +227,6 @@ struct BoardView: View {
                 .presentationDetents([.medium, .large])
             }
             .task { await loadInitial() }
-            .refreshable { await reload() }
             .onChange(of: eventDate) { _, _ in
                 Task { await loadOrganizers() }
             }
@@ -354,6 +353,9 @@ struct BoardView: View {
                 .padding(.bottom, BrindooSpacing.lg)
                 .brindooReadableWidth()
             }
+            // Tira-per-aggiornare solo sulla lista verticale: la barra dei
+            // filtri resta ferma e non innesca ricariche accidentali.
+            .refreshable { await reload() }
         }
     }
 
@@ -409,6 +411,7 @@ struct BoardView: View {
                 .padding(.vertical, BrindooSpacing.md)
                 .brindooReadableWidth()
             }
+            .refreshable { await reload() }
         }
     }
 
