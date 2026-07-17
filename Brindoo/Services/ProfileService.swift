@@ -198,6 +198,22 @@ final class ProfileService {
             .value
     }
 
+    /// Aggiornamento domande frequenti del professionista (max 5).
+    func updateFAQs(_ faqs: [ProfileFAQ]) async throws -> Profile {
+        guard let userID = SupabaseManager.shared.currentUserID else {
+            throw NSError(domain: "Profile", code: 401)
+        }
+        struct Payload: Encodable { let faqs: [ProfileFAQ] }
+        return try await client
+            .from("profiles")
+            .update(Payload(faqs: Array(faqs.prefix(ProfileFAQ.maxCount))))
+            .eq("id", value: userID)
+            .select()
+            .single()
+            .execute()
+            .value
+    }
+
     /// Aggiornamento read receipts
     func updateReadReceipts(enabled: Bool) async throws {
         guard let userID = SupabaseManager.shared.currentUserID else { return }

@@ -14,6 +14,7 @@ struct ProfileView: View {
     @State private var showBoardPreview: Bool = false
     @State private var showPortfolio: Bool = false
     @State private var showAvailability: Bool = false
+    @State private var showFAQs: Bool = false
     @State private var showAvatarFullScreen: Bool = false
     @State private var organizerCategories: [OrganizerCategoryDetail] = []
     @State private var reviewSummary: ReviewSummary?
@@ -97,6 +98,8 @@ struct ProfileView: View {
 
                             availabilityLink
 
+                            faqsLink
+
                             boardPreviewLink
                         }
 
@@ -170,6 +173,9 @@ struct ProfileView: View {
             }
             .sheet(isPresented: $showAvailability) {
                 AvailabilityView()
+            }
+            .sheet(isPresented: $showFAQs) {
+                EditFAQsView()
             }
             .fullScreenCover(isPresented: $showAvatarFullScreen) {
                 AvatarFullScreenView(
@@ -301,6 +307,21 @@ struct ProfileView: View {
                 background: Color.brindooWarning,
                 title: "Disponibilità",
                 subtitle: "Segna i giorni in cui non sei disponibile"
+            )
+        }
+        .buttonStyle(.plain)
+    }
+
+    @ViewBuilder
+    private var faqsLink: some View {
+        Button {
+            showFAQs = true
+        } label: {
+            navLinkRow(
+                icon: "questionmark.bubble.fill",
+                background: Color.blue,
+                title: "Domande frequenti",
+                subtitle: "Risposte pronte per i clienti (max 5)"
             )
         }
         .buttonStyle(.plain)

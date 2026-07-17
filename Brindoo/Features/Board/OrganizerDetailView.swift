@@ -222,6 +222,10 @@ struct OrganizerDetailView: View {
 
         coverageSection
 
+        if !organizer.faqs.isEmpty {
+            faqsSection
+        }
+
         // Disponibilità: i clienti vedono i giorni occupati prima di scrivere.
         if !isViewingOwn && !unavailableDays.isEmpty {
             VStack(alignment: .leading, spacing: BrindooSpacing.xs) {
@@ -436,6 +440,20 @@ struct OrganizerDetailView: View {
                 .foregroundStyle(Color.brindooTextSecondary)
             }
 
+            if organizer.identityVerified {
+                HStack(spacing: 4) {
+                    Image(systemName: "person.badge.shield.checkmark.fill").font(.system(size: 11))
+                    Text("Identità verificata")
+                        .font(BrindooFont.caption.weight(.semibold))
+                }
+                .foregroundStyle(.white)
+                .padding(.horizontal, BrindooSpacing.sm)
+                .padding(.vertical, 3)
+                .background(Color.blue)
+                .clipShape(Capsule())
+                .padding(.top, 2)
+            }
+
             HStack(spacing: 4) {
                 Image(systemName: "checkmark.shield.fill").font(.system(size: 11))
                 Text("Su Brindoo dal \(memberSinceYear)")
@@ -509,6 +527,41 @@ struct OrganizerDetailView: View {
             RoundedRectangle(cornerRadius: BrindooRadius.md)
                 .strokeBorder(Color.brindooCoral.opacity(0.25), lineWidth: 1.5)
         )
+    }
+
+    // Domande frequenti: risposte pronte, meno chat ripetitive.
+    @ViewBuilder
+    private var faqsSection: some View {
+        VStack(alignment: .leading, spacing: BrindooSpacing.sm) {
+            HStack(spacing: 6) {
+                Image(systemName: "questionmark.bubble")
+                    .font(.system(size: 14))
+                    .foregroundStyle(Color.brindooCoral)
+                Text("Domande frequenti")
+                    .font(BrindooFont.titleSmall)
+            }
+
+            ForEach(organizer.faqs) { faq in
+                DisclosureGroup {
+                    Text(faq.answer)
+                        .font(BrindooFont.bodySmall)
+                        .foregroundStyle(Color.brindooTextSecondary)
+                        .fixedSize(horizontal: false, vertical: true)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .padding(.top, BrindooSpacing.xs)
+                } label: {
+                    Text(faq.question)
+                        .font(BrindooFont.bodySmall.weight(.semibold))
+                        .foregroundStyle(Color.brindooTextPrimary)
+                        .multilineTextAlignment(.leading)
+                }
+                .tint(Color.brindooCoral)
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(BrindooSpacing.md)
+        .background(Color.brindooSurface)
+        .clipShape(RoundedRectangle(cornerRadius: BrindooRadius.md))
     }
 
     @ViewBuilder

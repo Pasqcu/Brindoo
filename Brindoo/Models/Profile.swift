@@ -41,6 +41,19 @@ enum UserRole: String, Codable, CaseIterable, Identifiable {
     }
 }
 
+// MARK: - FAQ del professionista
+
+/// Coppia domanda/risposta scritta dal professionista, visibile ai clienti
+/// sul profilo. Massimo 5 per profilo.
+struct ProfileFAQ: Codable, Hashable, Equatable, Identifiable {
+    var question: String
+    var answer: String
+
+    var id: String { question + "|" + answer }
+
+    static let maxCount = 5
+}
+
 // MARK: - Profilo
 
 struct Profile: Identifiable, Codable, Hashable, Equatable {
@@ -60,6 +73,10 @@ struct Profile: Identifiable, Codable, Hashable, Equatable {
     let vacationUntil: Date?
     /// Tempo mediano di risposta in chat (minuti), auto-calcolato dall'app.
     let responseMinutes: Int?
+    /// Domande frequenti scritte dal professionista (max 5).
+    let faqs: [ProfileFAQ]
+    /// True se l'amministrazione ha verificato l'identità del professionista.
+    let identityVerified: Bool
     let createdAt: Date
     let updatedAt: Date
 
@@ -79,6 +96,8 @@ struct Profile: Identifiable, Codable, Hashable, Equatable {
         case readReceiptsEnabled = "read_receipts_enabled"
         case vacationUntil = "vacation_until"
         case responseMinutes = "response_minutes"
+        case faqs
+        case identityVerified = "identity_verified"
         case createdAt = "created_at"
         case updatedAt = "updated_at"
     }
@@ -99,6 +118,8 @@ struct Profile: Identifiable, Codable, Hashable, Equatable {
         boostExpiresAt = try c.decodeIfPresent(Date.self, forKey: .boostExpiresAt)
         readReceiptsEnabled = try c.decodeIfPresent(Bool.self, forKey: .readReceiptsEnabled) ?? true
         responseMinutes = try c.decodeIfPresent(Int.self, forKey: .responseMinutes)
+        faqs = try c.decodeIfPresent([ProfileFAQ].self, forKey: .faqs) ?? []
+        identityVerified = try c.decodeIfPresent(Bool.self, forKey: .identityVerified) ?? false
 
         // vacation_until è memorizzato come date (YYYY-MM-DD).
         if let dateString = try c.decodeIfPresent(String.self, forKey: .vacationUntil),
@@ -139,6 +160,8 @@ struct Profile: Identifiable, Codable, Hashable, Equatable {
             try c.encode(fmt.string(from: vacationUntil), forKey: .vacationUntil)
         }
         try c.encodeIfPresent(responseMinutes, forKey: .responseMinutes)
+        try c.encode(faqs, forKey: .faqs)
+        try c.encode(identityVerified, forKey: .identityVerified)
         try c.encode(createdAt, forKey: .createdAt)
         try c.encode(updatedAt, forKey: .updatedAt)
     }
