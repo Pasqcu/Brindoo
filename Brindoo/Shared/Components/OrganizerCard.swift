@@ -32,6 +32,9 @@ struct OrganizerCard: View {
                     if organizer.isPro {
                         ProBadge()
                     }
+                    if organizer.identityVerified {
+                        VerifiedCheckIcon()
+                    }
                 }
                 
                 // Città

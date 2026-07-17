@@ -77,7 +77,7 @@ struct AgendaView: View {
                             section(title: "In arrivo", icon: "calendar.badge.clock",
                                     color: .brindooCoral, entries: upcoming)
 
-                            Text("Tieni premuto un evento per acconto e checklist.")
+                            Text("Tocca ⋯ su un evento per acconto e checklist.")
                                 .font(BrindooFont.caption)
                                 .foregroundStyle(Color.brindooTextSecondary)
                                 .frame(maxWidth: .infinity, alignment: .leading)
@@ -299,6 +299,30 @@ struct AgendaView: View {
                     }
                     .buttonStyle(.plain)
                     .accessibilityLabel("Aggiungi al calendario")
+
+                    // Stesse azioni del tocco prolungato, ma visibili:
+                    // acconto e checklist a portata di tap.
+                    Menu {
+                        Button {
+                            Task { await toggleDeposit(entry) }
+                        } label: {
+                            Label(
+                                entry.proposal.isDepositPaid ? "Acconto: segna come non versato" : "Segna acconto versato",
+                                systemImage: "eurosign.circle"
+                            )
+                        }
+                        Button {
+                            checklistEntry = entry
+                        } label: {
+                            Label("Checklist evento", systemImage: "checklist")
+                        }
+                    } label: {
+                        Image(systemName: "ellipsis.circle")
+                            .font(.system(size: 16, weight: .semibold))
+                            .foregroundStyle(Color.brindooTextSecondary)
+                            .frame(width: 32, height: 32)
+                    }
+                    .accessibilityLabel("Altre azioni")
                 } else {
                     Image(systemName: "chevron.right")
                         .font(.system(size: 11, weight: .semibold))

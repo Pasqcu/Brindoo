@@ -57,6 +57,13 @@ struct BookingStatusRow: View {
             Text("Appuntamento: \(booking.displayName)")
                 .font(BrindooFont.bodySmall.weight(.semibold))
             Spacer()
+            // Stato acconto sempre in vista (si aggiorna dall'Agenda).
+            if booking != .cancelled {
+                Text(proposal.isDepositPaid ? "Acconto ✓" : "Acconto —")
+                    .font(BrindooFont.caption.weight(.semibold))
+                    .foregroundStyle(proposal.isDepositPaid ? Color.brindooSuccess : Color.brindooTextSecondary)
+                    .accessibilityLabel(proposal.isDepositPaid ? "Acconto versato" : "Acconto non ancora versato")
+            }
         }
         .foregroundStyle(color)
         .padding(.vertical, BrindooSpacing.xxs)
