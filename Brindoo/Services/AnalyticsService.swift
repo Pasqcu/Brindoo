@@ -36,7 +36,7 @@ final class AnalyticsService {
                 .insert(Row(profile_id: profileId, viewer_id: viewerId))
                 .execute()
         } catch {
-            print("⚠️ profile_view: \(error)")
+            BrindooLog.error("profile_view: \(error)")
         }
     }
 
@@ -53,7 +53,7 @@ final class AnalyticsService {
                 .insert(Row(offer_id: offerId, viewer_id: viewerId))
                 .execute()
         } catch {
-            print("⚠️ offer_view: \(error)")
+            BrindooLog.error("offer_view: \(error)")
         }
     }
 

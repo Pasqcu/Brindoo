@@ -117,7 +117,7 @@ struct AppleSignInButton: View {
         }
         
         guard let nonce = currentNonce else {
-            print("⚠️ Nessun nonce disponibile, flusso compromesso")
+            BrindooLog.error("Nessun nonce disponibile, flusso compromesso")
             onError(.appleSignInFailed)
             return
         }

@@ -28,10 +28,6 @@ struct OfferPackage: Identifiable, Codable, Hashable, Equatable {
 
     /// "350 €" — prezzo leggibile.
     var priceDisplay: String {
-        let f = NumberFormatter()
-        f.numberStyle = .currency
-        f.locale = Locale(identifier: "it_IT")
-        f.maximumFractionDigits = price.truncatingRemainder(dividingBy: 1) == 0 ? 0 : 2
-        return f.string(from: NSNumber(value: price)) ?? "\(Int(price)) €"
+        BrindooFormat.euro(price)
     }
 }

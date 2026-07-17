@@ -59,10 +59,7 @@ struct EventCountdownRow: View {
 
     /// Giorni da oggi alla data (nil se il formato non è valido).
     static func daysUntil(_ day: String, from now: Date = Date()) -> Int? {
-        let f = DateFormatter()
-        f.dateFormat = "yyyy-MM-dd"
-        f.timeZone = TimeZone(identifier: "UTC")
-        guard let target = f.date(from: day) else { return nil }
+        guard let target = BrindooFormat.day(from: day) else { return nil }
         var calendar = Calendar.current
         calendar.timeZone = TimeZone(identifier: "UTC") ?? calendar.timeZone
         let start = calendar.startOfDay(for: now)

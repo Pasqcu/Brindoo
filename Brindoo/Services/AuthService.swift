@@ -174,7 +174,7 @@ final class AuthService {
                 password: password,
                 redirectTo: redirectURL
             )
-            print("✅ Registrazione completata per: \(trimmedEmail)")
+            BrindooLog.info("Registrazione completata per: \(trimmedEmail)")
         } catch {
             BrindooLog.error("Errore registrazione: \(error)")
             throw mapError(error)
@@ -198,7 +198,7 @@ final class AuthService {
                 email: trimmedEmail,
                 password: password
             )
-            print("✅ Login effettuato per: \(trimmedEmail)")
+            BrindooLog.info("Login effettuato per: \(trimmedEmail)")
         } catch {
             BrindooLog.error("Errore login: \(error)")
             throw mapError(error)
@@ -221,7 +221,7 @@ final class AuthService {
 
         do {
             try await auth.signOut()
-            print("✅ Logout effettuato")
+            BrindooLog.info("Logout effettuato")
         } catch {
             BrindooLog.error("Errore logout: \(error.localizedDescription)")
         }
@@ -246,7 +246,7 @@ final class AuthService {
                     nonce: nonce
                 )
             )
-            print("✅ Login con Apple effettuato")
+            BrindooLog.info("Login con Apple effettuato")
         } catch {
             BrindooLog.error("Errore login Apple: \(error)")
             throw mapError(error)
@@ -258,7 +258,7 @@ final class AuthService {
     func handleDeepLink(_ url: URL) async {
         do {
             try await auth.session(from: url)
-            print("✅ Sessione attivata via deep link")
+            BrindooLog.info("Sessione attivata via deep link")
         } catch {
             BrindooLog.error("Errore handle deep link: \(error)")
         }
@@ -278,7 +278,7 @@ final class AuthService {
 
         do {
             _ = try await auth.update(user: UserAttributes(email: trimmed))
-            print("✅ Richiesta cambio email inviata a: \(trimmed)")
+            BrindooLog.info("Richiesta cambio email inviata a: \(trimmed)")
         } catch {
             BrindooLog.error("Errore cambio email: \(error)")
             throw mapError(error)
@@ -299,7 +299,7 @@ final class AuthService {
                 trimmedEmail,
                 redirectTo: redirectURL
             )
-            print("✅ Email di reset password inviata a: \(trimmedEmail)")
+            BrindooLog.info("Email di reset password inviata a: \(trimmedEmail)")
         } catch {
             BrindooLog.error("Errore reset password: \(error)")
             throw mapError(error)

@@ -108,32 +108,18 @@ struct OfferProposal: Identifiable, Codable, Hashable, Equatable {
     /// True se l'evento ha una data già passata.
     var isEventPast: Bool {
         guard let eventDate, !eventDate.isEmpty else { return false }
-        let f = DateFormatter()
-        f.dateFormat = "yyyy-MM-dd"
-        f.timeZone = TimeZone(identifier: "UTC")
-        guard let d = f.date(from: eventDate) else { return false }
+        guard let d = BrindooFormat.day(from: eventDate) else { return false }
         return d < Calendar.current.startOfDay(for: Date())
     }
 
     /// "21 maggio 2026" oppure nil se non impostata.
     var eventDateDisplay: String? {
         guard let eventDate, !eventDate.isEmpty else { return nil }
-        let parser = DateFormatter()
-        parser.dateFormat = "yyyy-MM-dd"
-        parser.timeZone = TimeZone(identifier: "UTC")
-        guard let date = parser.date(from: eventDate) else { return nil }
-        let out = DateFormatter()
-        out.locale = Locale(identifier: "it_IT")
-        out.dateFormat = "d MMMM yyyy"
-        return out.string(from: date)
+        return BrindooFormat.italianDate(fromDay: eventDate)
     }
 
     var currentPriceDisplay: String {
-        let f = NumberFormatter()
-        f.numberStyle = .currency
-        f.currencyCode = "EUR"
-        f.maximumFractionDigits = 0
-        return f.string(from: NSNumber(value: currentPrice)) ?? "€\(Int(currentPrice))"
+        BrindooFormat.euro(currentPrice)
     }
 
     var updatedAtDisplay: String {
@@ -172,10 +158,6 @@ struct OfferProposalRound: Identifiable, Codable, Hashable, Equatable {
     }
 
     var priceDisplay: String {
-        let f = NumberFormatter()
-        f.numberStyle = .currency
-        f.currencyCode = "EUR"
-        f.maximumFractionDigits = 0
-        return f.string(from: NSNumber(value: price)) ?? "€\(Int(price))"
+        BrindooFormat.euro(price)
     }
 }

@@ -56,11 +56,7 @@ struct ServiceOffer: Identifiable, Codable, Hashable, Equatable {
 
     /// Stringa formattata del prezzo.
     var priceDisplay: String {
-        let f = NumberFormatter()
-        f.numberStyle = .currency
-        f.currencyCode = "EUR"
-        f.maximumFractionDigits = 0
-        return f.string(from: NSNumber(value: price)) ?? "€\(Int(price))"
+        BrindooFormat.euro(price)
     }
 
     /// "5 minuti fa", "2 giorni fa", ecc.

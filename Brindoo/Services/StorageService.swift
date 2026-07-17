@@ -79,7 +79,7 @@ final class StorageService {
             let publicUrl = try storage.from("avatars").getPublicURL(path: path)
             let urlWithCacheBust = "\(publicUrl.absoluteString)?t=\(Int(Date().timeIntervalSince1970))"
             
-            print("✅ Avatar caricato: \(urlWithCacheBust)")
+            BrindooLog.info("Avatar caricato: \(urlWithCacheBust)")
             return urlWithCacheBust
         } catch {
             BrindooLog.error("Errore upload avatar: \(error)")
@@ -95,9 +95,9 @@ final class StorageService {
         
         do {
             _ = try await storage.from("avatars").remove(paths: [path])
-            print("✅ Avatar cancellato")
+            BrindooLog.info("Avatar cancellato")
         } catch {
-            print("⚠️ Errore cancellazione avatar: \(error)")
+            BrindooLog.error("Errore cancellazione avatar: \(error)")
             // Non rilancio l'errore: se il file non esiste è ok lo stesso
         }
     }
@@ -135,7 +135,7 @@ final class StorageService {
             
             let publicUrl = try storage.from("portfolio").getPublicURL(path: path)
             
-            print("✅ Foto portfolio caricata")
+            BrindooLog.info("Foto portfolio caricata")
             return (url: publicUrl.absoluteString, path: path)
         } catch {
             BrindooLog.error("Errore upload portfolio: \(error)")
@@ -173,7 +173,7 @@ final class StorageService {
                     )
                 )
             let publicUrl = try storage.from("portfolio").getPublicURL(path: path)
-            print("✅ Foto offerta caricata")
+            BrindooLog.info("Foto offerta caricata")
             return publicUrl.absoluteString
         } catch {
             BrindooLog.error("Errore upload foto offerta: \(error)")
@@ -217,9 +217,9 @@ final class StorageService {
     func deletePortfolioImage(storagePath: String) async throws {
         do {
             _ = try await storage.from("portfolio").remove(paths: [storagePath])
-            print("✅ Foto portfolio cancellata: \(storagePath)")
+            BrindooLog.info("Foto portfolio cancellata: \(storagePath)")
         } catch {
-            print("⚠️ Errore cancellazione foto portfolio: \(error)")
+            BrindooLog.error("Errore cancellazione foto portfolio: \(error)")
             throw error
         }
     }

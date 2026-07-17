@@ -79,7 +79,7 @@ final class ProfileService {
             .execute()
             .value
 
-        print("✅ Profilo creato: \(profile.id)")
+        BrindooLog.info("Profilo creato: \(profile.id)")
         return profile
     }
 

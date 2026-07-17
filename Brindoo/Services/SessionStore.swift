@@ -71,11 +71,11 @@ final class SessionStore {
             let session = try await SupabaseManager.shared.auth.session
             self.applyUser(session.user)
             await loadProfileAndUpdateState()
-            print("✅ Sessione attiva trovata per: \(session.user.email ?? "nessuna email")")
+            BrindooLog.info("Sessione attiva trovata per: \(session.user.email ?? "nessuna email")")
         } catch {
             self.clearUser()
             self.authState = .signedOut
-            print("ℹ️ Nessuna sessione attiva")
+            BrindooLog.info("Nessuna sessione attiva")
         }
     }
 
@@ -126,7 +126,7 @@ final class SessionStore {
 
             // Se il profilo non esiste (trigger non eseguito), crealo
             if profile == nil {
-                print("ℹ️ Profilo mancante, lo creo...")
+                BrindooLog.info("Profilo mancante, lo creo...")
                 profile = try await ProfileService.shared.createProfileIfNeeded()
             }
 

@@ -79,7 +79,7 @@ final class DeepLinkRouter {
             pendingReviewId = payload.reviewId
         }
 
-        print("✅ Deep link gestito: \(payload.type.rawValue)")
+        BrindooLog.info("Deep link gestito: \(payload.type.rawValue)")
     }
 
     /// Reset dopo che la destinazione è stata raggiunta

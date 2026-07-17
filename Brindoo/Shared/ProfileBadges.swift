@@ -50,6 +50,21 @@ struct AchievementBadge: Identifiable, Equatable {
     }
 }
 
+// MARK: - Spunta identità verificata
+
+/// Icona compatta blu per l'identità verificata dall'amministrazione.
+/// Usata accanto al nome in card, chat e confronti.
+struct VerifiedCheckIcon: View {
+    var size: CGFloat = 12
+
+    var body: some View {
+        Image(systemName: "person.badge.shield.checkmark.fill")
+            .font(.system(size: size, weight: .semibold))
+            .foregroundStyle(.blue)
+            .accessibilityLabel("Identità verificata")
+    }
+}
+
 // MARK: - Riga di distintivi
 
 struct AchievementBadgeRow: View {

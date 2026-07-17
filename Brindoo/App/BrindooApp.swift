@@ -54,7 +54,7 @@ struct BrindooApp: App {
                 }
                 .onOpenURL { url in
                     // Deep link in arrivo (conferma email, reset password, link condivisi)
-                    print("📲 Deep link ricevuto: \(url.absoluteString)")
+                    BrindooLog.info("Deep link ricevuto: \(url.absoluteString)")
                     // Link condivisi di profilo/offerta (https://brindoo.app/p|o/<id>)
                     if DeepLinkRouter.shared.handleShareLink(url) { return }
                     Task {

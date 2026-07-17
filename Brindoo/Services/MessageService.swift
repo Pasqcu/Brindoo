@@ -271,7 +271,7 @@ final class MessageService {
         // Carica preferenza dell'utente
         let profile = try await ProfileService.shared.fetchProfile(userID: userId)
         guard profile?.readReceiptsEnabled == true else {
-            print("ℹ️ Read receipts disabilitati, non marco come letto")
+            BrindooLog.info("Read receipts disabilitati, non marco come letto")
             return
         }
         

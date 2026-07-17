@@ -55,7 +55,7 @@ final class PushOutboxService {
                 .execute()
         } catch {
             // Tracciato ma non rilanciato — il flusso utente deve continuare.
-            print("⚠️ Push outbox: \(error)")
+            BrindooLog.error("Push outbox: \(error)")
         }
     }
 

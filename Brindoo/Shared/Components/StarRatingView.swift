@@ -107,7 +107,6 @@ struct CompactRatingView: View {
     VStack(spacing: 20) {
         StarRatingView(rating: 4.5, mode: .display, size: 20)
         StarRatingView(rating: 3.0, mode: .input, size: 28) { newValue in
-            print("Tap: \(newValue)")
         }
         CompactRatingView(rating: OrganizerRating(organizerId: UUID(), avgRating: 4.7, reviewCount: 23))
         CompactRatingView(rating: OrganizerRating(organizerId: UUID(), avgRating: 0, reviewCount: 0))

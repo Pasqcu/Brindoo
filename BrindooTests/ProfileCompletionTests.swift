@@ -16,7 +16,8 @@ final class ProfileCompletionTests: XCTestCase {
         categoriesCount: Int = 0,
         portfolioCount: Int = 0,
         activeOffersCount: Int = 0,
-        coverageAreasCount: Int = 0
+        coverageAreasCount: Int = 0,
+        faqsCount: Int = 0
     ) -> ProfileCompletion {
         ProfileCompletion.evaluate(
             hasAvatar: hasAvatar,
@@ -24,7 +25,8 @@ final class ProfileCompletionTests: XCTestCase {
             categoriesCount: categoriesCount,
             portfolioCount: portfolioCount,
             activeOffersCount: activeOffersCount,
-            coverageAreasCount: coverageAreasCount
+            coverageAreasCount: coverageAreasCount,
+            faqsCount: faqsCount
         )
     }
 
@@ -38,7 +40,8 @@ final class ProfileCompletionTests: XCTestCase {
     func test_profiloCompleto_cento() {
         let c = completion(
             hasAvatar: true, bioLength: 80, categoriesCount: 2,
-            portfolioCount: 5, activeOffersCount: 1, coverageAreasCount: 3
+            portfolioCount: 5, activeOffersCount: 1, coverageAreasCount: 3,
+            faqsCount: 2
         )
         XCTAssertEqual(c.score, 100)
         XCTAssertTrue(c.isComplete)

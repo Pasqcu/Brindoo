@@ -44,7 +44,7 @@ final class CategoryService {
                 .value
             
             self.cachedCategories = categories
-            print("✅ Caricate \(categories.count) categorie")
+            BrindooLog.info("Caricate \(categories.count) categorie")
             return categories
         } catch {
             BrindooLog.error("Errore caricamento categorie: \(error)")

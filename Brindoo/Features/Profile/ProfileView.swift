@@ -34,7 +34,8 @@ struct ProfileView: View {
             categoriesCount: organizerCategories.count,
             portfolioCount: portfolioCount,
             activeOffersCount: activeOffersCount,
-            coverageAreasCount: profile.coverageAreas.count
+            coverageAreasCount: profile.coverageAreas.count,
+            faqsCount: profile.faqs.count
         )
     }
 
@@ -319,7 +320,7 @@ struct ProfileView: View {
         } label: {
             navLinkRow(
                 icon: "questionmark.bubble.fill",
-                background: Color.blue,
+                background: Color.indigo,
                 title: "Domande frequenti",
                 subtitle: "Risposte pronte per i clienti (max 5)"
             )

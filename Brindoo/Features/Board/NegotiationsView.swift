@@ -210,6 +210,21 @@ struct NegotiationsView: View {
                     }
                     .buttonStyle(.plain)
                     .accessibilityLabel("Apri chat")
+
+                    // Promemoria scritto dell'accordo, a portata di lista.
+                    ShareLink(item: AgreementSummary.text(
+                        offer: offer,
+                        organizerName: profileMap[proposal.organizerId]?.displayName,
+                        proposal: proposal
+                    )) {
+                        Image(systemName: "doc.text")
+                            .font(.system(size: 16, weight: .semibold))
+                            .foregroundStyle(Color.brindooCoral)
+                            .frame(width: 44, height: 44)
+                            .background(Color.brindooCoral.opacity(0.12))
+                            .clipShape(RoundedRectangle(cornerRadius: BrindooRadius.md))
+                    }
+                    .accessibilityLabel("Condividi riepilogo accordo")
                 }
             }
         }

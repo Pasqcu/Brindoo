@@ -24,4 +24,14 @@ enum BrindooLog {
         print("[errore] \(message)")
         #endif
     }
+
+    /// Registra un'informazione di servizio (avvenuta con successo).
+    /// Va nel registro di sistema ma NON nell'archivio su file del
+    /// rapporto diagnostico, riservato agli errori.
+    static func info(_ message: String) {
+        logger.info("\(message, privacy: .public)")
+        #if DEBUG
+        print("[info] \(message)")
+        #endif
+    }
 }

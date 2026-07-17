@@ -76,6 +76,19 @@ struct CompareOrganizersView: View {
                         }
                     }
 
+                    labeledRow("Identità") { profile in
+                        if profile.identityVerified {
+                            VStack(spacing: 2) {
+                                VerifiedCheckIcon(size: 13)
+                                Text("Verificata")
+                                    .font(BrindooFont.caption)
+                                    .foregroundStyle(Color.brindooTextSecondary)
+                            }
+                        } else {
+                            placeholderDash
+                        }
+                    }
+
                     labeledRow("Prezzo da") { profile in
                         if let price = minPrices[profile.id] {
                             VStack(spacing: 2) {
@@ -191,11 +204,7 @@ struct CompareOrganizersView: View {
     }
 
     private func priceDisplay(_ value: Double) -> String {
-        let f = NumberFormatter()
-        f.numberStyle = .currency
-        f.locale = Locale(identifier: "it_IT")
-        f.maximumFractionDigits = 0
-        return f.string(from: NSNumber(value: value)) ?? "\(Int(value)) €"
+        BrindooFormat.euro(value)
     }
 
     // MARK: - Dati

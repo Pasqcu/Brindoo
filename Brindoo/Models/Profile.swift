@@ -124,10 +124,7 @@ struct Profile: Identifiable, Codable, Hashable, Equatable {
         // vacation_until è memorizzato come date (YYYY-MM-DD).
         if let dateString = try c.decodeIfPresent(String.self, forKey: .vacationUntil),
            !dateString.isEmpty {
-            let fmt = DateFormatter()
-            fmt.dateFormat = "yyyy-MM-dd"
-            fmt.timeZone = TimeZone(identifier: "UTC")
-            vacationUntil = fmt.date(from: dateString)
+            vacationUntil = BrindooFormat.day(from: dateString)
         } else {
             vacationUntil = nil
         }
@@ -154,10 +151,7 @@ struct Profile: Identifiable, Codable, Hashable, Equatable {
         try c.encodeIfPresent(boostExpiresAt, forKey: .boostExpiresAt)
         try c.encode(readReceiptsEnabled, forKey: .readReceiptsEnabled)
         if let vacationUntil {
-            let fmt = DateFormatter()
-            fmt.dateFormat = "yyyy-MM-dd"
-            fmt.timeZone = TimeZone(identifier: "UTC")
-            try c.encode(fmt.string(from: vacationUntil), forKey: .vacationUntil)
+            try c.encode(BrindooFormat.dayString(from: vacationUntil), forKey: .vacationUntil)
         }
         try c.encodeIfPresent(responseMinutes, forKey: .responseMinutes)
         try c.encode(faqs, forKey: .faqs)

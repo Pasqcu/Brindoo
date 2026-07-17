@@ -37,7 +37,7 @@ final class AccountService {
                 .rpc("delete_my_account")
                 .execute()
             
-            print("✅ Account eliminato")
+            BrindooLog.info("Account eliminato")
         } catch {
             BrindooLog.error("Errore eliminazione account: \(error)")
             throw error
@@ -65,7 +65,7 @@ final class AccountService {
                     .remove(paths: paths)
             }
         } catch {
-            print("⚠️ Errore cancellazione avatars: \(error)")
+            BrindooLog.error("Errore cancellazione avatars: \(error)")
         }
         
         // Portfolio: lista e cancella
@@ -81,7 +81,7 @@ final class AccountService {
                     .remove(paths: paths)
             }
         } catch {
-            print("⚠️ Errore cancellazione portfolio: \(error)")
+            BrindooLog.error("Errore cancellazione portfolio: \(error)")
         }
     }
 }

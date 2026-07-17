@@ -44,11 +44,7 @@ struct OrganizerWithOffersCard: View {
 
     private var minPriceDisplay: String? {
         guard let minPrice else { return nil }
-        let f = NumberFormatter()
-        f.numberStyle = .currency
-        f.currencyCode = "EUR"
-        f.maximumFractionDigits = 0
-        return f.string(from: NSNumber(value: minPrice))
+        return BrindooFormat.euro(minPrice)
     }
 
     var body: some View {
@@ -96,6 +92,9 @@ struct OrganizerWithOffersCard: View {
                             .lineLimit(1)
                         if organizer.isPro {
                             ProBadge()
+                        }
+                        if organizer.identityVerified {
+                            VerifiedCheckIcon()
                         }
                         if let rating, rating.reviewCount > 0 {
                             HStack(spacing: 2) {
@@ -266,6 +265,7 @@ struct FeaturedOrganizerCard: View {
                         .font(BrindooFont.bodyMedium.weight(.semibold))
                         .lineLimit(1)
                     if organizer.isPro { ProBadge() }
+                    if organizer.identityVerified { VerifiedCheckIcon() }
                 }
                 HStack(spacing: BrindooSpacing.xs) {
                     if let city = organizer.city, !city.isEmpty {

@@ -71,7 +71,7 @@ final class PurchaseService {
                 return lhs.price < rhs.price
             }
             
-            print("✅ Caricati \(products.count) prodotti")
+            BrindooLog.info("Caricati \(products.count) prodotti")
         } catch {
             BrindooLog.error("Errore caricamento prodotti: \(error)")
         }
@@ -133,7 +133,7 @@ final class PurchaseService {
         do {
             try await AppStore.sync()
             await refreshEntitlements()
-            print("✅ Acquisti ripristinati")
+            BrindooLog.info("Acquisti ripristinati")
         } catch {
             BrindooLog.error("Errore restore: \(error)")
         }
@@ -180,9 +180,9 @@ final class PurchaseService {
                         body: ValidateReceiptBody(signed_transaction: jws)
                     )
                 )
-            print("✅ Entitlement validato server-side")
+            BrindooLog.info("Entitlement validato server-side")
         } catch {
-            print("⚠️ Errore validazione server-side: \(error)")
+            BrindooLog.error("Errore validazione server-side: \(error)")
         }
     }
 
@@ -199,7 +199,7 @@ final class PurchaseService {
                     await self.submitToServer(verification: result)
                     await transaction.finish()
                 } catch {
-                    print("⚠️ Transazione non verificata: \(error)")
+                    BrindooLog.error("Transazione non verificata: \(error)")
                 }
             }
         }

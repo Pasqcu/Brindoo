@@ -35,6 +35,9 @@ struct ChatHeaderView: View {
                                 .font(.system(size: 11, weight: .bold))
                                 .foregroundStyle(Color(red: 0.93, green: 0.55, blue: 0.20))
                         }
+                        if user.identityVerified {
+                            VerifiedCheckIcon(size: 11)
+                        }
                     }
                     if isOnline {
                         Text("online ora")

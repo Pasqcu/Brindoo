@@ -239,10 +239,7 @@ struct CreateClientRequestView: View {
 
         var eventDateString: String?
         if hasEventDate {
-            let f = DateFormatter()
-            f.dateFormat = "yyyy-MM-dd"
-            f.timeZone = TimeZone(identifier: "UTC")
-            eventDateString = f.string(from: eventDate)
+            eventDateString = BrindooFormat.dayString(from: eventDate)
         }
 
         isSaving = true

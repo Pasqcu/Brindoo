@@ -124,14 +124,14 @@ final class ReportService {
                 .from("reports")
                 .insert(payload)
                 .execute()
-            print("✅ Segnalazione inviata: \(targetType.rawValue) \(targetId)")
+            BrindooLog.info("Segnalazione inviata: \(targetType.rawValue) \(targetId)")
         } catch {
             // Se l'utente ha già segnalato lo stesso target, l'INSERT viola
             // l'UNIQUE constraint. Lo trattiamo come success "soft": l'utente
             // ha già segnalato → conferma silenziosa.
             let message = error.localizedDescription.lowercased()
             if message.contains("duplicate") || message.contains("unique") {
-                print("ℹ️ Segnalazione già esistente, ignoro")
+                BrindooLog.info("Segnalazione già esistente, ignoro")
                 return
             }
             BrindooLog.error("Errore invio segnalazione: \(error)")

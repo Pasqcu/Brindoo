@@ -34,7 +34,7 @@ final class PortfolioService {
                 .execute()
                 .value
 
-            print("✅ Caricate \(items.count) foto portfolio")
+            BrindooLog.info("Caricate \(items.count) foto portfolio")
             return items
         } catch {
             BrindooLog.error("Errore caricamento portfolio: \(error)")
@@ -91,7 +91,7 @@ final class PortfolioService {
                 .execute()
                 .value
 
-            print("✅ Foto aggiunta al portfolio")
+            BrindooLog.info("Foto aggiunta al portfolio")
             return item
         } catch {
             // Rollback: cancella la foto dallo Storage
@@ -123,7 +123,7 @@ final class PortfolioService {
         }
 
         try? await StorageService.shared.deletePortfolioImage(storagePath: item.storagePath)
-        print("✅ Foto rimossa dal portfolio")
+        BrindooLog.info("Foto rimossa dal portfolio")
     }
 
     /// Alias storico di `deletePhoto`.

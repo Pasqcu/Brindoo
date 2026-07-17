@@ -43,7 +43,8 @@ struct ProfileCompletion: Equatable {
         categoriesCount: Int,
         portfolioCount: Int,
         activeOffersCount: Int,
-        coverageAreasCount: Int
+        coverageAreasCount: Int,
+        faqsCount: Int = 0
     ) -> ProfileCompletion {
         ProfileCompletion(items: [
             Item(done: hasAvatar, weight: 15,
@@ -57,7 +58,9 @@ struct ProfileCompletion: Equatable {
             Item(done: activeOffersCount > 0, weight: 20,
                  suggestion: "Pubblica la tua prima offerta in bacheca"),
             Item(done: coverageAreasCount > 0, weight: 10,
-                 suggestion: "Indica le zone del Lazio in cui lavori")
+                 suggestion: "Indica le zone del Lazio in cui lavori"),
+            Item(done: faqsCount > 0, weight: 10,
+                 suggestion: "Aggiungi 2-3 domande frequenti: meno domande ripetitive in chat")
         ])
     }
 }

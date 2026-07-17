@@ -48,7 +48,7 @@ final class BlockService {
             
             blockedByIds = Set(blocksOnMe.map { $0.blocker_id })
             
-            print("✅ Block cache: blocco \(blockedIds.count), bloccato da \(blockedByIds.count)")
+            BrindooLog.info("Block cache: blocco \(blockedIds.count), bloccato da \(blockedByIds.count)")
         } catch {
             BrindooLog.error("Errore loadBlocks: \(error)")
         }

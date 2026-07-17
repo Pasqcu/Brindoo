@@ -64,7 +64,7 @@ final class LiveActivityManager {
                 pushType: nil // server-side push: aggiungere quando avremo l'edge function
             )
         } catch {
-            print("⚠️ LiveActivity start failed: \(error)")
+            BrindooLog.error("LiveActivity start failed: \(error)")
         }
     }
 
