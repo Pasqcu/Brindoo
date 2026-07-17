@@ -250,7 +250,7 @@ struct ActivityView: View {
 
                 let nameIds = Set(news.map(\.organizerId)).filter { favoriteNames[$0] == nil }
                 if let profiles = try? await ProfileService.shared.fetchProfiles(ids: Array(nameIds)) {
-                    for p in profiles { favoriteNames[p.id] = p.fullName ?? "Professionista" }
+                    for p in profiles { favoriteNames[p.id] = p.displayName }
                 }
             } else {
                 favoriteNews = []

@@ -26,7 +26,7 @@ struct ChatHeaderView: View {
                 }
                 VStack(alignment: .leading, spacing: 0) {
                     HStack(spacing: 4) {
-                        Text(user.fullName ?? "Utente")
+                        Text(user.displayName)
                             .font(BrindooFont.bodyMedium.weight(.semibold))
                             .foregroundStyle(Color.brindooTextPrimary)
                             .lineLimit(1)

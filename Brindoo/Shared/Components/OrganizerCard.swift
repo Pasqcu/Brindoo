@@ -24,7 +24,7 @@ struct OrganizerCard: View {
             VStack(alignment: .leading, spacing: BrindooSpacing.xs) {
                 // Nome + Pro badge (il badge Pro fa anche da "verificato")
                 HStack(spacing: BrindooSpacing.xxs) {
-                    Text(organizer.fullName ?? "Senza nome")
+                    Text(organizer.displayName)
                         .font(BrindooFont.titleSmall)
                         .foregroundStyle(Color.brindooTextPrimary)
                         .lineLimit(1)

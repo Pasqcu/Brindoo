@@ -74,7 +74,7 @@ struct OfferCard: View {
                     AvatarView(url: organizer.avatarUrl, name: organizer.fullName, size: 36)
                     VStack(alignment: .leading, spacing: 2) {
                         HStack(spacing: 4) {
-                            Text(organizer.fullName ?? "Organizzatore")
+                            Text(organizer.displayName)
                                 .font(BrindooFont.bodyMedium.weight(.semibold))
                                 .lineLimit(1)
                             if organizer.isPro {

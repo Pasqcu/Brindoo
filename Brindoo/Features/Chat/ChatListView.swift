@@ -371,7 +371,7 @@ struct ChatListRow: View {
                             .font(.system(size: 11))
                             .foregroundStyle(Color.brindooCoral)
                     }
-                    Text(otherUser.fullName ?? "Utente")
+                    Text(otherUser.displayName)
                         .font(BrindooFont.bodyLarge.weight(.semibold))
                         .foregroundStyle(Color.brindooTextPrimary)
                         .lineLimit(1)

@@ -203,7 +203,7 @@ struct ProfileView: View {
 
             VStack(spacing: 4) {
                 HStack(spacing: BrindooSpacing.xs) {
-                    Text(profile.fullName ?? "Senza nome")
+                    Text(profile.displayName)
                         .font(BrindooFont.titleLarge)
                     if profile.isPro {
                         Image(systemName: "checkmark.seal.fill")

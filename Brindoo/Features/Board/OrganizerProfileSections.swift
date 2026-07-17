@@ -17,7 +17,7 @@ struct OrganizerTitleSection: View {
     var body: some View {
         VStack(spacing: BrindooSpacing.xxs) {
             HStack(spacing: BrindooSpacing.xs) {
-                Text(organizer.fullName ?? "Senza nome")
+                Text(organizer.displayName)
                     .font(BrindooFont.titleLarge)
                 if organizer.isPro {
                     Image(systemName: "checkmark.seal.fill")

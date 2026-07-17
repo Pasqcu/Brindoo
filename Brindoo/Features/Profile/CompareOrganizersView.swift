@@ -26,7 +26,7 @@ struct CompareOrganizersView: View {
                     compareRow { profile in
                         VStack(spacing: BrindooSpacing.xs) {
                             AvatarView(url: profile.avatarUrl, name: profile.fullName, size: 56)
-                            Text(profile.fullName ?? "Professionista")
+                            Text(profile.displayName)
                                 .font(BrindooFont.bodySmall.weight(.semibold))
                                 .multilineTextAlignment(.center)
                                 .lineLimit(2)

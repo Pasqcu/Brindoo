@@ -34,7 +34,7 @@ struct BlockedUsersView: View {
                             HStack {
                                 AvatarView(url: profile.avatarUrl, name: profile.fullName, size: 40)
                                 VStack(alignment: .leading) {
-                                    Text(profile.fullName ?? "Utente")
+                                    Text(profile.displayName)
                                         .font(BrindooFont.bodyMedium)
                                     if let city = profile.city {
                                         Text(city)

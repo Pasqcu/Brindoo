@@ -50,7 +50,7 @@ struct WriteReviewView: View {
                         )
                         
                         VStack(spacing: BrindooSpacing.xxs) {
-                            Text(organizer.fullName ?? "Organizzatore")
+                            Text(organizer.displayName)
                                 .font(BrindooFont.titleMedium)
                             
                             if let city = organizer.city {

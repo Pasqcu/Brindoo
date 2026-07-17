@@ -63,7 +63,7 @@ struct ChatView: View {
             } else {
                 if otherIsTyping {
                     ChatTypingIndicator(
-                        userName: otherUser.fullName ?? "Utente",
+                        userName: otherUser.displayName,
                         isAnimating: otherIsTyping
                     )
                 }
@@ -76,7 +76,7 @@ struct ChatView: View {
                 if let replyingTo {
                     ChatReplyBanner(
                         message: replyingTo,
-                        replyToName: replyingTo.senderId == session.userID ? "te stesso" : otherUser.fullName ?? "utente",
+                        replyToName: replyingTo.senderId == session.userID ? "te stesso" : otherUser.displayName,
                         onClose: { self.replyingTo = nil }
                     )
                 }
@@ -93,7 +93,7 @@ struct ChatView: View {
                     HStack(spacing: BrindooSpacing.xs) {
                         AvatarView(url: otherUser.avatarUrl, name: otherUser.fullName, size: 32)
                         VStack(alignment: .leading, spacing: 0) {
-                            Text(otherUser.fullName ?? "Utente")
+                            Text(otherUser.displayName)
                                 .font(BrindooFont.bodyMedium.weight(.semibold))
                                 .foregroundStyle(Color.brindooTextPrimary)
                             if otherUser.isPro {
@@ -209,7 +209,7 @@ struct ChatView: View {
         } message: {
             Text(sendErrorMessage ?? "")
         }
-        .alert("Bloccare \(otherUser.fullName ?? "utente")?", isPresented: $showBlockConfirm) {
+        .alert("Bloccare \(otherUser.displayName)?", isPresented: $showBlockConfirm) {
             Button("Annulla", role: .cancel) {}
             Button("Blocca", role: .destructive) {
                 Task { await blockUser() }

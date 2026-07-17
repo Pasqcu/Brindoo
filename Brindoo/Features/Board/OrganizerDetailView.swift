@@ -169,7 +169,7 @@ struct OrganizerDetailView: View {
         .navigationDestination(item: $navigateToChat) { conv in
             ChatView(conversation: conv, otherUser: organizer)
         }
-        .alert("Bloccare \(organizer.fullName ?? "utente")?", isPresented: $showBlockConfirm) {
+        .alert("Bloccare \(organizer.displayName)?", isPresented: $showBlockConfirm) {
             Button("Annulla", role: .cancel) {}
             Button("Blocca", role: .destructive) {
                 Task { await block() }
@@ -300,7 +300,7 @@ struct OrganizerDetailView: View {
         let url = URL(string: "https://brindoo.app/p/\(organizer.id.uuidString)")!
         let avatar = await ShareCardRenderer.loadImage(from: organizer.avatarUrl)
         let card = ProfileShareCard(
-            name: organizer.fullName ?? "Professionista",
+            name: organizer.displayName,
             city: organizer.city,
             categories: categories.map { $0.category.name },
             rating: reviewSummary,

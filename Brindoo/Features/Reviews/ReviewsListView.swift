@@ -322,7 +322,7 @@ struct ReviewsListView: View {
                         .font(.system(size: 11))
                         .foregroundStyle(Color.brindooCoral)
                     VStack(alignment: .leading, spacing: 2) {
-                        Text("Risposta di \(organizer.fullName ?? "organizzatore")")
+                        Text("Risposta di \(organizer.displayName)")
                             .font(BrindooFont.caption.weight(.semibold))
                             .foregroundStyle(Color.brindooCoral)
                         Text(reply)

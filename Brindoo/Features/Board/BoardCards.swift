@@ -87,7 +87,7 @@ struct OrganizerWithOffersCard: View {
 
                 VStack(alignment: .leading, spacing: 2) {
                     HStack(spacing: 4) {
-                        Text(organizer.fullName ?? "Senza nome")
+                        Text(organizer.displayName)
                             .font(BrindooFont.titleSmall)
                             .lineLimit(1)
                         if organizer.isPro {
@@ -261,7 +261,7 @@ struct FeaturedOrganizerCard: View {
 
             VStack(alignment: .leading, spacing: 2) {
                 HStack(spacing: 4) {
-                    Text(organizer.fullName ?? "Professionista")
+                    Text(organizer.displayName)
                         .font(BrindooFont.bodyMedium.weight(.semibold))
                         .lineLimit(1)
                     if organizer.isPro { ProBadge() }

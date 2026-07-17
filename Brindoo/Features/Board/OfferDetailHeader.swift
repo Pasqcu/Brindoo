@@ -65,7 +65,7 @@ struct OfferHeaderSection: View {
                         AvatarView(url: profile.avatarUrl, name: profile.fullName, size: 32)
                         VStack(alignment: .leading, spacing: 0) {
                             HStack(spacing: 4) {
-                                Text(profile.fullName ?? "Organizzatore")
+                                Text(profile.displayName)
                                     .font(BrindooFont.bodyMedium.weight(.medium))
                                 if profile.isPro {
                                     Image(systemName: "checkmark.seal.fill")

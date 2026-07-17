@@ -282,7 +282,7 @@ struct ClientRequestCard: View {
                 HStack(spacing: BrindooSpacing.sm) {
                     AvatarView(url: clientProfile.avatarUrl, name: clientProfile.fullName, size: 32)
                     VStack(alignment: .leading, spacing: 0) {
-                        Text(clientProfile.fullName ?? "Cliente")
+                        Text(clientProfile.displayName)
                             .font(BrindooFont.bodySmall.weight(.semibold))
                         Text(timeAgo(request.createdAt))
                             .font(BrindooFont.caption)
