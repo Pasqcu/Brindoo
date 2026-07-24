@@ -35,6 +35,14 @@ struct BoardSnapshot: Codable {
 @Observable
 final class BoardViewModel {
 
+    /// Da dove arrivano i dati. In app le prese vere, nei test finte.
+    private let data: BoardDataSource
+
+    /// Senza argomenti usa le prese vere; i test passano le loro.
+    init(data: BoardDataSource? = nil) {
+        self.data = data ?? .live
+    }
+
     // Contesto (impostato dalla vista prima del primo caricamento)
     private(set) var isClient: Bool = false
     private(set) var clientPreview: Bool = false
@@ -224,13 +232,13 @@ final class BoardViewModel {
     func loadInitial() async {
         isLoading = true
         do {
-            categories = try await CategoryService.shared.fetchCategories()
+            categories = try await data.fetchCategories()
         } catch {
             // Senza categorie i filtri restano vuoti: meglio dirlo che tacere.
             onToast?(BrindooToast("Impossibile caricare le categorie", message: "Trascina in basso per riprovare.", style: .error))
             BrindooLog.error("Errore caricamento categorie: \(error)")
         }
-        await BlockService.shared.loadBlocks()
+        await data.loadBlocks()
         await checkOrganizerCategoriesIfNeeded()
 
         // Parti già "vicino a casa": filtra sulla provincia dell'utente.
@@ -261,7 +269,7 @@ final class BoardViewModel {
         guard !isClient,
               ProfessionalOnboardingHint.isPending,
               let userID else { return }
-        let cats = (try? await OrganizerService.shared.fetchOrganizerCategories(organizerID: userID)) ?? []
+        let cats = (try? await data.fetchOrganizerCategories(userID)) ?? []
         hasOrganizerCategories = !cats.isEmpty
         if !cats.isEmpty {
             ProfessionalOnboardingHint.clear()
@@ -279,13 +287,13 @@ final class BoardViewModel {
 
     /// Una pagina di professionisti già filtrata per data evento (se attiva).
     private func fetchPage(offset: Int, busyIds: Set<UUID>) async throws -> (profiles: [Profile], hasMore: Bool) {
-        let page = try await OrganizerService.shared.fetchOrganizers(
-            categoryIds: selectedCategoryIds,
-            areaFilters: selectedAreaSlugs,
-            searchText: searchText.isEmpty ? nil : searchText,
-            includeCurrentUser: clientPreview,
-            limit: pageSize,
-            offset: offset
+        let page = try await data.fetchOrganizers(
+            selectedCategoryIds,
+            selectedAreaSlugs,
+            searchText.isEmpty ? nil : searchText,
+            clientPreview,
+            pageSize,
+            offset
         )
         return (applyDateFilter(page.profiles, busyIds: busyIds), page.hasMore)
     }
@@ -306,7 +314,7 @@ final class BoardViewModel {
 
     private func fetchBusyIdsIfNeeded() async -> Set<UUID> {
         guard let eventDate else { return [] }
-        return (try? await AvailabilityService.shared.fetchBusyOrganizerIds(on: eventDate)) ?? []
+        return (try? await data.fetchBusyOrganizerIds(eventDate)) ?? []
     }
 
     /// Accumula pagine a partire da `startOffset` finché non trova almeno un
@@ -400,7 +408,7 @@ final class BoardViewModel {
         await loadOffersForOrganizers(profiles)
         await loadCategoriesForOrganizers(profiles)
         if !profiles.isEmpty,
-           let ratings = try? await ReviewService.shared.fetchRatings(organizerIds: profiles.map { $0.id }) {
+           let ratings = try? await data.fetchRatings(profiles.map { $0.id }) {
             organizerRatings.merge(ratings) { _, new in new }
         }
     }
@@ -409,7 +417,7 @@ final class BoardViewModel {
         // Una sola richiesta per tutta la pagina (non una per professionista).
         let missing = profiles.map(\.id).filter { organizerCategoriesMap[$0] == nil }
         guard !missing.isEmpty else { return }
-        let map = (try? await OrganizerService.shared.fetchOrganizerCategoriesMap(organizerIds: missing)) ?? [:]
+        let map = (try? await data.fetchOrganizerCategoriesMap(missing)) ?? [:]
         for id in missing {
             organizerCategoriesMap[id] = map[id] ?? []
         }
@@ -419,7 +427,7 @@ final class BoardViewModel {
         let ids = profiles.map { $0.id }
         guard !ids.isEmpty else { return }
         do {
-            let grouped = try await ServiceOfferService.shared.fetchActiveOffers(forOrganizers: ids)
+            let grouped = try await data.fetchActiveOffers(ids)
             organizerOffersMap.merge(grouped) { _, new in new }
         } catch {
             BrindooLog.error("Errore caricamento offerte: \(error)")
@@ -428,7 +436,7 @@ final class BoardViewModel {
 
     func loadMyOffers() async {
         do {
-            let result = try await ServiceOfferService.shared.fetchMyOffers()
+            let result = try await data.fetchMyOffers()
             myOffers = result
             await loadCategoriesForMyOffers(result)
         } catch {
@@ -441,7 +449,7 @@ final class BoardViewModel {
         // Una sola richiesta per tutte le offerte.
         let missing = offers.map(\.id).filter { myOfferCategoriesMap[$0] == nil }
         guard !missing.isEmpty else { return }
-        let map = (try? await ServiceOfferService.shared.fetchOfferCategoriesMap(offerIds: missing)) ?? [:]
+        let map = (try? await data.fetchOfferCategoriesMap(missing)) ?? [:]
         for id in missing {
             myOfferCategoriesMap[id] = map[id] ?? []
         }
