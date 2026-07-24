@@ -117,4 +117,6 @@ with (security_invoker = off) as
   from public.client_feedback
   group by client_id;
 
-grant select on public.client_trust_stats to anon, authenticated;
+-- Solo utenti autenticati: i conteggi riguardano persone, non devono
+-- essere leggibili da chiunque abbia la chiave pubblica dell'app.
+grant select on public.client_trust_stats to authenticated;
