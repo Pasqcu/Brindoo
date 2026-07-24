@@ -107,10 +107,10 @@ extension LazioArea {
 
     /// Etichetta human-readable per una lista di slug.
     static func displayLabel(forSlugs slugs: [String]) -> String {
-        guard !slugs.isEmpty else { return "Tutto il Lazio" }
+        guard !slugs.isEmpty else { return BrindooText.wholeLazio }
         let names = slugs.compactMap { area(forSlug: $0)?.name }
         switch names.count {
-        case 0:  return "Tutto il Lazio"
+        case 0:  return BrindooText.wholeLazio
         case 1:  return names[0]
         case 2:  return names.joined(separator: " · ")
         default: return "\(names[0]) +\(names.count - 1)"

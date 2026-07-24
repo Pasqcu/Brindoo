@@ -331,7 +331,7 @@ struct OfferDetailView: View {
             BrindooHaptics.notify(.success)
             toastCenter.show(BrindooToast("Data aggiornata", message: "L'altra parte è stata avvisata in chat.", style: .success))
         } else {
-            toastCenter.show(BrindooToast("Impossibile spostare la data", message: "Controlla la connessione e riprova.", style: .error))
+            toastCenter.show(BrindooToast("Impossibile spostare la data", message: BrindooText.retryHint, style: .error))
         }
     }
 
@@ -356,7 +356,7 @@ struct OfferDetailView: View {
         if await vm.togglePause() {
             onChange?()
         } else {
-            toastCenter.show(BrindooToast("Impossibile aggiornare l'offerta", message: "Controlla la connessione e riprova.", style: .error))
+            toastCenter.show(BrindooToast("Impossibile aggiornare l'offerta", message: BrindooText.retryHint, style: .error))
         }
     }
 
@@ -365,7 +365,7 @@ struct OfferDetailView: View {
             onChange?()
             dismiss()
         } else {
-            toastCenter.show(BrindooToast("Impossibile eliminare l'offerta", message: "Controlla la connessione e riprova.", style: .error))
+            toastCenter.show(BrindooToast("Impossibile eliminare l'offerta", message: BrindooText.retryHint, style: .error))
         }
     }
 
@@ -400,7 +400,7 @@ struct OfferDetailView: View {
             chatPartner = other
             navigateToChat = conv
         } catch {
-            toastCenter.show(BrindooToast("Impossibile aprire la chat", message: "Controlla la connessione e riprova.", style: .error))
+            toastCenter.show(BrindooToast("Impossibile aprire la chat", message: BrindooText.retryHint, style: .error))
             BrindooLog.error("\(error)")
         }
     }

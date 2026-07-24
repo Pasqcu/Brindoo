@@ -235,7 +235,7 @@ final class BoardViewModel {
             categories = try await data.fetchCategories()
         } catch {
             // Senza categorie i filtri restano vuoti: meglio dirlo che tacere.
-            onToast?(BrindooToast("Impossibile caricare le categorie", message: "Trascina in basso per riprovare.", style: .error))
+            onToast?(BrindooToast(BrindooText.loadError("le categorie"), message: "Trascina in basso per riprovare.", style: .error))
             BrindooLog.error("Errore caricamento categorie: \(error)")
         }
         await data.loadBlocks()
@@ -354,7 +354,7 @@ final class BoardViewModel {
         } catch {
             // Se abbiamo la lista dalla cache, non coprirla con la schermata d'errore.
             if organizers.isEmpty {
-                errorMessage = "Impossibile caricare i professionisti"
+                errorMessage = BrindooText.loadError("i professionisti")
             }
             BrindooLog.error("Errore caricamento professionisti: \(error)")
         }
@@ -398,7 +398,7 @@ final class BoardViewModel {
             canLoadMore = hasMore
         } catch {
             canLoadMore = false
-            onToast?(BrindooToast("Impossibile caricare altri profili", message: "Trascina in basso per riprovare.", style: .error))
+            onToast?(BrindooToast(BrindooText.loadError("altri profili"), message: "Trascina in basso per riprovare.", style: .error))
             BrindooLog.error("Errore caricamento pagina successiva: \(error)")
         }
     }
@@ -440,7 +440,7 @@ final class BoardViewModel {
             myOffers = result
             await loadCategoriesForMyOffers(result)
         } catch {
-            errorMessage = "Impossibile caricare le offerte"
+            errorMessage = BrindooText.loadError("le offerte")
             BrindooLog.error("Errore caricamento offerte: \(error)")
         }
     }

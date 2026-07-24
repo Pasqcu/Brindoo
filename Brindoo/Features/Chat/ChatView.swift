@@ -438,7 +438,7 @@ struct ChatView: View {
             } else {
                 await MainActor.run {
                     photoPickerItem = nil
-                    sendErrorMessage = "Impossibile caricare la foto selezionata. Riprova."
+                    sendErrorMessage = BrindooText.loadError("la foto selezionata. Riprova.")
                 }
             }
         } catch {

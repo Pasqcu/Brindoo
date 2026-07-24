@@ -306,7 +306,7 @@ struct PortfolioGalleryView: View {
         } catch {
             BrindooLog.error("Errore caricamento portfolio: \(error)")
             if state.value == nil {
-                state = .error("Impossibile caricare il portfolio")
+                state = .error(BrindooText.loadError("il portfolio"))
             } else {
                 errorMessage = "Impossibile aggiornare il portfolio"
             }

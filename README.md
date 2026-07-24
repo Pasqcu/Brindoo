@@ -12,16 +12,24 @@ chat in tempo reale, recensioni verificate, agenda eventi. Backend Supabase.
 - **Trattative**: proposta / controproposta / accettazione, pacchetti
   prezzo (Base/Completo/Premium), riepilogo accordo condivisibile,
   regole di annullamento mostrate prima di accettare
+- **Acconto e pagamento**: si concorda come pagare (contanti o bonifico),
+  chi incassa dichiara l'importo e l'altra parte conferma. I soldi non
+  passano dall'app: Brindoo registra l'accordo e ne tiene traccia
 - **Chat** in tempo reale: foto, risposte, modifica, bozze, risposte
-  rapide, indicatore di scrittura, ricevute di lettura
+  rapide, indicatore di scrittura, ricevute di lettura; i messaggi
+  scritti senza linea restano in coda e partono da soli
 - **Agenda**: eventi confermati, conto alla rovescia, acconto, checklist,
   promemoria locali e calendario iPhone
 - **Profili**: portfolio foto, categorie, zone di copertura su mappa,
   disponibilità, FAQ, distintivi, recensioni con foto e risposta
-- **Fiducia**: recensioni "verificate" (solo da trattative concluse) e
-  badge "identità verificata" assegnato dall'amministrazione
+- **Fiducia a due sensi**: recensioni "verificate" (solo da trattative
+  concluse), badge "identità verificata" assegnato dall'amministrazione e
+  distintivo di affidabilità del cliente ricavato dagli esiti degli eventi
+- **Ricerche salvate**: filtri messi da parte con avviso quando compaiono
+  professionisti nuovi
 - **Extra**: piano Pro (StoreKit), Boost, referral, preventivo guidato,
-  Live Activity per le trattative, notifiche push
+  Live Activity per le trattative, notifiche push scegliendo le categorie
+  (messaggi / trattative / promemoria)
 - **Legale e GDPR**: accettazione Termini con prova sul server (data +
   versione, riproposta se i Termini cambiano), dichiarazione di
   responsabilità del professionista, esportazione dei propri dati,
@@ -37,7 +45,7 @@ Brindoo/
   Models/         Modelli dati (Profile, ServiceOffer, OfferProposal, ...)
   Services/       Accesso a Supabase e servizi locali
   Shared/         Componenti e logiche riusabili (BrindooFormat, badge, ...)
-BrindooTests/     Test unitari sulle logiche pure
+BrindooTests/     Test unitari su logiche pure e flussi della bacheca
 supabase/         Migrazioni del database
 ```
 
@@ -58,6 +66,8 @@ xcodebuild test -project Brindoo.xcodeproj -scheme Brindoo \
 ## Database
 
 Migrazioni in `supabase/migrations/`, applicate al progetto prod con la
-CLI `supabase db push`. Il badge `identity_verified` sui profili si
+CLI `supabase db push`. Le ultime due (preferenze notifiche + affidabilità
+cliente, dettagli acconto) vanno applicate perché le relative schermate
+funzionino: senza, l'app continua a partire e usa i valori di partenza. Il badge `identity_verified` sui profili si
 assegna solo dalla dashboard Supabase (un trigger blocca l'auto-assegnazione
 via API).

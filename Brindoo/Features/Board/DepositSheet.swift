@@ -428,7 +428,7 @@ struct DepositSheet: View {
         BrindooLog.error("Acconto: \(error)")
         toastCenter.show(BrindooToast(
             "Non è stato possibile salvare",
-            message: "Controlla la connessione e riprova.",
+            message: BrindooText.retryHint,
             style: .error
         ))
     }

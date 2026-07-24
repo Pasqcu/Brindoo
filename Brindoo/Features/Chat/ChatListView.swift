@@ -246,7 +246,7 @@ struct ChatListView: View {
         } catch {
             BrindooLog.error("Errore caricamento chat: \(error)")
             // Se una lista è già a schermo non la copriamo con l'errore.
-            if state.value == nil { state = .error("Impossibile caricare le chat") }
+            if state.value == nil { state = .error(BrindooText.loadError("le chat")) }
         }
     }
 

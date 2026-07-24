@@ -85,7 +85,7 @@ struct AvailabilityView: View {
             let dates = try await AvailabilityService.shared.fetchMyUnavailableDays()
             selected = Set(dates.map { calendar.dateComponents([.year, .month, .day], from: $0) })
         } catch {
-            self.error = "Impossibile caricare il calendario."
+            self.error = BrindooText.loadError("il calendario.")
             BrindooLog.error("\(error)")
         }
     }

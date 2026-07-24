@@ -25,7 +25,7 @@ final class AccountService {
     func deleteMyAccount() async throws {
         guard let userId = SupabaseManager.shared.currentUserID else {
             throw NSError(domain: "AccountService", code: 401,
-                          userInfo: [NSLocalizedDescriptionKey: "Devi essere loggato"])
+                          userInfo: [NSLocalizedDescriptionKey: BrindooText.loginRequired])
         }
         
         // 1. Cancella file Storage (best effort, prima del DB)

@@ -25,7 +25,7 @@ struct FavoriteOffersView: View {
                 BrindooEmptyState(
                     icon: "exclamationmark.triangle",
                     title: message,
-                    message: "Controlla la connessione e riprova.",
+                    message: BrindooText.retryHint,
                     actionTitle: "Riprova"
                 ) {
                     Task { await load() }
@@ -87,7 +87,7 @@ struct FavoriteOffersView: View {
             BrindooLog.error("Errore caricamento preferiti: \(error)")
             // Se una lista era già a schermo non la copriamo con l'errore.
             if state.value == nil {
-                state = .error("Impossibile caricare le offerte salvate")
+                state = .error(BrindooText.loadError("le offerte salvate"))
             }
         }
     }

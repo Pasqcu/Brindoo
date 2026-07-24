@@ -51,12 +51,12 @@ final class StorageService {
     func uploadAvatar(_ image: UIImage) async throws -> String {
         guard let userId = SupabaseManager.shared.currentUserID else {
             throw NSError(domain: "StorageService", code: 401,
-                          userInfo: [NSLocalizedDescriptionKey: "Devi essere loggato"])
+                          userInfo: [NSLocalizedDescriptionKey: BrindooText.loginRequired])
         }
         
         guard let imageData = compressImage(image) else {
             throw NSError(domain: "StorageService", code: 400,
-                          userInfo: [NSLocalizedDescriptionKey: "Immagine non valida"])
+                          userInfo: [NSLocalizedDescriptionKey: BrindooText.invalidImage])
         }
         
         let path = "\(userId.uuidString)/avatar.jpg"
@@ -109,12 +109,12 @@ final class StorageService {
     func uploadPortfolioImage(_ image: UIImage) async throws -> (url: String, path: String) {
         guard let userId = SupabaseManager.shared.currentUserID else {
             throw NSError(domain: "StorageService", code: 401,
-                          userInfo: [NSLocalizedDescriptionKey: "Devi essere loggato"])
+                          userInfo: [NSLocalizedDescriptionKey: BrindooText.loginRequired])
         }
         
         guard let imageData = compressImage(image, quality: 0.8) else {
             throw NSError(domain: "StorageService", code: 400,
-                          userInfo: [NSLocalizedDescriptionKey: "Immagine non valida"])
+                          userInfo: [NSLocalizedDescriptionKey: BrindooText.invalidImage])
         }
         
         let filename = "\(UUID().uuidString).jpg"
@@ -150,12 +150,12 @@ final class StorageService {
     func uploadOfferImage(_ image: UIImage) async throws -> String {
         guard let userId = SupabaseManager.shared.currentUserID else {
             throw NSError(domain: "StorageService", code: 401,
-                          userInfo: [NSLocalizedDescriptionKey: "Devi essere loggato"])
+                          userInfo: [NSLocalizedDescriptionKey: BrindooText.loginRequired])
         }
 
         guard let imageData = compressImage(image, quality: 0.8) else {
             throw NSError(domain: "StorageService", code: 400,
-                          userInfo: [NSLocalizedDescriptionKey: "Immagine non valida"])
+                          userInfo: [NSLocalizedDescriptionKey: BrindooText.invalidImage])
         }
 
         let path = "\(userId.uuidString)/offer_\(UUID().uuidString).jpg"
@@ -188,12 +188,12 @@ final class StorageService {
     func uploadReviewImage(_ image: UIImage) async throws -> String {
         guard let userId = SupabaseManager.shared.currentUserID else {
             throw NSError(domain: "StorageService", code: 401,
-                          userInfo: [NSLocalizedDescriptionKey: "Devi essere loggato"])
+                          userInfo: [NSLocalizedDescriptionKey: BrindooText.loginRequired])
         }
 
         guard let imageData = compressImage(image, quality: 0.8) else {
             throw NSError(domain: "StorageService", code: 400,
-                          userInfo: [NSLocalizedDescriptionKey: "Immagine non valida"])
+                          userInfo: [NSLocalizedDescriptionKey: BrindooText.invalidImage])
         }
 
         let path = "\(userId.uuidString)/review_\(UUID().uuidString).jpg"

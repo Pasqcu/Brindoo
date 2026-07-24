@@ -265,7 +265,7 @@ struct CoverageAreasField: View {
                         .background(Color.brindooCoral)
                         .clipShape(Circle())
                     VStack(alignment: .leading, spacing: 2) {
-                        Text(selectedAreaSlugs.isEmpty ? "Tutto il Lazio" : LazioArea.displayLabel(forSlugs: Array(selectedAreaSlugs)))
+                        Text(selectedAreaSlugs.isEmpty ? BrindooText.wholeLazio : LazioArea.displayLabel(forSlugs: Array(selectedAreaSlugs)))
                             .font(BrindooFont.bodyMedium.weight(.semibold))
                             .foregroundStyle(Color.brindooTextPrimary)
                             .lineLimit(2)

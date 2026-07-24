@@ -35,7 +35,7 @@ struct ClientRequestsView: View {
                 ProgressView().tint(.brindooCoral)
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
             } else if loadFailed {
-                BrindooErrorState(message: "Impossibile caricare le richieste") {
+                BrindooErrorState(message: BrindooText.loadError("le richieste")) {
                     Task { await load() }
                 }
             } else if requests.isEmpty {

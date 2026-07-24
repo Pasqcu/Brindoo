@@ -399,9 +399,9 @@ struct AgendaView: View {
         } catch {
             BrindooLog.error("Errore caricamento agenda: \(error)")
             if state.value == nil {
-                state = .error("Impossibile caricare l'agenda")
+                state = .error(BrindooText.loadError("l'agenda"))
             } else {
-                toastCenter.show(BrindooToast("Impossibile aggiornare l'agenda", message: "Controlla la connessione e riprova.", style: .error))
+                toastCenter.show(BrindooToast("Impossibile aggiornare l'agenda", message: BrindooText.retryHint, style: .error))
             }
         }
     }

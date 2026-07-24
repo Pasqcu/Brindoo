@@ -392,7 +392,7 @@ struct ReviewsListView: View {
         } catch {
             BrindooLog.error("Errore caricamento recensioni: \(error)")
             if state.value == nil {
-                state = .error("Impossibile caricare le recensioni")
+                state = .error(BrindooText.loadError("le recensioni"))
             }
         }
     }

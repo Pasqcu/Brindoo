@@ -139,7 +139,7 @@ final class ReviewService {
     ) async throws -> Review {
         guard let userId = SupabaseManager.shared.currentUserID else {
             throw NSError(domain: "ReviewService", code: 401,
-                          userInfo: [NSLocalizedDescriptionKey: "Devi essere loggato"])
+                          userInfo: [NSLocalizedDescriptionKey: BrindooText.loginRequired])
         }
 
         guard userId != organizerId else {

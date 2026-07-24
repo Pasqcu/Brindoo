@@ -70,7 +70,7 @@ struct BrindooErrorState: View {
         BrindooEmptyState(
             icon: "exclamationmark.triangle",
             title: message,
-            message: "Controlla la connessione e riprova.",
+            message: BrindooText.retryHint,
             actionTitle: "Riprova",
             action: retry
         )

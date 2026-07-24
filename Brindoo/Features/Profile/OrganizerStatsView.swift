@@ -147,7 +147,7 @@ struct OrganizerStatsView: View {
         } catch {
             BrindooLog.error("Errore caricamento statistiche: \(error)")
             if state.value == nil {
-                state = .error("Impossibile caricare le statistiche")
+                state = .error(BrindooText.loadError("le statistiche"))
             }
         }
     }

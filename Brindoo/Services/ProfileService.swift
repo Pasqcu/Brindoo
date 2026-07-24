@@ -56,7 +56,7 @@ final class ProfileService {
             throw NSError(
                 domain: "ProfileService",
                 code: 401,
-                userInfo: [NSLocalizedDescriptionKey: "Devi essere loggato"]
+                userInfo: [NSLocalizedDescriptionKey: BrindooText.loginRequired]
             )
         }
 
@@ -90,7 +90,7 @@ final class ProfileService {
     func updateCurrentProfile(_ update: ProfileUpdate) async throws -> Profile {
         guard let userID = SupabaseManager.shared.currentUserID else {
             throw NSError(domain: "ProfileService", code: 401,
-                          userInfo: [NSLocalizedDescriptionKey: "Devi essere loggato"])
+                          userInfo: [NSLocalizedDescriptionKey: BrindooText.loginRequired])
         }
 
         struct Payload: Encodable {

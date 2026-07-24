@@ -334,9 +334,9 @@ struct NegotiationsView: View {
         } catch {
             BrindooLog.error("Errore caricamento trattative: \(error)")
             if state.value == nil {
-                state = .error("Impossibile caricare le trattative")
+                state = .error(BrindooText.loadError("le trattative"))
             } else {
-                toastCenter.show(BrindooToast("Impossibile aggiornare le trattative", message: "Controlla la connessione e riprova.", style: .error))
+                toastCenter.show(BrindooToast("Impossibile aggiornare le trattative", message: BrindooText.retryHint, style: .error))
             }
         }
     }

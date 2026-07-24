@@ -74,7 +74,7 @@ struct BoardFiltersBar: View {
     }
 
     private var compactSummaryText: String {
-        var parts: [String] = [areaFilterTitle == "Area" ? "Tutto il Lazio" : areaFilterTitle]
+        var parts: [String] = [areaFilterTitle == "Area" ? BrindooText.wholeLazio : areaFilterTitle]
         if !vm.selectedCategoryIds.isEmpty {
             let names = vm.categories.filter { vm.selectedCategoryIds.contains($0.id) }.map(\.name)
             parts.append(names.count <= 2 ? names.joined(separator: ", ") : "\(names.count) categorie")
@@ -156,7 +156,7 @@ struct BoardFiltersBar: View {
             HStack(spacing: BrindooSpacing.xs) {
                 areaFilterButton
                 Divider().frame(height: 22)
-                provinceChip(title: "Tutto il Lazio", isOn: vm.selectedAreaSlugs.isEmpty) {
+                provinceChip(title: BrindooText.wholeLazio, isOn: vm.selectedAreaSlugs.isEmpty) {
                     vm.selectedAreaSlugs.removeAll()
                     Task { await vm.loadOrganizers() }
                 }
