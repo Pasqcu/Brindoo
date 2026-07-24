@@ -16,10 +16,8 @@ struct ProfileView: View {
     @State private var showAvailability: Bool = false
     @State private var showFAQs: Bool = false
     @State private var showAvatarFullScreen: Bool = false
-    @State private var organizerCategories: [OrganizerCategoryDetail] = []
-    @State private var reviewSummary: ReviewSummary?
-    @State private var portfolioCount: Int = 0
-    @State private var activeOffersCount: Int = 0
+    /// Parte dati (categorie, recensioni, portfolio): vive nel ViewModel.
+    @State private var vm = ProfileViewModel()
 
     private var isOrganizer: Bool {
         session.currentProfile?.role == .organizer
@@ -31,9 +29,9 @@ struct ProfileView: View {
         return ProfileCompletion.evaluate(
             hasAvatar: profile.avatarUrl?.isEmpty == false,
             bioLength: (profile.bio ?? "").trimmingCharacters(in: .whitespacesAndNewlines).count,
-            categoriesCount: organizerCategories.count,
-            portfolioCount: portfolioCount,
-            activeOffersCount: activeOffersCount,
+            categoriesCount: vm.organizerCategories.count,
+            portfolioCount: vm.portfolioCount,
+            activeOffersCount: vm.activeOffersCount,
             coverageAreasCount: profile.coverageAreas.count,
             faqsCount: profile.faqs.count
         )
@@ -71,11 +69,11 @@ struct ProfileView: View {
                         }
 
                         if isOrganizer {
-                            if !organizerCategories.isEmpty {
+                            if !vm.organizerCategories.isEmpty {
                                 categoriesSection
                             }
 
-                            if let summary = reviewSummary, summary.totalReviews > 0 {
+                            if let summary = vm.reviewSummary, summary.totalReviews > 0 {
                                 reviewsSection(summary)
                             }
 
@@ -83,7 +81,7 @@ struct ProfileView: View {
                                 actionMiniCard(
                                     icon: "photo.stack",
                                     title: "Portfolio",
-                                    subtitle: portfolioCount > 0 ? "\(portfolioCount) elementi" : "Aggiungi foto"
+                                    subtitle: vm.portfolioCount > 0 ? "\(vm.portfolioCount) elementi" : "Aggiungi foto"
                                 ) {
                                     showPortfolio = true
                                 }
@@ -144,10 +142,10 @@ struct ProfileView: View {
                     .accessibilityLabel("Impostazioni")
                 }
             }
-            .task { await loadData() }
-            .refreshable { await loadData() }
+            .task { await vm.load(userId: session.userID, isOrganizer: isOrganizer) }
+            .refreshable { await vm.load(userId: session.userID, isOrganizer: isOrganizer) }
             .sheet(isPresented: $showEditProfile, onDismiss: {
-                Task { await loadData() }
+                Task { await vm.load(userId: session.userID, isOrganizer: isOrganizer) }
             }) {
                 EditProfileView()
             }
@@ -413,7 +411,7 @@ struct ProfileView: View {
                 .font(BrindooFont.titleSmall)
 
             VStack(spacing: BrindooSpacing.xs) {
-                ForEach(organizerCategories) { detail in
+                ForEach(vm.organizerCategories) { detail in
                     HStack(alignment: .top, spacing: BrindooSpacing.sm) {
                         Image(systemName: detail.category.icon)
                             .font(.system(size: 18))
@@ -494,27 +492,4 @@ struct ProfileView: View {
         .buttonStyle(.plain)
     }
 
-    private func loadData() async {
-        guard let userId = session.userID else { return }
-
-        if isOrganizer {
-            do {
-                organizerCategories = try await OrganizerCategoriesService.shared.fetchDetailed(organizerId: userId)
-            } catch { BrindooLog.error("\(error)") }
-
-            do {
-                reviewSummary = try await ReviewService.shared.fetchSummary(organizerId: userId)
-            } catch { BrindooLog.error("\(error)") }
-
-            do {
-                let items = try await PortfolioService.shared.fetchPortfolio(organizerId: userId)
-                portfolioCount = items.count
-            } catch { BrindooLog.error("\(error)") }
-
-            // Per la barra "profilo completo": quante offerte attive ha.
-            if let offers = try? await ServiceOfferService.shared.fetchMyOffers() {
-                activeOffersCount = offers.filter { $0.status == .active }.count
-            }
-        }
-    }
 }

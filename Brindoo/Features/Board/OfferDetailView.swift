@@ -26,34 +26,15 @@ struct OfferDetailView: View {
 
     let offer: ServiceOffer
 
-    @State private var categories: [ServiceCategory] = []
-    @State private var organizerProfile: Profile?
-    /// Foto del portfolio dell'organizzatore mostrate nella galleria in alto.
-    @State private var portfolioUrls: [String] = []
-    /// Pacchetti prezzo dell'offerta (Base / Completo / Premium).
-    @State private var packages: [OfferPackage] = []
+    /// Parte dati (caricamenti, trattative, preferiti): vive nel ViewModel.
+    @State private var vm: OfferDetailViewModel
+
+    // Stato di sola interfaccia (pannelli, navigazione, effetti)
     @State private var navigateToChat: Conversation?
     @State private var chatPartner: Profile?
-
-    @State private var currentStatus: ServiceOfferStatus
-    @State private var isUpdating: Bool = false
     @State private var showDeleteConfirm: Bool = false
     @State private var showReport: Bool = false
-
-    // Trattativa lato cliente: una sola attiva
-    @State private var myProposal: OfferProposal?
-    @State private var myProposalLastRound: OfferProposalRound?
-
-    // Lato organizzatore: lista proposte ricevute con ultimo round per ognuna
-    @State private var receivedProposals: [OfferProposal] = []
-    @State private var lastRoundsMap: [UUID: OfferProposalRound] = [:]
-    @State private var clientProfilesMap: [UUID: Profile] = [:]
-
     @State private var showNegotiateSheet: NegotiateOfferView.Mode?
-    @State private var actionError: String?
-
-    // Preferiti
-    @State private var isFavorite: Bool = false
 
     // Cartolina di condivisione
     @State private var isPreparingShare: Bool = false
@@ -73,9 +54,14 @@ struct OfferDetailView: View {
 
     init(offer: ServiceOffer, onChange: (() -> Void)? = nil) {
         self.offer = offer
-        self._currentStatus = State(initialValue: offer.status)
+        self._vm = State(initialValue: OfferDetailViewModel(offer: offer))
         self.onChange = onChange
     }
+
+    /// Durata della festa di coriandoli e attesa prima di chiedere la
+    /// valutazione: tempi di lettura, non attese tecniche.
+    private static let confettiSeconds: Double = 1.6
+    private static let reviewPromptDelaySeconds: Double = 0.8
 
     private var isOwnOffer: Bool {
         session.userID == offer.organizerId
@@ -86,34 +72,26 @@ struct OfferDetailView: View {
     }
 
     private var canClientInteract: Bool {
-        isClient && !isOwnOffer && currentStatus == .active
-    }
-
-    /// Copertina dell'offerta seguita dalle foto del portfolio (senza doppioni).
-    private var galleryUrls: [String] {
-        var urls: [String] = []
-        if let cover = offer.imageUrl { urls.append(cover) }
-        for u in portfolioUrls where !urls.contains(u) { urls.append(u) }
-        return urls
+        isClient && !isOwnOffer && vm.currentStatus == .active
     }
 
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: BrindooSpacing.lg) {
-                if !galleryUrls.isEmpty {
-                    OfferPhotoGallery(urls: galleryUrls)
+                if !vm.galleryUrls.isEmpty {
+                    OfferPhotoGallery(urls: vm.galleryUrls)
                 }
 
                 OfferHeaderSection(
                     offer: offer,
-                    currentStatus: currentStatus,
-                    organizerProfile: organizerProfile
+                    currentStatus: vm.currentStatus,
+                    organizerProfile: vm.organizerProfile
                 )
 
                 Divider()
 
-                if !categories.isEmpty {
-                    OfferCategoriesSection(categories: categories)
+                if !vm.categories.isEmpty {
+                    OfferCategoriesSection(categories: vm.categories)
                 }
 
                 OfferInfoSection(offer: offer)
@@ -122,11 +100,11 @@ struct OfferDetailView: View {
 
                 // Vetrina pacchetti in sola lettura per proprietario e offerte
                 // in pausa; la versione selezionabile vive nelle azioni cliente.
-                if !packages.isEmpty && !canClientInteract {
-                    OfferPackagesDisplay(packages: packages)
+                if !vm.packages.isEmpty && !canClientInteract {
+                    OfferPackagesDisplay(packages: vm.packages)
                 }
 
-                if let error = actionError {
+                if let error = vm.actionError {
                     errorBanner(error)
                 }
 
@@ -134,23 +112,23 @@ struct OfferDetailView: View {
                     Divider()
                     ClientNegotiationSection(
                         offer: offer,
-                        proposal: myProposal,
-                        organizerProfile: organizerProfile,
-                        packages: packages,
+                        proposal: vm.myProposal,
+                        organizerProfile: vm.organizerProfile,
+                        packages: vm.packages,
                         onAcceptAtPrice: { price, label in
-                            Task { await acceptAtPrice(price, label: label) }
+                            Task { await vm.acceptAtPrice(price, label: label) }
                         },
                         onProposeNew: { showNegotiateSheet = .openAsClient(offer: offer) },
                         onHide: { Task { await dismissOffer() } },
                         onAccept: { p in Task { await acceptProposal(p) } },
-                        onReject: { p in Task { await rejectProposal(p) } },
+                        onReject: { p in Task { await vm.rejectProposal(p) } },
                         onCounter: { p in showNegotiateSheet = .counter(proposal: p, role: .client, offer: offer) },
-                        onWithdraw: { p in Task { await withdrawProposal(p) } },
+                        onWithdraw: { p in Task { await vm.withdrawProposal(p) } },
                         onOpenChat: { org in Task { await openChat(with: org) } },
                         onMarkBooking: { p, status in Task { await markBooking(p, status) } },
                         onMoveDate: { p in moveDateTarget = p },
                         onAddToCalendar: { p in Task { await addToCalendar(p) } },
-                        onReviewSubmitted: { Task { await loadData() } }
+                        onReviewSubmitted: { Task { await vm.loadData() } }
                     )
                 }
 
@@ -159,10 +137,10 @@ struct OfferDetailView: View {
                     ownerControls
                     ReceivedProposalsSection(
                         offer: offer,
-                        proposals: receivedProposals,
-                        clientProfiles: clientProfilesMap,
+                        proposals: vm.receivedProposals,
+                        clientProfiles: vm.clientProfilesMap,
                         onAccept: { p in Task { await acceptProposal(p) } },
-                        onReject: { p in Task { await rejectProposal(p) } },
+                        onReject: { p in Task { await vm.rejectProposal(p) } },
                         onCounter: { p in showNegotiateSheet = .counter(proposal: p, role: .organizer, offer: offer) },
                         onOpenChat: { client in Task { await openChat(with: client) } },
                         onMarkBooking: { p, status in Task { await markBooking(p, status) } },
@@ -201,12 +179,12 @@ struct OfferDetailView: View {
                 ToolbarItem(placement: .topBarTrailing) {
                     HStack(spacing: BrindooSpacing.sm) {
                         Button {
-                            Task { await toggleFavorite() }
+                            Task { await vm.toggleFavorite() }
                         } label: {
-                            Image(systemName: isFavorite ? "heart.fill" : "heart")
-                                .foregroundStyle(isFavorite ? Color.brindooCoral : Color.brindooTextSecondary)
+                            Image(systemName: vm.isFavorite ? "heart.fill" : "heart")
+                                .foregroundStyle(vm.isFavorite ? Color.brindooCoral : Color.brindooTextSecondary)
                         }
-                        .accessibilityLabel(isFavorite ? "Rimuovi dai preferiti" : "Salva nei preferiti")
+                        .accessibilityLabel(vm.isFavorite ? "Rimuovi dai preferiti" : "Salva nei preferiti")
 
                         Menu {
                             Button(role: .destructive) {
@@ -239,7 +217,14 @@ struct OfferDetailView: View {
                 Task { await moveEventDate(proposal, to: newDate) }
             }
         }
-        .task { await loadData() }
+        .task {
+            vm.configure(
+                userID: session.userID,
+                isOwnOffer: isOwnOffer,
+                canClientInteract: canClientInteract
+            )
+            await vm.loadData()
+        }
         .navigationDestination(item: $navigateToChat) { conv in
             if let partner = chatPartner {
                 ChatView(conversation: conv, otherUser: partner)
@@ -247,7 +232,7 @@ struct OfferDetailView: View {
         }
         .sheet(item: $showNegotiateSheet) { mode in
             NegotiateOfferView(mode: mode) {
-                Task { await loadData() }
+                Task { await vm.loadData() }
             }
         }
         .confirmationDialog(
@@ -283,10 +268,10 @@ struct OfferDetailView: View {
     private var ownerControls: some View {
         VStack(spacing: BrindooSpacing.sm) {
             BrindooButton(
-                currentStatus == .active ? "Metti in pausa" : "Riattiva offerta",
+                vm.currentStatus == .active ? "Metti in pausa" : "Riattiva offerta",
                 style: .secondary,
                 size: .medium,
-                isLoading: isUpdating
+                isLoading: vm.isUpdating
             ) {
                 Task { await togglePause() }
             }
@@ -314,7 +299,7 @@ struct OfferDetailView: View {
         let card = OfferShareCard(
             title: offer.title,
             priceDisplay: offer.priceDisplay,
-            organizerName: organizerProfile?.fullName,
+            organizerName: vm.organizerProfile?.fullName,
             cover: cover
         )
 
@@ -325,140 +310,62 @@ struct OfferDetailView: View {
         }
     }
 
-    // MARK: - Actions
+    // MARK: - Azioni che restano alla vista
+    //
+    // Il ViewModel fa il lavoro sui dati e dice com'è andata; qui restano
+    // festa, navigazione, avvisi e cose del telefono (calendario).
 
-    private func loadData() async {
-        do {
-            categories = try await ServiceOfferService.shared.fetchOfferCategories(offerId: offer.id)
-        } catch { BrindooLog.error("\(error)") }
-
-        do {
-            organizerProfile = try await ProfileService.shared.fetchProfile(userID: offer.organizerId)
-        } catch { BrindooLog.error("\(error)") }
-
-        // Foto del portfolio per la galleria (best-effort, massimo 6).
-        if let items = try? await PortfolioService.shared.fetchPortfolio(organizerId: offer.organizerId) {
-            portfolioUrls = items.prefix(6).map { $0.imageUrl }
-        }
-
-        // Pacchetti prezzo (best-effort).
-        packages = (try? await OfferPackageService.shared.fetchPackages(offerId: offer.id)) ?? []
-
-        // Cliente: carica la sua trattativa attiva + stato preferito + traccia view.
-        if canClientInteract {
-            do {
-                myProposal = try await OfferProposalService.shared.fetchMyActiveProposal(forOffer: offer.id)
-                if let p = myProposal {
-                    myProposalLastRound = try await OfferProposalService.shared.fetchLastRound(proposalId: p.id)
-                }
-            } catch { BrindooLog.error("\(error)") }
-
-            isFavorite = (try? await OfferFavoriteService.shared.isFavorite(offerId: offer.id)) ?? false
-
-            // Traccia view (best-effort, ignora errori).
-            await AnalyticsService.shared.trackOfferView(offerId: offer.id)
-        }
-
-        // Organizzatore proprietario: carica le proposte ricevute
-        if isOwnOffer {
-            do {
-                receivedProposals = try await OfferProposalService.shared.fetchProposals(forOffer: offer.id)
-                await loadClientsAndRounds(for: receivedProposals)
-            } catch { BrindooLog.error("\(error)") }
-        }
-    }
-
-    private func toggleFavorite() async {
-        let target = !isFavorite
-        isFavorite = target // optimistic
-        do {
-            if target {
-                try await OfferFavoriteService.shared.add(offerId: offer.id)
-            } else {
-                try await OfferFavoriteService.shared.remove(offerId: offer.id)
-            }
-        } catch {
-            isFavorite = !target // rollback
-            BrindooLog.error("\(error)")
-        }
-    }
-
-    private func loadClientsAndRounds(for proposals: [OfferProposal]) async {
-        await withTaskGroup(of: (UUID, Profile?, OfferProposalRound?).self) { group in
-            for p in proposals {
-                group.addTask {
-                    let profile = try? await ProfileService.shared.fetchProfile(userID: p.clientId)
-                    let round = try? await OfferProposalService.shared.fetchLastRound(proposalId: p.id)
-                    return (p.id, profile, round)
-                }
-            }
-            for await (proposalId, profile, round) in group {
-                if let p = proposals.first(where: { $0.id == proposalId }) {
-                    if let profile { clientProfilesMap[p.clientId] = profile }
-                }
-                if let round { lastRoundsMap[proposalId] = round }
-            }
-        }
-    }
-
-    /// Accetta al prezzo dato (base o di un pacchetto). L'etichetta del
-    /// pacchetto, se presente, finisce nel messaggio della proposta.
-    private func acceptAtPrice(_ price: Double, label: String?) async {
-        actionError = nil
-        do {
-            _ = try await OfferProposalService.shared.openProposal(
-                offer: offer,
-                price: price,
-                message: label
-            )
-            await loadData()
-        } catch {
-            actionError = "Impossibile inviare la proposta."
-            BrindooLog.error("\(error)")
-        }
-    }
-
+    /// Accordo raggiunto: coriandoli, poi si apre la chat.
     private func acceptProposal(_ proposal: OfferProposal) async {
-        actionError = nil
-        do {
-            let conv = try await OfferProposalService.shared.accept(proposal: proposal)
-            BrindooHaptics.notify(.success)
-
-            // Festa! Coriandoli per l'accordo raggiunto, poi si apre la chat.
-            showConfetti = true
-            await loadData()
-            try? await Task.sleep(nanoseconds: 1_600_000_000)
-            showConfetti = false
-
-            if let conv {
-                // Per il cliente l'altro è l'organizzatore, per l'organizzatore è il cliente.
-                if session.userID == proposal.clientId {
-                    chatPartner = organizerProfile
-                } else {
-                    chatPartner = clientProfilesMap[proposal.clientId]
-                }
-                navigateToChat = conv
-            }
-        } catch {
-            actionError = "Impossibile accettare."
-            BrindooLog.error("\(error)")
-        }
+        guard let result = await vm.acceptProposal(proposal) else { return }
+        BrindooHaptics.notify(.success)
+        showConfetti = true
+        try? await Task.sleep(for: .seconds(Self.confettiSeconds))
+        showConfetti = false
+        chatPartner = result.partner
+        navigateToChat = result.conversation
     }
 
-    /// Sposta (o fissa) la data dell'evento e avvisa l'altra parte in chat.
     private func moveEventDate(_ proposal: OfferProposal, to newDate: String) async {
-        do {
-            try await OfferProposalService.shared.updateEventDate(
-                proposal: proposal,
-                newDate: newDate,
-                offerTitle: offer.title
-            )
+        if await vm.moveEventDate(proposal, to: newDate) {
             BrindooHaptics.notify(.success)
             toastCenter.show(BrindooToast("Data aggiornata", message: "L'altra parte è stata avvisata in chat.", style: .success))
-            await loadData()
-        } catch {
+        } else {
             toastCenter.show(BrindooToast("Impossibile spostare la data", message: "Controlla la connessione e riprova.", style: .error))
-            BrindooLog.error("\(error)")
+        }
+    }
+
+    private func markBooking(_ proposal: OfferProposal, _ status: BookingStatus) async {
+        guard await vm.markBooking(proposal, status) else { return }
+        BrindooHaptics.notify(status == .completed ? .success : .warning)
+        // Momento positivo: chiedi una valutazione su App Store.
+        if status == .completed {
+            try? await Task.sleep(for: .seconds(Self.reviewPromptDelaySeconds))
+            requestReview()
+        }
+    }
+
+    private func dismissOffer() async {
+        if await vm.dismissOffer() {
+            onChange?()
+            dismiss()
+        }
+    }
+
+    private func togglePause() async {
+        if await vm.togglePause() {
+            onChange?()
+        } else {
+            toastCenter.show(BrindooToast("Impossibile aggiornare l'offerta", message: "Controlla la connessione e riprova.", style: .error))
+        }
+    }
+
+    private func deleteOffer() async {
+        if await vm.deleteOffer() {
+            onChange?()
+            dismiss()
+        } else {
+            toastCenter.show(BrindooToast("Impossibile eliminare l'offerta", message: "Controlla la connessione e riprova.", style: .error))
         }
     }
 
@@ -479,85 +386,6 @@ struct OfferDetailView: View {
                 message: (error as? CalendarServiceError)?.errorDescription ?? "Riprova.",
                 style: .error
             ))
-        }
-    }
-
-    private func markBooking(_ proposal: OfferProposal, _ status: BookingStatus) async {
-        actionError = nil
-        do {
-            try await OfferProposalService.shared.updateBookingStatus(proposalId: proposal.id, booking: status)
-            if status == .cancelled {
-                LocalReminderService.cancelReminder(proposalId: proposal.id)
-            }
-            BrindooHaptics.notify(status == .completed ? .success : .warning)
-            await loadData()
-            // Momento positivo: chiedi una valutazione su App Store.
-            if status == .completed {
-                try? await Task.sleep(nanoseconds: 800_000_000)
-                requestReview()
-            }
-        } catch {
-            actionError = "Impossibile aggiornare l'appuntamento."
-            BrindooLog.error("\(error)")
-        }
-    }
-
-    private func rejectProposal(_ proposal: OfferProposal) async {
-        actionError = nil
-        do {
-            try await OfferProposalService.shared.reject(proposal: proposal)
-            await loadData()
-        } catch {
-            actionError = "Impossibile rifiutare."
-            BrindooLog.error("\(error)")
-        }
-    }
-
-    private func withdrawProposal(_ proposal: OfferProposal) async {
-        actionError = nil
-        do {
-            try await OfferProposalService.shared.withdraw(proposal: proposal)
-            await loadData()
-        } catch {
-            actionError = "Impossibile ritirare."
-            BrindooLog.error("\(error)")
-        }
-    }
-
-    private func dismissOffer() async {
-        actionError = nil
-        do {
-            try await OfferDismissalService.shared.dismiss(offerId: offer.id)
-            onChange?()
-            dismiss()
-        } catch {
-            actionError = "Impossibile nascondere."
-            BrindooLog.error("\(error)")
-        }
-    }
-
-    private func togglePause() async {
-        isUpdating = true
-        defer { isUpdating = false }
-        let next: ServiceOfferStatus = (currentStatus == .active) ? .paused : .active
-        do {
-            try await ServiceOfferService.shared.updateStatus(offerId: offer.id, status: next)
-            currentStatus = next
-            onChange?()
-        } catch {
-            toastCenter.show(BrindooToast("Impossibile aggiornare l'offerta", message: "Controlla la connessione e riprova.", style: .error))
-            BrindooLog.error("\(error)")
-        }
-    }
-
-    private func deleteOffer() async {
-        do {
-            try await ServiceOfferService.shared.deleteOffer(offerId: offer.id)
-            onChange?()
-            dismiss()
-        } catch {
-            toastCenter.show(BrindooToast("Impossibile eliminare l'offerta", message: "Controlla la connessione e riprova.", style: .error))
-            BrindooLog.error("\(error)")
         }
     }
 
