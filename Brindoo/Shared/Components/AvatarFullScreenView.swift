@@ -21,7 +21,7 @@ struct AvatarFullScreenView: View {
 
             Group {
                 if let urlString = url, !urlString.isEmpty, let validUrl = URL(string: urlString) {
-                    AsyncImage(url: validUrl) { phase in
+                    BrindooCachedImage(url: validUrl) { phase in
                         switch phase {
                         case .empty:
                             ProgressView().tint(.white)

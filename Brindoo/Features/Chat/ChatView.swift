@@ -50,6 +50,9 @@ struct ChatView: View {
     // Trattativa attiva con questo utente (collegamento Chat ↔ Trattative)
     @State private var linkedProposal: OfferProposal?
 
+    /// Coda dei messaggi in attesa di rete.
+    @State private var outbox = OfflineOutboxService.shared
+
     var body: some View {
         VStack(spacing: 0) {
             if let proposal = linkedProposal {
@@ -57,6 +60,12 @@ struct ChatView: View {
             }
 
             messagesScroll
+
+            // Messaggi scritti senza linea: restano visibili qui finché
+            // non partono da soli.
+            if !outbox.pendingMessages(for: conversation.id).isEmpty {
+                ChatPendingBanner(count: outbox.pendingMessages(for: conversation.id).count)
+            }
 
             if isBlocked {
                 ChatBlockedBanner { Task { await unblock() } }
@@ -362,6 +371,21 @@ struct ChatView: View {
         isSending = true
         defer { isSending = false }
         
+        // Senza linea non si perde nulla: il messaggio va in coda e parte
+        // da solo appena torna il segnale.
+        guard NetworkMonitor.shared.isOnline else {
+            await OfflineOutboxService.shared.enqueueMessage(
+                conversationId: conversation.id,
+                text: text,
+                repliedToId: replyingTo?.id
+            )
+            inputText = ""
+            replyingTo = nil
+            await ChatDraftStore.shared.clear(conversation.id)
+            BrindooHaptics.notify(.warning)
+            return
+        }
+
         do {
             _ = try await MessageService.shared.sendMessage(
                 conversationId: conversation.id,
@@ -373,6 +397,15 @@ struct ChatView: View {
             await ChatDraftStore.shared.clear(conversation.id)
         } catch {
             BrindooLog.error("\(error)")
+            // Errore di rete a metà invio: stessa sorte, in coda.
+            await OfflineOutboxService.shared.enqueueMessage(
+                conversationId: conversation.id,
+                text: text,
+                repliedToId: replyingTo?.id
+            )
+            inputText = ""
+            replyingTo = nil
+            await ChatDraftStore.shared.clear(conversation.id)
         }
     }
     

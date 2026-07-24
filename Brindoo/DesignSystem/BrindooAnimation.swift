@@ -51,3 +51,31 @@ private struct FadeInUpModifier: ViewModifier {
             }
     }
 }
+
+// MARK: - Transizione card → dettaglio
+
+// Su iPhone aggiornati la card si "apre" nel dettaglio invece di comparire
+// di colpo: il passaggio è più leggibile e l'app sembra più curata.
+// Sui telefoni più vecchi non cambia nulla (nessun effetto, nessun errore).
+extension View {
+
+    /// Segna la card di partenza dell'effetto di apertura.
+    @ViewBuilder
+    func brindooZoomSource(id: some Hashable, in namespace: Namespace.ID) -> some View {
+        if #available(iOS 18.0, *) {
+            self.matchedTransitionSource(id: id, in: namespace)
+        } else {
+            self
+        }
+    }
+
+    /// Segna la schermata di arrivo dell'effetto di apertura.
+    @ViewBuilder
+    func brindooZoomDestination(id: some Hashable, in namespace: Namespace.ID) -> some View {
+        if #available(iOS 18.0, *) {
+            self.navigationTransition(.zoom(sourceID: id, in: namespace))
+        } else {
+            self
+        }
+    }
+}

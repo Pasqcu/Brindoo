@@ -14,6 +14,11 @@ struct BoardFiltersBar: View {
     @Bindable var vm: BoardViewModel
     @Binding var showAreaPicker: Bool
 
+    /// Quando l'utente scorre la bacheca la barra si riduce alla sola
+    /// ricerca (più un riassunto dei filtri attivi): su iPhone piccoli
+    /// le tre righe impilate mangiavano mezzo schermo.
+    var isCompact: Bool = false
+
     private let lazioProvinces = LazioProvince.allCases
 
     private func provinceSlug(_ p: LazioProvince) -> String { "prov_\(p.rawValue.lowercased())" }
@@ -29,6 +34,58 @@ struct BoardFiltersBar: View {
                 .padding(.horizontal, BrindooSpacing.md)
                 .padding(.top, BrindooSpacing.xs)
 
+            if isCompact {
+                compactSummary
+            } else {
+                expandedFilters
+            }
+        }
+        .padding(.bottom, isCompact ? BrindooSpacing.xs : BrindooSpacing.sm)
+        .animation(BrindooAnimation.snappy, value: isCompact)
+    }
+
+    /// Riga unica mostrata mentre si scorre: dice cosa è attivo e riapre i filtri.
+    @ViewBuilder
+    private var compactSummary: some View {
+        Button {
+            showAreaPicker = true
+        } label: {
+            HStack(spacing: BrindooSpacing.xs) {
+                Image(systemName: "line.3.horizontal.decrease.circle.fill")
+                    .font(.system(size: 14, weight: .semibold))
+                Text(compactSummaryText)
+                    .font(BrindooFont.bodySmall.weight(.medium))
+                    .lineLimit(1)
+                Spacer(minLength: 0)
+                Image(systemName: "chevron.down")
+                    .font(.system(size: 11, weight: .semibold))
+            }
+            .foregroundStyle(Color.brindooCoral)
+            .padding(.horizontal, BrindooSpacing.md)
+            .padding(.vertical, BrindooSpacing.xs)
+            .frame(maxWidth: .infinity)
+            .background(Color.brindooCoral.opacity(0.08))
+            .clipShape(Capsule())
+            .padding(.horizontal, BrindooSpacing.md)
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel("Filtri attivi: \(compactSummaryText). Tocca per cambiarli.")
+        .transition(.opacity)
+    }
+
+    private var compactSummaryText: String {
+        var parts: [String] = [areaFilterTitle == "Area" ? "Tutto il Lazio" : areaFilterTitle]
+        if !vm.selectedCategoryIds.isEmpty {
+            let names = vm.categories.filter { vm.selectedCategoryIds.contains($0.id) }.map(\.name)
+            parts.append(names.count <= 2 ? names.joined(separator: ", ") : "\(names.count) categorie")
+        }
+        if vm.eventDate != nil { parts.append("data scelta") }
+        return parts.joined(separator: " · ")
+    }
+
+    @ViewBuilder
+    private var expandedFilters: some View {
+        VStack(spacing: BrindooSpacing.xs) {
             provinceChipsBar
 
             ScrollView(.horizontal, showsIndicators: false) {
@@ -57,12 +114,14 @@ struct BoardFiltersBar: View {
                             .background(isSelected ? tint : tint.opacity(0.12))
                             .clipShape(Capsule())
                         }
+                        .accessibilityLabel(category.name)
+                        .accessibilityAddTraits(isSelected ? [.isSelected] : [])
                     }
                 }
                 .padding(.horizontal, BrindooSpacing.md)
             }
         }
-        .padding(.bottom, BrindooSpacing.sm)
+        .transition(.opacity)
     }
 
     /// Chip compatto "Pulisci" in testa alla riga categorie.

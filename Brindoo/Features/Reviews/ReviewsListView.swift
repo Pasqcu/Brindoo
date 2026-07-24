@@ -301,7 +301,7 @@ struct ReviewsListView: View {
                 Button {
                     fullScreenPhotoUrl = FullScreenPhoto(url: photo)
                 } label: {
-                    AsyncImage(url: url) { image in
+                    BrindooCachedImage(url: url) { image in
                         image.resizable().scaledToFill()
                     } placeholder: {
                         BrindooSkeleton(cornerRadius: BrindooRadius.sm)

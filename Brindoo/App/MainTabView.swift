@@ -14,6 +14,7 @@ struct MainTabView: View {
     @Environment(SessionStore.self) private var session
     @Environment(\.scenePhase) private var scenePhase
     @State private var router = DeepLinkRouter.shared
+    @State private var network = NetworkMonitor.shared
 
     @State private var pendingNegotiations: Int = 0
     @State private var unreadChats: Int = 0
@@ -99,11 +100,23 @@ struct MainTabView: View {
             ProfessionalDeclarationGate()
         }
         .task(id: router.selectedTab) { await refreshBadges() }
+        // Tornata la linea, la coda si svuota da sola.
+        .onChange(of: network.isOnline) { _, online in
+            guard online else { return }
+            Task { await OfflineOutboxService.shared.flush() }
+        }
         .onChange(of: scenePhase) { _, newPhase in
             // Al rientro in app i conteggi (e il numerino sull'icona)
             // si riallineano subito alla realtà.
             if newPhase == .active {
                 Task { await refreshBadges() }
+                // Cose scritte senza linea: si riprova appena l'app torna viva.
+                Task { await OfflineOutboxService.shared.flush() }
+                // Ricerche salvate con avviso: controllo silenzioso delle
+                // novità (al massimo una volta l'ora).
+                if isClient {
+                    Task { await SavedSearchService.shared.checkForNewResults() }
+                }
             }
         }
         .task(id: session.currentProfile?.id) {

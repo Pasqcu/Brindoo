@@ -47,11 +47,14 @@ struct OrganizerWithOffersCard: View {
         return BrindooFormat.euro(minPrice)
     }
 
+    /// Colore guida della card (prima categoria del professionista).
+    private var accent: Color { categories.first?.tint ?? .brindooCoral }
+
     var body: some View {
         VStack(alignment: .leading, spacing: BrindooSpacing.sm) {
             if let cover = coverImageUrl, let url = URL(string: cover) {
                 ZStack(alignment: .bottomLeading) {
-                    AsyncImage(url: url) { phase in
+                    BrindooCachedImage(url: url) { phase in
                         switch phase {
                         case .success(let image): image.resizable().scaledToFill()
                         case .empty: BrindooSkeleton(cornerRadius: BrindooRadius.sm)
@@ -183,9 +186,11 @@ struct OrganizerWithOffersCard: View {
         .clipShape(RoundedRectangle(cornerRadius: BrindooRadius.lg))
         .overlay(
             RoundedRectangle(cornerRadius: BrindooRadius.lg)
-                .strokeBorder(Color.brindooBorder, lineWidth: 1)
+                .strokeBorder(organizer.isBoosted ? accent.opacity(0.5) : Color.brindooBorder,
+                              lineWidth: organizer.isBoosted ? 1.5 : 1)
         )
-        .brindooCardShadow()
+        // Chi è in vetrina "sta sopra": ombra più marcata.
+        .brindooElevation(organizer.isBoosted ? .raised : .card)
     }
 
     @ViewBuilder
@@ -234,7 +239,7 @@ struct FeaturedOrganizerCard: View {
         VStack(alignment: .leading, spacing: 0) {
             ZStack(alignment: .topLeading) {
                 if let cover = coverImageUrl, let url = URL(string: cover) {
-                    AsyncImage(url: url) { phase in
+                    BrindooCachedImage(url: url) { phase in
                         switch phase {
                         case .success(let image): image.resizable().scaledToFill()
                         case .empty: BrindooSkeleton(cornerRadius: 0)
@@ -293,6 +298,7 @@ struct FeaturedOrganizerCard: View {
             RoundedRectangle(cornerRadius: BrindooRadius.lg)
                 .strokeBorder(Color.brindooCoral.opacity(0.35), lineWidth: 1)
         )
-        .brindooCardShadow()
+        // È la vetrina: deve staccarsi dal resto della bacheca.
+        .brindooElevation(.raised)
     }
 }

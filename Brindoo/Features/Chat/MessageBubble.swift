@@ -179,7 +179,7 @@ struct MessageBubble: View {
     @ViewBuilder
     private var imageContent: some View {
         if let urlString = message.imageUrl, let url = URL(string: urlString) {
-            AsyncImage(url: url) { phase in
+            BrindooCachedImage(url: url) { phase in
                 switch phase {
                 case .success(let image):
                     image

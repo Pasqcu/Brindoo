@@ -226,7 +226,7 @@ struct GuidedQuoteView: View {
     private func thumbnail(_ offer: ServiceOffer) -> some View {
         Group {
             if let urlString = offer.imageUrl, let url = URL(string: urlString) {
-                AsyncImage(url: url) { phase in
+                BrindooCachedImage(url: url) { phase in
                     if let image = phase.image {
                         image.resizable().scaledToFill()
                     } else {

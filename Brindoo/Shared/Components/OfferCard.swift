@@ -37,7 +37,7 @@ struct OfferCard: View {
 
             if let imageUrl = offer.imageUrl, let url = URL(string: imageUrl) {
                 ZStack(alignment: .bottomTrailing) {
-                    AsyncImage(url: url) { phase in
+                    BrindooCachedImage(url: url) { phase in
                         switch phase {
                         case .success(let image):
                             image.resizable().scaledToFill()

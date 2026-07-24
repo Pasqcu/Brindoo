@@ -59,10 +59,22 @@ struct BookingStatusRow: View {
             Spacer()
             // Stato acconto sempre in vista (si aggiorna dall'Agenda).
             if booking != .cancelled {
-                Text(proposal.isDepositPaid ? "Acconto ✓" : "Acconto —")
+                // Tre stati, non due: non registrato / dichiarato in attesa
+                // di conferma / versato e confermato da entrambi.
+                let (text, tint, spoken): (String, Color, String) = {
+                    if proposal.isDepositPaid {
+                        let amount = proposal.depositAmountDisplay.map { " \($0)" } ?? ""
+                        return ("Acconto ✓\(amount)", .brindooSuccess, "Acconto versato e confermato")
+                    }
+                    if proposal.isDepositAwaitingConfirmation {
+                        return ("Acconto da confermare", .brindooWarning, "Acconto dichiarato, in attesa di conferma")
+                    }
+                    return ("Acconto —", .brindooTextSecondary, "Acconto non ancora registrato")
+                }()
+                Text(text)
                     .font(BrindooFont.caption.weight(.semibold))
-                    .foregroundStyle(proposal.isDepositPaid ? Color.brindooSuccess : Color.brindooTextSecondary)
-                    .accessibilityLabel(proposal.isDepositPaid ? "Acconto versato" : "Acconto non ancora versato")
+                    .foregroundStyle(tint)
+                    .accessibilityLabel(spoken)
             }
         }
         .foregroundStyle(color)

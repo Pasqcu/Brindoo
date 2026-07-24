@@ -79,6 +79,18 @@ struct OfferProposal: Identifiable, Codable, Hashable, Equatable {
     let bookingStatus: BookingStatus?
     /// True se le parti hanno registrato il versamento dell'acconto.
     var depositPaid: Bool? = nil
+    /// Come si è deciso di pagare acconto e saldo.
+    var depositMethod: PaymentMethod? = nil
+    var balanceMethod: PaymentMethod? = nil
+    /// Importo dell'acconto dichiarato da chi incassa.
+    var depositAmount: Double? = nil
+    var depositNote: String? = nil
+    /// Chi ha dichiarato di aver ricevuto l'acconto, e quando.
+    var depositDeclaredBy: UUID? = nil
+    var depositDeclaredAt: Date? = nil
+    /// Conferma dell'altra parte: è questa che chiude il cerchio.
+    var depositConfirmedBy: UUID? = nil
+    var depositConfirmedAt: Date? = nil
     let createdAt: Date
     let updatedAt: Date
 
@@ -94,11 +106,45 @@ struct OfferProposal: Identifiable, Codable, Hashable, Equatable {
         case eventDate = "event_date"
         case bookingStatus = "booking_status"
         case depositPaid = "deposit_paid"
+        case depositMethod = "deposit_method"
+        case balanceMethod = "balance_method"
+        case depositAmount = "deposit_amount"
+        case depositNote = "deposit_note"
+        case depositDeclaredBy = "deposit_declared_by"
+        case depositDeclaredAt = "deposit_declared_at"
+        case depositConfirmedBy = "deposit_confirmed_by"
+        case depositConfirmedAt = "deposit_confirmed_at"
         case createdAt = "created_at"
         case updatedAt = "updated_at"
     }
 
-    var isDepositPaid: Bool { depositPaid ?? false }
+    /// L'acconto è "versato" solo quando anche l'altra parte ha confermato.
+    var isDepositPaid: Bool { depositConfirmedAt != nil || (depositPaid ?? false) }
+
+    /// Acconto dichiarato ma non ancora confermato dall'altra parte.
+    var isDepositAwaitingConfirmation: Bool {
+        depositDeclaredAt != nil && depositConfirmedAt == nil
+    }
+
+    /// Chi deve confermare adesso (nil se non c'è nulla in sospeso).
+    var depositConfirmationPending: Bool { isDepositAwaitingConfirmation }
+
+    /// True se tocca a questo utente confermare l'acconto dichiarato dall'altro.
+    func canConfirmDeposit(as userId: UUID) -> Bool {
+        isDepositAwaitingConfirmation && depositDeclaredBy != userId
+    }
+
+    /// Importo dell'acconto leggibile, o nil se non dichiarato.
+    var depositAmountDisplay: String? {
+        guard let depositAmount else { return nil }
+        return BrindooFormat.euro(depositAmount)
+    }
+
+    /// Quanto resta da saldare dopo l'acconto.
+    var balanceDueDisplay: String? {
+        guard let depositAmount, depositAmount > 0, depositAmount < currentPrice else { return nil }
+        return BrindooFormat.euro(currentPrice - depositAmount)
+    }
 
     /// Stato effettivo dell'appuntamento (default: confermato se accettata).
     var effectiveBooking: BookingStatus {
@@ -156,5 +202,53 @@ struct OfferProposalRound: Identifiable, Codable, Hashable, Equatable {
 
     var priceDisplay: String {
         BrindooFormat.euro(price)
+    }
+}
+
+// MARK: - Come si paga
+
+/// Modo di pagamento concordato fra le parti. I soldi non passano dentro
+/// Brindoo: l'app registra solo l'accordo e la conferma di chi riceve.
+enum PaymentMethod: String, Codable, CaseIterable, Identifiable, Hashable {
+    case cash      // contanti, di persona
+    case transfer  // bonifico o altro mezzo tracciabile
+    case other     // da concordare
+
+    var id: String { rawValue }
+
+    var label: String {
+        switch self {
+        case .cash:     return "Contanti"
+        case .transfer: return "Bonifico o pagamento tracciato"
+        case .other:    return "Da concordare"
+        }
+    }
+
+    var shortLabel: String {
+        switch self {
+        case .cash:     return "Contanti"
+        case .transfer: return "Bonifico"
+        case .other:    return "Da concordare"
+        }
+    }
+
+    var icon: String {
+        switch self {
+        case .cash:     return "banknote"
+        case .transfer: return "building.columns"
+        case .other:    return "questionmark.circle"
+        }
+    }
+
+    /// Nota mostrata sotto la scelta: dice chiaro cosa comporta.
+    var hint: String {
+        switch self {
+        case .cash:
+            return "Si paga di persona. Chi riceve lo dichiara nell'app e l'altra parte conferma: resta traccia della data."
+        case .transfer:
+            return "Si paga con bonifico o altro mezzo tracciabile, direttamente fra voi. Brindoo non incassa nulla."
+        case .other:
+            return "Deciderete i dettagli in chat. Potrete indicare il modo scelto anche più avanti."
+        }
     }
 }

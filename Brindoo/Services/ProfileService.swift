@@ -263,6 +263,54 @@ final class ProfileService {
             .execute()
     }
 
+    /// Rilegge il profilo finché non soddisfa la condizione (o scade il tempo).
+    ///
+    /// Serve dopo un acquisto: il server scrive l'abbonamento un istante dopo
+    /// la conferma di Apple. Prima si aspettava mezzo secondo "a occhio" e su
+    /// rete lenta l'utente vedeva ancora il piano vecchio.
+    func awaitProfile(
+        where condition: @escaping (Profile) -> Bool,
+        timeout: TimeInterval = 8,
+        pollEvery: TimeInterval = 0.6
+    ) async -> Profile? {
+        guard let userID = SupabaseManager.shared.currentUserID else { return nil }
+        let deadline = Date().addingTimeInterval(timeout)
+        var latest: Profile?
+
+        while Date() < deadline {
+            if let profile = try? await fetchProfile(userID: userID) {
+                latest = profile
+                if condition(profile) { return profile }
+            }
+            try? await Task.sleep(nanoseconds: UInt64(pollEvery * 1_000_000_000))
+        }
+        return latest
+    }
+
+    /// Quali notifiche l'utente vuole ricevere. Il filtro vero è sul server:
+    /// una categoria spenta non entra nemmeno nella coda di invio.
+    func updateNotificationPreferences(
+        messages: Bool,
+        negotiations: Bool,
+        reminders: Bool
+    ) async throws {
+        guard let userID = SupabaseManager.shared.currentUserID else { return }
+        struct Payload: Encodable {
+            let notify_messages: Bool
+            let notify_negotiations: Bool
+            let notify_reminders: Bool
+        }
+        try await client
+            .from("profiles")
+            .update(Payload(
+                notify_messages: messages,
+                notify_negotiations: negotiations,
+                notify_reminders: reminders
+            ))
+            .eq("id", value: userID)
+            .execute()
+    }
+
     /// Aggiornamento stato Pro
     func updateProStatus(isPro: Bool, expiresAt: Date?) async throws {
         guard let userID = SupabaseManager.shared.currentUserID else { return }

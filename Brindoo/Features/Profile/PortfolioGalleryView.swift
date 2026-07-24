@@ -235,7 +235,7 @@ struct PortfolioGalleryView: View {
                 // FIX #15: apri preview a partire dall'indice toccato
                 previewStartIndex = index
             } label: {
-                AsyncImage(url: URL(string: item.imageUrl)) { phase in
+                BrindooCachedImage(url: URL(string: item.imageUrl)) { phase in
                     switch phase {
                     case .empty:
                         ZStack {
@@ -470,7 +470,7 @@ struct PortfolioPagerView: View {
     
     @ViewBuilder
     private func photoView(_ item: PortfolioItem) -> some View {
-        AsyncImage(url: URL(string: item.imageUrl)) { phase in
+        BrindooCachedImage(url: URL(string: item.imageUrl)) { phase in
             switch phase {
             case .empty:
                 ProgressView().tint(.white)

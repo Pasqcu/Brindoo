@@ -70,6 +70,10 @@ struct Profile: Identifiable, Codable, Hashable, Equatable {
     let proExpiresAt: Date?
     let boostExpiresAt: Date?
     let readReceiptsEnabled: Bool
+    /// Quali notifiche l'utente vuole ricevere (messaggi / trattative / promemoria).
+    let notifyMessages: Bool
+    let notifyNegotiations: Bool
+    let notifyReminders: Bool
     let vacationUntil: Date?
     /// Tempo mediano di risposta in chat (minuti), auto-calcolato dall'app.
     let responseMinutes: Int?
@@ -99,6 +103,9 @@ struct Profile: Identifiable, Codable, Hashable, Equatable {
         case proExpiresAt = "pro_expires_at"
         case boostExpiresAt = "boost_expires_at"
         case readReceiptsEnabled = "read_receipts_enabled"
+        case notifyMessages = "notify_messages"
+        case notifyNegotiations = "notify_negotiations"
+        case notifyReminders = "notify_reminders"
         case vacationUntil = "vacation_until"
         case responseMinutes = "response_minutes"
         case faqs
@@ -125,6 +132,10 @@ struct Profile: Identifiable, Codable, Hashable, Equatable {
         proExpiresAt = try c.decodeIfPresent(Date.self, forKey: .proExpiresAt)
         boostExpiresAt = try c.decodeIfPresent(Date.self, forKey: .boostExpiresAt)
         readReceiptsEnabled = try c.decodeIfPresent(Bool.self, forKey: .readReceiptsEnabled) ?? true
+        // Assenti finché la migrazione non è applicata: si parte da "tutte attive".
+        notifyMessages = try c.decodeIfPresent(Bool.self, forKey: .notifyMessages) ?? true
+        notifyNegotiations = try c.decodeIfPresent(Bool.self, forKey: .notifyNegotiations) ?? true
+        notifyReminders = try c.decodeIfPresent(Bool.self, forKey: .notifyReminders) ?? true
         responseMinutes = try c.decodeIfPresent(Int.self, forKey: .responseMinutes)
         faqs = try c.decodeIfPresent([ProfileFAQ].self, forKey: .faqs) ?? []
         identityVerified = try c.decodeIfPresent(Bool.self, forKey: .identityVerified) ?? false
@@ -161,6 +172,9 @@ struct Profile: Identifiable, Codable, Hashable, Equatable {
         try c.encodeIfPresent(proExpiresAt, forKey: .proExpiresAt)
         try c.encodeIfPresent(boostExpiresAt, forKey: .boostExpiresAt)
         try c.encode(readReceiptsEnabled, forKey: .readReceiptsEnabled)
+        try c.encode(notifyMessages, forKey: .notifyMessages)
+        try c.encode(notifyNegotiations, forKey: .notifyNegotiations)
+        try c.encode(notifyReminders, forKey: .notifyReminders)
         if let vacationUntil {
             try c.encode(BrindooFormat.dayString(from: vacationUntil), forKey: .vacationUntil)
         }

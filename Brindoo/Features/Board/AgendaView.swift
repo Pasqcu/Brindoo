@@ -17,6 +17,12 @@ struct AgendaView: View {
     @State private var offerMap: [UUID: ServiceOffer] = [:]
     @State private var profileMap: [UUID: Profile] = [:]
     @State private var checklistEntry: Entry?
+    /// Trattativa di cui stiamo gestendo acconto e modo di pagamento.
+    @State private var depositProposal: OfferProposal?
+    /// Eventi passati per cui il professionista non ha ancora detto
+    /// com'è andata col cliente.
+    @State private var pendingFeedbackIds: Set<UUID> = []
+    @State private var sendingFeedback: UUID?
 
     private var proposals: [OfferProposal] { state.value ?? [] }
 
@@ -86,6 +92,16 @@ struct AgendaView: View {
                                 completeEventCard
                             }
                         }
+                        if let entry = feedbackEntry {
+                            ClientFeedbackPrompt(
+                                clientName: profileMap[entry.proposal.clientId]?.displayName ?? "il cliente",
+                                isSending: sendingFeedback == entry.proposal.id
+                            ) { outcome in
+                                Task { await sendFeedback(entry, outcome: outcome) }
+                            } onSkip: {
+                                pendingFeedbackIds.remove(entry.proposal.id)
+                            }
+                        }
                         if !past.isEmpty {
                             section(title: "Passati", icon: "checkmark.circle",
                                     color: .brindooTextSecondary, entries: past)
@@ -99,6 +115,9 @@ struct AgendaView: View {
         .background(Color.brindooBackground)
         .navigationTitle("Agenda eventi")
         .navigationBarTitleDisplayMode(.inline)
+        .sheet(item: $depositProposal) { proposal in
+            DepositSheet(proposal: proposal) { await loadData() }
+        }
         .sheet(item: $checklistEntry) { entry in
             EventChecklistView(
                 proposalId: entry.proposal.id,
@@ -206,12 +225,9 @@ struct AgendaView: View {
         }
         .contextMenu {
             Button {
-                Task { await toggleDeposit(entry) }
+                depositProposal = proposal
             } label: {
-                Label(
-                    proposal.isDepositPaid ? "Acconto: segna come non versato" : "Segna acconto versato",
-                    systemImage: "eurosign.circle"
-                )
+                Label(depositLabel(proposal), systemImage: "eurosign.circle")
             }
             if entry.date >= Calendar.current.startOfDay(for: Date()) {
                 Button {
@@ -271,10 +287,20 @@ struct AgendaView: View {
                     HStack(spacing: 3) {
                         Image(systemName: "eurosign.circle.fill")
                             .font(.system(size: 10))
-                        Text("Acconto versato")
+                        Text("Acconto versato\(proposal.depositAmountDisplay.map { " · \($0)" } ?? "")")
                             .font(BrindooFont.caption.weight(.semibold))
                     }
                     .foregroundStyle(Color.brindooSuccess)
+                } else if proposal.isDepositAwaitingConfirmation {
+                    HStack(spacing: 3) {
+                        Image(systemName: "clock.badge.exclamationmark")
+                            .font(.system(size: 10))
+                        Text(proposal.canConfirmDeposit(as: session.userID ?? UUID())
+                             ? "Acconto da confermare"
+                             : "Acconto in attesa di conferma")
+                            .font(BrindooFont.caption.weight(.semibold))
+                    }
+                    .foregroundStyle(Color.brindooWarning)
                 }
             }
 
@@ -304,12 +330,9 @@ struct AgendaView: View {
                     // acconto e checklist a portata di tap.
                     Menu {
                         Button {
-                            Task { await toggleDeposit(entry) }
+                            depositProposal = entry.proposal
                         } label: {
-                            Label(
-                                entry.proposal.isDepositPaid ? "Acconto: segna come non versato" : "Segna acconto versato",
-                                systemImage: "eurosign.circle"
-                            )
+                            Label(depositLabel(entry.proposal), systemImage: "eurosign.circle")
                         }
                         Button {
                             checklistEntry = entry
@@ -356,17 +379,12 @@ struct AgendaView: View {
     }
 
     /// Registra o toglie l'acconto versato sull'evento.
-    private func toggleDeposit(_ entry: Entry) async {
-        do {
-            try await OfferProposalService.shared.setDepositPaid(
-                proposalId: entry.proposal.id,
-                paid: !entry.proposal.isDepositPaid
-            )
-            BrindooHaptics.notify(.success)
-            await loadData()
-        } catch {
-            toastCenter.show(BrindooToast("Impossibile aggiornare l'acconto", style: .error))
-        }
+    /// Cosa scrivere sulla voce di menù, in base a dove sta l'acconto.
+    private func depositLabel(_ proposal: OfferProposal) -> String {
+        if proposal.isDepositPaid { return "Acconto versato · vedi dettagli" }
+        if proposal.canConfirmDeposit(as: session.userID ?? UUID()) { return "Conferma l'acconto ricevuto" }
+        if proposal.isDepositAwaitingConfirmation { return "Acconto in attesa di conferma" }
+        return "Acconto e pagamento"
     }
 
     // MARK: - Loading
@@ -401,5 +419,97 @@ struct AgendaView: View {
         if let profiles = try? await ProfileService.shared.fetchProfiles(ids: Array(missingProfiles)) {
             for p in profiles { profileMap[p.id] = p }
         }
+
+        // Solo per il professionista: eventi passati ancora senza esito.
+        if session.currentProfile?.role == .organizer {
+            pendingFeedbackIds = await ClientTrustService.shared
+                .pendingFeedbackProposalIds(among: proposals)
+        }
+    }
+
+    /// Primo evento passato di cui chiedere l'esito (uno alla volta).
+    private var feedbackEntry: Entry? {
+        past.first { pendingFeedbackIds.contains($0.proposal.id) }
+    }
+
+    private func sendFeedback(_ entry: Entry, outcome: ClientOutcome) async {
+        sendingFeedback = entry.proposal.id
+        defer { sendingFeedback = nil }
+        do {
+            try await ClientTrustService.shared.submit(
+                proposalId: entry.proposal.id,
+                clientId: entry.proposal.clientId,
+                outcome: outcome
+            )
+            pendingFeedbackIds.remove(entry.proposal.id)
+            BrindooHaptics.notify(.success)
+            toastCenter.show(BrindooToast("Grazie, aiuta gli altri professionisti", style: .success))
+        } catch {
+            BrindooLog.error("Esito cliente: \(error)")
+            toastCenter.show(BrindooToast("Non è stato possibile salvare l'esito", style: .error))
+        }
+    }
+}
+
+// MARK: - "Com'è andata col cliente?"
+
+/// Richiesta leggera mostrata al professionista dopo un evento passato.
+/// Un tap e sparisce; si può anche saltare.
+struct ClientFeedbackPrompt: View {
+
+    let clientName: String
+    let isSending: Bool
+    let onChoose: (ClientOutcome) -> Void
+    let onSkip: () -> Void
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: BrindooSpacing.sm) {
+            HStack(spacing: BrindooSpacing.xs) {
+                Image(systemName: "hand.thumbsup")
+                    .font(.system(size: 15, weight: .semibold))
+                Text("Com'è andata con \(clientName)?")
+                    .font(BrindooFont.titleSmall)
+                Spacer(minLength: 0)
+                Button("Salta", action: onSkip)
+                    .font(BrindooFont.bodySmall)
+                    .foregroundStyle(Color.brindooTextSecondary)
+            }
+            .foregroundStyle(Color.brindooCoral)
+
+            Text("Resta un conteggio, non una recensione: nessuno leggerà commenti sul cliente.")
+                .font(BrindooFont.caption)
+                .foregroundStyle(Color.brindooTextSecondary)
+
+            if isSending {
+                ProgressView().frame(maxWidth: .infinity)
+            } else {
+                VStack(spacing: BrindooSpacing.xs) {
+                    ForEach(ClientOutcome.allCases) { outcome in
+                        Button {
+                            onChoose(outcome)
+                        } label: {
+                            HStack(spacing: BrindooSpacing.xs) {
+                                Image(systemName: outcome.icon)
+                                    .frame(width: 20)
+                                Text(outcome.label)
+                                    .font(BrindooFont.bodyMedium.weight(.medium))
+                                Spacer(minLength: 0)
+                            }
+                            .foregroundStyle(outcome == .honored ? Color.brindooSuccess : Color.brindooTextPrimary)
+                            .padding(.horizontal, BrindooSpacing.sm)
+                            .padding(.vertical, BrindooSpacing.xs)
+                            .frame(maxWidth: .infinity)
+                            .background(Color.brindooSurfaceElevated)
+                            .clipShape(RoundedRectangle(cornerRadius: BrindooRadius.sm))
+                        }
+                        .buttonStyle(.plain)
+                    }
+                }
+            }
+        }
+        .padding(BrindooSpacing.md)
+        .background(Color.brindooSurface)
+        .clipShape(RoundedRectangle(cornerRadius: BrindooRadius.md))
+        .brindooElevation(.card)
     }
 }

@@ -252,7 +252,7 @@ struct OrganizerDetailView: View {
                     spacing: BrindooSpacing.xs
                 ) {
                     ForEach(portfolioItems.prefix(9)) { item in
-                        AsyncImage(url: URL(string: item.imageUrl)) { image in
+                        BrindooCachedImage(url: URL(string: item.imageUrl)) { image in
                             image.resizable().scaledToFill()
                         } placeholder: {
                             Color.brindooBorder
@@ -322,7 +322,7 @@ struct OrganizerDetailView: View {
         ZStack(alignment: .bottom) {
             if let banner = portfolioItems.first?.imageUrl, let url = URL(string: banner) {
                 ZStack(alignment: .bottom) {
-                    AsyncImage(url: url) { image in
+                    BrindooCachedImage(url: url) { image in
                         image.resizable().scaledToFill()
                     } placeholder: {
                         BrindooGradient.coralSoft

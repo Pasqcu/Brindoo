@@ -22,6 +22,8 @@ enum LocalReminderService {
         offerTitle: String
     ) async {
         guard let eventDate, !eventDate.isEmpty else { return }
+        // Rispetta la scelta fatta in Impostazioni.
+        guard remindersEnabled else { return }
 
         let parser = DateFormatter()
         parser.dateFormat = "yyyy-MM-dd"
@@ -58,5 +60,25 @@ enum LocalReminderService {
     static func cancelReminder(proposalId: UUID) {
         UNUserNotificationCenter.current()
             .removePendingNotificationRequests(withIdentifiers: ["event-reminder-\(proposalId.uuidString)"])
+    }
+
+    /// Toglie tutti i promemoria eventi già programmati (l'utente li ha spenti).
+    static func cancelAllEventReminders() async {
+        let center = UNUserNotificationCenter.current()
+        let pending = await center.pendingNotificationRequests()
+        let ids = pending.map(\.identifier).filter { $0.hasPrefix("event-reminder-") }
+        guard !ids.isEmpty else { return }
+        center.removePendingNotificationRequests(withIdentifiers: ids)
+    }
+
+    // MARK: - Preferenza locale
+
+    private static let remindersKey = "brindoo.notify.reminders"
+
+    /// Copia locale della preferenza "promemoria eventi": serve qui perché
+    /// i promemoria li programma il telefono, non il server.
+    static var remindersEnabled: Bool {
+        get { UserDefaults.standard.object(forKey: remindersKey) as? Bool ?? true }
+        set { UserDefaults.standard.set(newValue, forKey: remindersKey) }
     }
 }

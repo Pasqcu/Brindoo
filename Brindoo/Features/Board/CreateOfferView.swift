@@ -238,7 +238,7 @@ struct CreateOfferView: View {
                             .resizable()
                             .scaledToFill()
                     } else if let templateImageUrl, let url = URL(string: templateImageUrl) {
-                        AsyncImage(url: url) { image in
+                        BrindooCachedImage(url: url) { image in
                             image.resizable().scaledToFill()
                         } placeholder: {
                             BrindooSkeleton(cornerRadius: BrindooRadius.md)

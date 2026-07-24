@@ -34,41 +34,12 @@ struct BoardView: View {
     @State private var showWelcome: Bool = false
     @State private var showFilters: Bool = false
     @State private var showClientRequests: Bool = false
+    /// Barra filtri ridotta: si attiva quando l'utente scorre la bacheca.
+    @State private var filtersCompact: Bool = false
+    /// Spazio condiviso per l'effetto "la card si apre nel dettaglio".
+    @Namespace private var cardZoom
+    @State private var showSavedSearches: Bool = false
 
-    // Scorciatoie verso il ViewModel: il corpo della vista resta invariato.
-    private var categories: [ServiceCategory] { vm.categories }
-    private var organizers: [Profile] { vm.organizers }
-    private var sortedOrganizers: [Profile] { vm.sortedOrganizers }
-    private var boostedOrganizers: [Profile] { vm.boostedOrganizers }
-    private var organizerCategoriesMap: [UUID: [ServiceCategory]] { vm.organizerCategoriesMap }
-    private var organizerOffersMap: [UUID: [ServiceOffer]] { vm.organizerOffersMap }
-    private var organizerRatings: [UUID: OrganizerRating] { vm.organizerRatings }
-    private var canLoadMore: Bool { vm.canLoadMore }
-    private var pageOffset: Int { vm.pageOffset }
-    private var myOffers: [ServiceOffer] { vm.myOffers }
-    private var myOfferCategoriesMap: [UUID: [ServiceCategory]] { vm.myOfferCategoriesMap }
-    private var isLoading: Bool { vm.isLoading }
-    private var errorMessage: String? { vm.errorMessage }
-    private var hasOrganizerCategories: Bool { vm.hasOrganizerCategories }
-    private var hasExtraFilters: Bool { vm.hasExtraFilters }
-    private var hasActiveFilters: Bool { vm.hasActiveFilters }
-    private var hasContentFilters: Bool { vm.hasContentFilters }
-    private var lastSearchedText: String { vm.lastSearchedText }
-    private var eventDate: Date? { vm.eventDate }
-    private var sortMode: BoardSortMode { vm.sortMode }
-
-    private var searchText: String {
-        get { vm.searchText }
-        nonmutating set { vm.searchText = newValue }
-    }
-    private var selectedCategoryIds: Set<UUID> {
-        get { vm.selectedCategoryIds }
-        nonmutating set { vm.selectedCategoryIds = newValue }
-    }
-    private var selectedAreaSlugs: Set<String> {
-        get { vm.selectedAreaSlugs }
-        nonmutating set { vm.selectedAreaSlugs = newValue }
-    }
 
     private var isClient: Bool {
         clientPreview || session.currentProfile?.role == .client
@@ -103,7 +74,7 @@ struct BoardView: View {
             }
 
             if isClient {
-                BoardFiltersBar(vm: vm, showAreaPicker: $showAreaPicker)
+                BoardFiltersBar(vm: vm, showAreaPicker: $showAreaPicker, isCompact: filtersCompact)
             }
 
             content
@@ -152,9 +123,19 @@ struct BoardView: View {
                 }
                 ToolbarItem(placement: .topBarTrailing) {
                     Button {
+                        showSavedSearches = true
+                    } label: {
+                        Image(systemName: "bookmark")
+                            .font(.system(size: 16, weight: .semibold))
+                            .foregroundStyle(Color.brindooCoral)
+                    }
+                    .accessibilityLabel("Ricerche salvate")
+                }
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button {
                         showFilters = true
                     } label: {
-                        Image(systemName: hasExtraFilters ? "line.3.horizontal.decrease.circle.fill" : "line.3.horizontal.decrease.circle")
+                        Image(systemName: vm.hasExtraFilters ? "line.3.horizontal.decrease.circle.fill" : "line.3.horizontal.decrease.circle")
                             .font(.system(size: 17, weight: .semibold))
                             .foregroundStyle(Color.brindooCoral)
                     }
@@ -169,7 +150,7 @@ struct BoardView: View {
                         }
                     } label: {
                         // La variante "piena" segnala un ordinamento diverso da quello di default.
-                        Image(systemName: sortMode == .recommended ? "arrow.up.arrow.down.circle" : "arrow.up.arrow.down.circle.fill")
+                        Image(systemName: vm.sortMode == .recommended ? "arrow.up.arrow.down.circle" : "arrow.up.arrow.down.circle.fill")
                             .font(.system(size: 17, weight: .semibold))
                             .foregroundStyle(Color.brindooCoral)
                     }
@@ -209,16 +190,26 @@ struct BoardView: View {
             }) {
                 EditProfileView()
             }
+            .sheet(isPresented: $showSavedSearches) {
+                SavedSearchesSheet(
+                    categories: vm.categories,
+                    currentFilters: vm.currentFiltersAsSavedSearch
+                ) { search in
+                    Task { await vm.applySavedSearch(search) }
+                }
+                .presentationDetents([.medium, .large])
+                .presentationDragIndicator(.visible)
+            }
             .sheet(isPresented: $showFilters) {
                 BoardFiltersSheet(minRating: Bindable(vm).minRating, maxPrice: Bindable(vm).maxPrice, eventDate: Bindable(vm).eventDate)
                     .presentationDetents([.medium, .large])
                     .presentationDragIndicator(.visible)
             }
             .sheet(isPresented: $showWelcome) {
-                ClientWelcomeSheet(categories: categories) { chosen in
+                ClientWelcomeSheet(categories: vm.categories) { chosen in
                     welcomeSeen = true
                     if !chosen.isEmpty {
-                        selectedCategoryIds = chosen
+                        vm.selectedCategoryIds = chosen
                         Task { await loadOrganizers() }
                     }
                 } onSkip: {
@@ -227,15 +218,15 @@ struct BoardView: View {
                 .presentationDetents([.medium, .large])
             }
             .task { await loadInitial() }
-            .onChange(of: eventDate) { _, _ in
+            .onChange(of: vm.eventDate) { _, _ in
                 Task { await loadOrganizers() }
             }
-            .task(id: searchText) {
+            .task(id: vm.searchText) {
                 // Ricerca "dal vivo": aggiorna la lista mentre si scrive,
                 // con una breve pausa per non interrogare il server a ogni lettera.
-                guard isClient, !isLoading, searchText != lastSearchedText else { return }
+                guard isClient, !vm.isLoading, vm.searchText != vm.lastSearchedText else { return }
                 try? await Task.sleep(for: .milliseconds(400))
-                guard !Task.isCancelled, searchText != lastSearchedText else { return }
+                guard !Task.isCancelled, vm.searchText != vm.lastSearchedText else { return }
                 await loadOrganizers()
             }
             .coachMark(
@@ -257,16 +248,16 @@ struct BoardView: View {
     // MARK: - Complete profile hint (organizer appena upgradato)
 
     private var shouldShowCompleteHint: Bool {
-        ProfessionalOnboardingHint.isPending && !hasOrganizerCategories
+        ProfessionalOnboardingHint.isPending && !vm.hasOrganizerCategories
     }
 
     // MARK: - Content router
 
     @ViewBuilder
     private var content: some View {
-        if isLoading {
+        if vm.isLoading {
             BoardLoadingSkeleton()
-        } else if let errorMessage {
+        } else if let errorMessage = vm.errorMessage {
             BoardErrorView(message: errorMessage) {
                 Task { await reload() }
             }
@@ -281,20 +272,23 @@ struct BoardView: View {
 
     @ViewBuilder
     private var clientList: some View {
-        if organizers.isEmpty {
+        if vm.organizers.isEmpty {
             BoardEmptyView(
-                icon: hasActiveFilters ? "magnifyingglass" : "person.2",
-                title: hasActiveFilters ? "Nessun risultato" : "Nessun professionista",
-                subtitle: hasActiveFilters
-                    ? "Prova a rimuovere qualche filtro"
+                icon: vm.hasActiveFilters ? "magnifyingglass" : "person.2",
+                title: vm.hasActiveFilters ? "Nessun risultato" : "Nessun professionista",
+                subtitle: vm.hasActiveFilters
+                    ? "Nessun professionista con questi filtri"
                     : "Non ci sono ancora professionisti disponibili",
-                showClear: hasActiveFilters
-            ) { clearAllFilters() }
-        } else if sortedOrganizers.isEmpty {
+                showClear: vm.hasActiveFilters,
+                onClear: { clearAllFilters() },
+                suggestions: vm.noResultSuggestions,
+                onSuggestion: { s in Task { await vm.apply(s) } }
+            )
+        } else if vm.sortedOrganizers.isEmpty {
             // I filtri extra (stelle/prezzo) tagliano tutto il caricato:
             // continua a caricare pagine finché trova un profilo valido
             // o le pagine finiscono, per non mostrare un vuoto ingannevole.
-            if canLoadMore {
+            if vm.canLoadMore {
                 VStack(spacing: BrindooSpacing.md) {
                     ProgressView()
                     Text("Cerco altri profili che rispettano i filtri…")
@@ -302,49 +296,67 @@ struct BoardView: View {
                         .foregroundStyle(Color.brindooTextSecondary)
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
-                .task(id: pageOffset) { await loadMoreOrganizers() }
+                .task(id: vm.pageOffset) { await loadMoreOrganizers() }
             } else {
                 BoardEmptyView(
                     icon: "line.3.horizontal.decrease.circle",
                     title: "Nessun risultato",
                     subtitle: "Nessun profilo rispetta i filtri scelti",
-                    showClear: true
-                ) { clearAllFilters() }
+                    showClear: true,
+                    onClear: { clearAllFilters() },
+                    suggestions: vm.noResultSuggestions,
+                    onSuggestion: { s in Task { await vm.apply(s) } }
+                )
             }
         } else {
             ScrollView {
                 LazyVStack(spacing: BrindooSpacing.md) {
-                    if !hasContentFilters && !boostedOrganizers.isEmpty {
+                    // Sonda invisibile: dice quanto si è scorso, così la
+                    // barra filtri può ridursi e liberare schermo.
+                    Color.clear
+                        .frame(height: 0)
+                        .background(
+                            GeometryReader { proxy in
+                                Color.clear.preference(
+                                    key: BoardScrollOffsetKey.self,
+                                    value: proxy.frame(in: .named("boardScroll")).minY
+                                )
+                            }
+                        )
+
+                    if !vm.hasContentFilters && !vm.boostedOrganizers.isEmpty {
                         BoardFeaturedCarousel(
-                            organizers: boostedOrganizers,
-                            ratings: organizerRatings,
-                            offersMap: organizerOffersMap
+                            organizers: vm.boostedOrganizers,
+                            ratings: vm.organizerRatings,
+                            offersMap: vm.organizerOffersMap
                         )
                     }
 
-                    if !hasContentFilters {
-                        BoardDiscoveryHeader(count: sortedOrganizers.count, hasMore: canLoadMore)
+                    if !vm.hasContentFilters {
+                        BoardDiscoveryHeader(count: vm.sortedOrganizers.count, hasMore: vm.canLoadMore)
                     }
 
-                    ForEach(sortedOrganizers) { organizer in
+                    ForEach(vm.sortedOrganizers) { organizer in
                         NavigationLink {
                             OrganizerDetailView(organizer: organizer)
+                                .brindooZoomDestination(id: organizer.id, in: cardZoom)
                         } label: {
                             OrganizerWithOffersCard(
                                 organizer: organizer,
-                                categories: organizerCategoriesMap[organizer.id] ?? [],
-                                offers: organizerOffersMap[organizer.id] ?? [],
-                                rating: organizerRatings[organizer.id]
+                                categories: vm.organizerCategoriesMap[organizer.id] ?? [],
+                                offers: vm.organizerOffersMap[organizer.id] ?? [],
+                                rating: vm.organizerRatings[organizer.id]
                             )
                         }
                         .buttonStyle(BrindooPressStyle())
+                        .brindooZoomSource(id: organizer.id, in: cardZoom)
                     }
 
-                    if canLoadMore {
+                    if vm.canLoadMore {
                         ProgressView()
                             .frame(maxWidth: .infinity)
                             .padding(.vertical, BrindooSpacing.md)
-                            .task(id: pageOffset) { await loadMoreOrganizers() }
+                            .task(id: vm.pageOffset) { await loadMoreOrganizers() }
                     }
 
                     BoardInviteCard()
@@ -352,6 +364,16 @@ struct BoardView: View {
                 .padding(.horizontal, BrindooSpacing.md)
                 .padding(.bottom, BrindooSpacing.lg)
                 .brindooReadableWidth()
+            }
+            .coordinateSpace(name: "boardScroll")
+            .onPreferenceChange(BoardScrollOffsetKey.self) { [compact = $filtersCompact] offset in
+                // Soglie diverse per chiudere e riaprire: evita il
+                // tremolio quando si sta esattamente sul limite.
+                if offset < -70, !compact.wrappedValue {
+                    withAnimation(BrindooAnimation.snappy) { compact.wrappedValue = true }
+                } else if offset > -20, compact.wrappedValue {
+                    withAnimation(BrindooAnimation.snappy) { compact.wrappedValue = false }
+                }
             }
             // Tira-per-aggiornare solo sulla lista verticale: la barra dei
             // filtri resta ferma e non innesca ricariche accidentali.
@@ -363,7 +385,7 @@ struct BoardView: View {
 
     @ViewBuilder
     private var organizerList: some View {
-        if myOffers.isEmpty {
+        if vm.myOffers.isEmpty {
             BrindooEmptyState(
                 icon: "tag",
                 title: "Nessuna offerta",
@@ -375,25 +397,27 @@ struct BoardView: View {
         } else {
             ScrollView {
                 LazyVStack(spacing: BrindooSpacing.md) {
-                    ForEach(myOffers) { offer in
+                    ForEach(vm.myOffers) { offer in
                         NavigationLink {
                             OfferDetailView(offer: offer) {
                                 Task { await loadMyOffers() }
                             }
+                            .brindooZoomDestination(id: offer.id, in: cardZoom)
                         } label: {
                             OfferCard(
                                 offer: offer,
-                                categories: myOfferCategoriesMap[offer.id] ?? [],
+                                categories: vm.myOfferCategoriesMap[offer.id] ?? [],
                                 organizer: nil,
                                 showOrganizer: false
                             )
                         }
                         .buttonStyle(BrindooPressStyle())
+                        .brindooZoomSource(id: offer.id, in: cardZoom)
                         .contextMenu {
                             Button {
                                 duplicateTemplate = OfferTemplate(
                                     offer: offer,
-                                    categoryIds: (myOfferCategoriesMap[offer.id] ?? []).map(\.id)
+                                    categoryIds: (vm.myOfferCategoriesMap[offer.id] ?? []).map(\.id)
                                 )
                             } label: {
                                 Label("Duplica offerta", systemImage: "plus.square.on.square")
@@ -435,7 +459,7 @@ struct BoardView: View {
         await vm.loadInitial()
 
         // Primo passo guidato per il cliente (una sola volta).
-        if isClient && !clientPreview && !welcomeSeen && !categories.isEmpty {
+        if isClient && !clientPreview && !welcomeSeen && !vm.categories.isEmpty {
             showWelcome = true
         }
     }
@@ -445,4 +469,14 @@ struct BoardView: View {
     private func loadOrganizers() async { await vm.loadOrganizers() }
     private func loadMoreOrganizers() async { await vm.loadMoreOrganizers() }
     private func loadMyOffers() async { await vm.loadMyOffers() }
+}
+
+// MARK: - Sonda di scorrimento
+
+/// Riporta quanto è stata scorsa la bacheca, per ridurre la barra filtri.
+struct BoardScrollOffsetKey: PreferenceKey {
+    static var defaultValue: CGFloat = 0
+    static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) {
+        value = nextValue()
+    }
 }

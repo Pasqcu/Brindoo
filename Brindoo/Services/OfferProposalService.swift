@@ -375,6 +375,101 @@ final class OfferProposalService {
             .execute()
     }
 
+    // MARK: - Acconto e saldo
+
+    /// Registra come le parti hanno deciso di pagare (contanti o tracciato).
+    /// Nessun soldo passa da Brindoo: si annota solo l'accordo.
+    func setPaymentMethods(
+        proposalId: UUID,
+        deposit: PaymentMethod?,
+        balance: PaymentMethod?
+    ) async throws {
+        struct U: Encodable {
+            let deposit_method: String?
+            let balance_method: String?
+        }
+        try await client
+            .from("offer_proposals")
+            .update(U(deposit_method: deposit?.rawValue, balance_method: balance?.rawValue))
+            .eq("id", value: proposalId)
+            .execute()
+    }
+
+    /// Chi incassa dichiara l'acconto ricevuto. Resta "in attesa di conferma"
+    /// finché l'altra parte non lo conferma.
+    func declareDeposit(
+        proposalId: UUID,
+        amount: Double,
+        method: PaymentMethod,
+        note: String?
+    ) async throws {
+        guard let me = SupabaseManager.shared.currentUserID else { return }
+        struct U: Encodable {
+            let deposit_amount: Double
+            let deposit_method: String
+            let deposit_note: String?
+            let deposit_declared_by: UUID
+            let deposit_declared_at: String
+            let deposit_confirmed_by: UUID?
+            let deposit_confirmed_at: String?
+        }
+        try await client
+            .from("offer_proposals")
+            .update(U(
+                deposit_amount: amount,
+                deposit_method: method.rawValue,
+                deposit_note: note?.isEmpty == true ? nil : note,
+                deposit_declared_by: me,
+                deposit_declared_at: ISO8601DateFormatter().string(from: Date()),
+                // Una nuova dichiarazione azzera l'eventuale conferma vecchia.
+                deposit_confirmed_by: nil,
+                deposit_confirmed_at: nil
+            ))
+            .eq("id", value: proposalId)
+            .execute()
+    }
+
+    /// L'altra parte conferma di aver versato quell'acconto.
+    func confirmDeposit(proposalId: UUID) async throws {
+        guard let me = SupabaseManager.shared.currentUserID else { return }
+        struct U: Encodable {
+            let deposit_confirmed_by: UUID
+            let deposit_confirmed_at: String
+        }
+        try await client
+            .from("offer_proposals")
+            .update(U(
+                deposit_confirmed_by: me,
+                deposit_confirmed_at: ISO8601DateFormatter().string(from: Date())
+            ))
+            .eq("id", value: proposalId)
+            .execute()
+    }
+
+    /// Annulla la dichiarazione (errore di importo, pagamento non arrivato…).
+    func clearDeposit(proposalId: UUID) async throws {
+        struct U: Encodable {
+            let deposit_amount: Double?
+            let deposit_note: String?
+            let deposit_declared_by: UUID?
+            let deposit_declared_at: String?
+            let deposit_confirmed_by: UUID?
+            let deposit_confirmed_at: String?
+        }
+        try await client
+            .from("offer_proposals")
+            .update(U(
+                deposit_amount: nil,
+                deposit_note: nil,
+                deposit_declared_by: nil,
+                deposit_declared_at: nil,
+                deposit_confirmed_by: nil,
+                deposit_confirmed_at: nil
+            ))
+            .eq("id", value: proposalId)
+            .execute()
+    }
+
     private func insertRound(
         proposalId: UUID,
         role: ProposerRole,

@@ -21,6 +21,8 @@ struct NegotiationsView: View {
     @State private var state: LoadState<[OfferProposal]> = .loading
     @State private var offerMap: [UUID: ServiceOffer] = [:]
     @State private var profileMap: [UUID: Profile] = [:]
+    /// Affidabilità dei clienti, mostrata solo al professionista.
+    @State private var clientTrust: [UUID: ClientTrust] = [:]
 
     private var proposals: [OfferProposal] { state.value ?? [] }
     @State private var chatTarget: ChatTarget?
@@ -271,6 +273,18 @@ struct NegotiationsView: View {
                 Text(other?.fullName ?? "Utente")
                     .font(BrindooFont.caption)
                     .foregroundStyle(Color.brindooTextSecondary)
+                // Il professionista vede com'è andata in passato con questo cliente.
+                if currentUserId == proposal.organizerId,
+                   let badge = clientTrust[proposal.clientId]?.badge {
+                    HStack(spacing: 3) {
+                        Image(systemName: badge.icon)
+                            .font(.system(size: 10))
+                        Text(badge.label)
+                            .font(BrindooFont.caption.weight(.medium))
+                    }
+                    .foregroundStyle(badge.isPositive ? Color.brindooSuccess : Color.brindooWarning)
+                    .accessibilityLabel(badge.label)
+                }
                 if let eventDate = proposal.eventDateDisplay {
                     HStack(spacing: 3) {
                         Image(systemName: "calendar")
@@ -339,6 +353,15 @@ struct NegotiationsView: View {
         }
         if let profiles = try? await ProfileService.shared.fetchProfiles(ids: Array(missingProfiles)) {
             for p in profiles { profileMap[p.id] = p }
+        }
+
+        // Affidabilità dei clienti: serve solo a chi sta dall'altra parte.
+        if let me = currentUserId {
+            let clientIds = proposals.filter { $0.organizerId == me }.map(\.clientId)
+            if !clientIds.isEmpty,
+               let trust = try? await ClientTrustService.shared.fetchTrust(clientIds: Array(Set(clientIds))) {
+                clientTrust.merge(trust) { _, new in new }
+            }
         }
     }
 }

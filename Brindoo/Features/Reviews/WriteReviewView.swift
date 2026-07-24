@@ -227,7 +227,7 @@ struct WriteReviewView: View {
                             .resizable()
                             .scaledToFill()
                     } else if let existingPhotoUrl, let url = URL(string: existingPhotoUrl) {
-                        AsyncImage(url: url) { image in
+                        BrindooCachedImage(url: url) { image in
                             image.resizable().scaledToFill()
                         } placeholder: {
                             BrindooSkeleton(cornerRadius: BrindooRadius.md)

@@ -23,6 +23,9 @@ struct OnboardingView: View {
 
     /// Stato visivo della checkbox. Sincronizzato con AppStorage.
     @State private var acceptedTermsAndAge: Bool = false
+    /// Ruolo scelto nella seconda slide: guida il resto dell'introduzione
+    /// e arriva già selezionato alla creazione del profilo.
+    @AppStorage("brindoo.onboarding.role") private var chosenRoleRaw: String = ""
     @State private var showTerms: Bool = false
     @State private var showPrivacy: Bool = false
 
@@ -30,23 +33,62 @@ struct OnboardingView: View {
         currentSlide >= slides.count - 1
     }
 
-    private let slides: [OnboardingSlide] = [
-        OnboardingSlide(
-            icon: "party.popper.fill",
-            title: "Benvenuto in Brindoo",
-            description: "Il marketplace per organizzare feste ed eventi memorabili."
-        ),
-        OnboardingSlide(
-            icon: "magnifyingglass.circle.fill",
-            title: "Trova il professionista giusto",
-            description: "Animatori, fotografi, catering, location: tutto a portata di tap."
-        ),
-        OnboardingSlide(
-            icon: "sparkles",
-            title: "O fatti trovare",
-            description: "Sei un organizzatore? Crea il tuo profilo e ricevi richieste dai clienti."
-        )
-    ]
+    private var chosenRole: UserRole? {
+        UserRole(rawValue: chosenRoleRaw)
+    }
+
+    /// Le slide cambiano in base a chi sei: chi cerca vede come si trova e
+    /// si tratta, chi offre vede come farsi trovare e ricevere richieste.
+    private var slides: [OnboardingSlide] {
+        var list: [OnboardingSlide] = [
+            OnboardingSlide(
+                icon: "party.popper.fill",
+                title: "Benvenuto in Brindoo",
+                description: "Feste ed eventi nel Lazio: qui chi organizza e chi lavora si incontrano."
+            ),
+            // La seconda slide è la domanda: viene disegnata a parte.
+            OnboardingSlide(
+                icon: "person.2.fill",
+                title: "Cosa ti porta qui?",
+                description: "Scegli come vuoi usare Brindoo. Potrai cambiare idea in qualsiasi momento."
+            )
+        ]
+
+        switch chosenRole {
+        case .client:
+            list.append(OnboardingSlide(
+                icon: "magnifyingglass.circle.fill",
+                title: "Trova e tratta il prezzo",
+                description: "Cerca per categoria e zona, confronta le offerte e fai la tua proposta: il prezzo si concorda in chat."
+            ))
+            list.append(OnboardingSlide(
+                icon: "calendar.badge.checkmark",
+                title: "Tutto in un posto",
+                description: "Accordo, acconto e promemoria dell'evento restano in agenda, con il riepilogo da condividere."
+            ))
+        case .organizer:
+            list.append(OnboardingSlide(
+                icon: "sparkles",
+                title: "Fatti trovare",
+                description: "Pubblica le tue offerte con foto e prezzi, indica le zone che copri e ricevi richieste dai clienti."
+            ))
+            list.append(OnboardingSlide(
+                icon: "star.bubble.fill",
+                title: "Costruisci la tua reputazione",
+                description: "Recensioni verificate, tempi di risposta e portfolio: chi ti sceglie sa già come lavori."
+            ))
+        case nil:
+            list.append(OnboardingSlide(
+                icon: "hand.tap.fill",
+                title: "Scegli sopra per continuare",
+                description: "Dicci se cerchi un professionista o se sei tu il professionista."
+            ))
+        }
+        return list
+    }
+
+    /// Indice della slide con la domanda sul ruolo.
+    private let roleSlideIndex = 1
     
     var body: some View {
         NavigationStack {
@@ -60,7 +102,9 @@ struct OnboardingView: View {
                         if currentSlide < slides.count - 1 {
                             Button("Salta") {
                                 withAnimation {
-                                    currentSlide = slides.count - 1
+                                    // Senza il ruolo scelto il salto si ferma
+                                    // alla domanda: è l'unica cosa obbligatoria.
+                                    currentSlide = chosenRole == nil ? roleSlideIndex : slides.count - 1
                                 }
                             }
                             .font(BrindooFont.bodyMedium.weight(.medium))
@@ -77,8 +121,14 @@ struct OnboardingView: View {
                     // il contenuto interno di ogni slide è centrato/scorrevole).
                     TabView(selection: $currentSlide) {
                         ForEach(slides.indices, id: \.self) { index in
-                            slideView(slides[index])
-                                .tag(index)
+                            Group {
+                                if index == roleSlideIndex {
+                                    roleSlideView(slides[index])
+                                } else {
+                                    slideView(slides[index])
+                                }
+                            }
+                            .tag(index)
                         }
                     }
                     .tabViewStyle(.page(indexDisplayMode: .never))
@@ -114,7 +164,8 @@ struct OnboardingView: View {
                             isLastSlide ? "Inizia ora" : "Continua",
                             style: .primary,
                             size: .large,
-                            isDisabled: isLastSlide && !acceptedTermsAndAge
+                            isDisabled: (isLastSlide && !acceptedTermsAndAge)
+                                || (currentSlide == roleSlideIndex && chosenRole == nil)
                         ) {
                             if isLastSlide {
                                 navigateToSignUp = true
@@ -233,6 +284,91 @@ struct OnboardingView: View {
 
     // MARK: - Slide
     
+    /// Slide della domanda: due carte grandi, una per ruolo.
+    @ViewBuilder
+    private func roleSlideView(_ slide: OnboardingSlide) -> some View {
+        ScrollView(.vertical, showsIndicators: false) {
+            VStack(spacing: BrindooSpacing.xl) {
+                VStack(spacing: BrindooSpacing.sm) {
+                    Text(slide.title)
+                        .font(BrindooFont.displayMedium)
+                        .multilineTextAlignment(.center)
+                        .foregroundStyle(Color.brindooTextPrimary)
+                    Text(slide.description)
+                        .font(BrindooFont.bodyLarge)
+                        .multilineTextAlignment(.center)
+                        .foregroundStyle(Color.brindooTextSecondary)
+                }
+                .padding(.top, BrindooSpacing.lg)
+
+                VStack(spacing: BrindooSpacing.md) {
+                    roleCard(
+                        role: .client,
+                        title: "Sto organizzando un evento",
+                        subtitle: "Cerco animatori, foto, catering, location…"
+                    )
+                    roleCard(
+                        role: .organizer,
+                        title: "Offro i miei servizi",
+                        subtitle: "Voglio farmi trovare da chi organizza eventi"
+                    )
+                }
+            }
+            .padding(.horizontal, BrindooSpacing.lg)
+            .padding(.bottom, BrindooSpacing.lg)
+        }
+    }
+
+    @ViewBuilder
+    private func roleCard(role: UserRole, title: String, subtitle: String) -> some View {
+        let isSelected = chosenRole == role
+        Button {
+            withAnimation(BrindooAnimation.snappy) {
+                chosenRoleRaw = role.rawValue
+            }
+            BrindooHaptics.selection()
+        } label: {
+            HStack(spacing: BrindooSpacing.md) {
+                Image(systemName: role.iconName)
+                    .font(.system(size: 24, weight: .semibold))
+                    .foregroundStyle(isSelected ? .white : Color.brindooCoral)
+                    .frame(width: 56, height: 56)
+                    .background(isSelected ? Color.brindooCoral : Color.brindooCoral.opacity(0.12))
+                    .clipShape(Circle())
+
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(title)
+                        .font(BrindooFont.titleSmall)
+                        .foregroundStyle(Color.brindooTextPrimary)
+                        .multilineTextAlignment(.leading)
+                    Text(subtitle)
+                        .font(BrindooFont.bodySmall)
+                        .foregroundStyle(Color.brindooTextSecondary)
+                        .multilineTextAlignment(.leading)
+                }
+
+                Spacer(minLength: 0)
+
+                Image(systemName: isSelected ? "checkmark.circle.fill" : "circle")
+                    .font(.system(size: 20))
+                    .foregroundStyle(isSelected ? Color.brindooCoral : Color.brindooBorder)
+            }
+            .padding(BrindooSpacing.md)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(Color.brindooSurface)
+            .clipShape(RoundedRectangle(cornerRadius: BrindooRadius.lg))
+            .overlay(
+                RoundedRectangle(cornerRadius: BrindooRadius.lg)
+                    .strokeBorder(isSelected ? Color.brindooCoral : Color.brindooBorder,
+                                  lineWidth: isSelected ? 2 : 1)
+            )
+            .brindooElevation(isSelected ? .raised : .card)
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel("\(title). \(subtitle)")
+        .accessibilityAddTraits(isSelected ? [.isSelected] : [])
+    }
+
     @ViewBuilder
     private func slideView(_ slide: OnboardingSlide) -> some View {
         // A dimensioni di testo Accessibilità il contenuto può eccedere l'altezza:

@@ -18,7 +18,7 @@ struct OfferPhotoGallery: View {
         TabView {
             ForEach(urls, id: \.self) { urlString in
                 if let url = URL(string: urlString) {
-                    AsyncImage(url: url) { phase in
+                    BrindooCachedImage(url: url) { phase in
                         switch phase {
                         case .success(let image):
                             image.resizable().scaledToFill()

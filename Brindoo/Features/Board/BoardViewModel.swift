@@ -130,6 +130,82 @@ final class BoardViewModel {
         self.onToast = onToast
     }
 
+    // MARK: - Ricerche salvate
+
+    /// I filtri di adesso confezionati come ricerca salvabile.
+    /// `nil` quando non c'è nulla di specifico da mettere da parte.
+    var currentFiltersAsSavedSearch: SavedSearch? {
+        guard hasActiveFilters || minRating > 0 || maxPrice > 0 else { return nil }
+        return SavedSearch(
+            name: "",
+            categoryIds: Array(selectedCategoryIds),
+            areaSlugs: Array(selectedAreaSlugs),
+            searchText: searchText,
+            minRating: minRating,
+            maxPrice: maxPrice
+        )
+    }
+
+    /// Riapre una ricerca salvata in bacheca.
+    func applySavedSearch(_ search: SavedSearch) async {
+        selectedCategoryIds = Set(search.categoryIds)
+        selectedAreaSlugs = Set(search.areaSlugs)
+        searchText = search.searchText
+        minRating = search.minRating
+        maxPrice = search.maxPrice
+        eventDate = nil
+        await loadOrganizers()
+    }
+
+    // MARK: - Vie d'uscita quando non esce nulla
+
+    /// Suggerimento in un colpo solo per allargare una ricerca a vuoto.
+    struct Suggestion: Identifiable, Equatable {
+        enum Kind: String { case wholeLazio, clearDate, clearCategories, clearRating, clearPrice, clearSearch }
+        let kind: Kind
+        let label: String
+        let icon: String
+        var id: String { kind.rawValue }
+    }
+
+    /// Cosa proporre, in ordine di "quanto allarga", in base ai filtri attivi.
+    /// Vuoto = non c'è più niente da allentare.
+    var noResultSuggestions: [Suggestion] {
+        var out: [Suggestion] = []
+        if !selectedAreaSlugs.isEmpty {
+            out.append(.init(kind: .wholeLazio, label: "Cerca in tutto il Lazio", icon: "map"))
+        }
+        if eventDate != nil {
+            out.append(.init(kind: .clearDate, label: "Togli il filtro data", icon: "calendar.badge.minus"))
+        }
+        if minRating > 0 {
+            out.append(.init(kind: .clearRating, label: "Accetta anche meno stelle", icon: "star"))
+        }
+        if maxPrice > 0 {
+            out.append(.init(kind: .clearPrice, label: "Togli il tetto di prezzo", icon: "eurosign.circle"))
+        }
+        if !selectedCategoryIds.isEmpty {
+            out.append(.init(kind: .clearCategories, label: "Togli le categorie scelte", icon: "square.grid.2x2"))
+        }
+        if !searchText.isEmpty {
+            out.append(.init(kind: .clearSearch, label: "Svuota la ricerca «\(searchText)»", icon: "magnifyingglass"))
+        }
+        return out
+    }
+
+    /// Applica un suggerimento e ricarica.
+    func apply(_ suggestion: Suggestion) async {
+        switch suggestion.kind {
+        case .wholeLazio:      selectedAreaSlugs.removeAll()
+        case .clearDate:       eventDate = nil
+        case .clearCategories: selectedCategoryIds.removeAll()
+        case .clearRating:     minRating = 0
+        case .clearPrice:      maxPrice = 0
+        case .clearSearch:     searchText = ""
+        }
+        await loadOrganizers()
+    }
+
     /// Azzeramento completo di tutti i filtri (contenuto + extra).
     func clearAllFilters() {
         selectedCategoryIds.removeAll()

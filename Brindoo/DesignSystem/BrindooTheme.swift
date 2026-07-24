@@ -142,10 +142,46 @@ enum BrindooFont {
 
 // MARK: - Ombre
 
+// Tre livelli di profondità invece di uno solo: l'occhio capisce subito
+// cosa sta "sopra" a cosa (card normale < card in evidenza < pannello).
+enum BrindooElevation {
+    case flat      // elementi a filo di sfondo
+    case card      // card standard di lista
+    case raised    // card in evidenza (Boost, vetrina, selezionata)
+    case overlay   // pannelli, barre fluttuanti, menù
+
+    var color: Color {
+        switch self {
+        case .flat:    return .clear
+        case .card:    return Color.black.opacity(0.06)
+        case .raised:  return Color.black.opacity(0.12)
+        case .overlay: return Color.black.opacity(0.18)
+        }
+    }
+
+    var radius: CGFloat {
+        switch self {
+        case .flat: return 0
+        case .card: return 8
+        case .raised: return 16
+        case .overlay: return 24
+        }
+    }
+
+    var y: CGFloat {
+        switch self {
+        case .flat: return 0
+        case .card: return 2
+        case .raised: return 6
+        case .overlay: return 10
+        }
+    }
+}
+
 enum BrindooShadow {
-    static let cardShadowColor = Color.black.opacity(0.06)
-    static let cardShadowRadius: CGFloat = 8
-    static let cardShadowY: CGFloat = 2
+    static let cardShadowColor = BrindooElevation.card.color
+    static let cardShadowRadius = BrindooElevation.card.radius
+    static let cardShadowY = BrindooElevation.card.y
 }
 
 // MARK: - Modifier helper
@@ -153,12 +189,12 @@ enum BrindooShadow {
 extension View {
     /// Applica l'ombra standard delle card
     func brindooCardShadow() -> some View {
-        self.shadow(
-            color: BrindooShadow.cardShadowColor,
-            radius: BrindooShadow.cardShadowRadius,
-            x: 0,
-            y: BrindooShadow.cardShadowY
-        )
+        brindooElevation(.card)
+    }
+
+    /// Applica il livello di profondità scelto.
+    func brindooElevation(_ level: BrindooElevation) -> some View {
+        self.shadow(color: level.color, radius: level.radius, x: 0, y: level.y)
     }
     
     /// Padding orizzontale standard schermata

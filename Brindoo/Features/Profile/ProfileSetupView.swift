@@ -14,6 +14,8 @@ struct ProfileSetupView: View {
     @Environment(SessionStore.self) private var session
 
     @State private var currentStep: SetupStep = .role
+    /// Parte già dalla scelta fatta nell'introduzione, se c'è stata.
+    @AppStorage("brindoo.onboarding.role") private var onboardingRoleRaw: String = ""
     @State private var selectedRole: UserRole = .client
     @State private var fullName: String = ""
     @State private var city: String = ""
@@ -70,6 +72,12 @@ struct ProfileSetupView: View {
                             .font(BrindooFont.bodyMedium.weight(.medium))
                             .foregroundStyle(Color.brindooTextSecondary)
                     }
+                }
+            }
+            .onAppear {
+                // La scelta fatta nell'introduzione arriva già selezionata.
+                if let role = UserRole(rawValue: onboardingRoleRaw) {
+                    selectedRole = role
                 }
             }
         }

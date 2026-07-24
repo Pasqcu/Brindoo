@@ -26,11 +26,21 @@ final class PushOutboxService {
         SupabaseManager.shared.client
     }
 
+    /// Categoria della notifica: serve al server per rispettare le
+    /// preferenze del destinatario (messaggi / trattative / promemoria).
+    enum Category: String {
+        case message
+        case negotiation
+        case reminder
+        case other
+    }
+
     /// Inserisce una riga nell'outbox. Best-effort: se fallisce non blocca l'azione.
     func enqueue(
         recipientId: UUID,
         title: String,
         body: String,
+        category: Category = .other,
         payload: [String: String]? = nil
     ) async {
         // Non spedire push a se stessi.
@@ -40,6 +50,7 @@ final class PushOutboxService {
             let recipient_id: UUID
             let title: String
             let body: String
+            let category: String
             let payload: [String: String]?
         }
 
@@ -50,6 +61,7 @@ final class PushOutboxService {
                     recipient_id: recipientId,
                     title: title,
                     body: body,
+                    category: category.rawValue,
                     payload: payload
                 ))
                 .execute()
@@ -66,6 +78,7 @@ final class PushOutboxService {
             recipientId: organizerId,
             title: "Nuova proposta su \(offerTitle)",
             body: "\(clientName) ha inviato una proposta",
+            category: .negotiation,
             payload: ["type": "new_proposal", "offer_id": offerId.uuidString]
         )
     }
@@ -75,6 +88,7 @@ final class PushOutboxService {
             recipientId: recipientId,
             title: "Controproposta da \(fromName)",
             body: "Nuova controproposta su \"\(offerTitle)\"",
+            category: .negotiation,
             payload: ["type": "proposal_counter", "offer_id": offerId.uuidString]
         )
     }
@@ -84,6 +98,7 @@ final class PushOutboxService {
             recipientId: recipientId,
             title: "Proposta accettata 🎉",
             body: "La trattativa su \"\(offerTitle)\" è andata in porto",
+            category: .negotiation,
             payload: ["type": "proposal_accepted", "offer_id": offerId.uuidString]
         )
     }

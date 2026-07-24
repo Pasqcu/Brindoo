@@ -308,6 +308,10 @@ struct BoostView: View {
     
     // MARK: - Actions
     
+    /// Tempi di lettura del messaggio di riuscita, non attese tecniche.
+    private static let successToastSeconds: Double = 2
+    private static let dismissAfterToastSeconds: Double = 0.3
+
     private func purchase(_ product: Product) async {
         isLoading = true
         errorMessage = nil
@@ -317,10 +321,14 @@ struct BoostView: View {
         
         switch result {
         case .success:
+            // Il Boost è attivo quando il server l'ha scritto sul profilo.
+            if let profile = await ProfileService.shared.awaitProfile(where: { $0.isBoosted }) {
+                session.updateLocalProfile(profile)
+            }
             withAnimation { showSuccessToast = true }
-            try? await Task.sleep(nanoseconds: 2_000_000_000)
+            try? await Task.sleep(for: .seconds(Self.successToastSeconds))
             withAnimation { showSuccessToast = false }
-            try? await Task.sleep(nanoseconds: 300_000_000)
+            try? await Task.sleep(for: .seconds(Self.dismissAfterToastSeconds))
             dismiss()
             
         case .userCancelled:

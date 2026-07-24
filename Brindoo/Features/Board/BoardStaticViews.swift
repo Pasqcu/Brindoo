@@ -64,6 +64,9 @@ struct BoardFeaturedCarousel: View {
     let ratings: [UUID: OrganizerRating]
     let offersMap: [UUID: [ServiceOffer]]
 
+    /// Spazio condiviso per l'effetto "la card si apre nel dettaglio".
+    @Namespace private var cardZoom
+
     var body: some View {
         VStack(alignment: .leading, spacing: BrindooSpacing.xs) {
             HStack(spacing: 6) {
@@ -79,6 +82,7 @@ struct BoardFeaturedCarousel: View {
                     ForEach(organizers) { org in
                         NavigationLink {
                             OrganizerDetailView(organizer: org)
+                                .brindooZoomDestination(id: org.id, in: cardZoom)
                         } label: {
                             FeaturedOrganizerCard(
                                 organizer: org,
@@ -87,6 +91,7 @@ struct BoardFeaturedCarousel: View {
                             )
                         }
                         .buttonStyle(BrindooPressStyle())
+                        .brindooZoomSource(id: org.id, in: cardZoom)
                     }
                 }
                 .padding(.vertical, 2)
@@ -162,8 +167,13 @@ struct BoardEmptyView: View {
     let subtitle: String
     let showClear: Bool
     let onClear: () -> Void
+    /// Vie d'uscita a portata di tap: invece del vicolo cieco, proponiamo
+    /// di allargare la ricerca un pezzo per volta.
+    var suggestions: [BoardViewModel.Suggestion] = []
+    var onSuggestion: ((BoardViewModel.Suggestion) -> Void)? = nil
 
     var body: some View {
+        ScrollView {
         VStack(spacing: BrindooSpacing.md) {
             BrindooEmptyState(
                 icon: icon,
@@ -172,6 +182,41 @@ struct BoardEmptyView: View {
                 actionTitle: showClear ? "Rimuovi filtri" : nil,
                 action: showClear ? onClear : nil
             )
+
+            if !suggestions.isEmpty, let onSuggestion {
+                VStack(spacing: BrindooSpacing.xs) {
+                    Text("Prova così")
+                        .font(BrindooFont.caption.weight(.semibold))
+                        .foregroundStyle(Color.brindooTextSecondary)
+
+                    ForEach(suggestions) { suggestion in
+                        Button {
+                            BrindooHaptics.impact(.light)
+                            onSuggestion(suggestion)
+                        } label: {
+                            HStack(spacing: BrindooSpacing.xs) {
+                                Image(systemName: suggestion.icon)
+                                    .font(.system(size: 13, weight: .medium))
+                                    .frame(width: 20)
+                                Text(suggestion.label)
+                                    .font(BrindooFont.bodyMedium.weight(.medium))
+                                    .multilineTextAlignment(.leading)
+                                Spacer(minLength: 0)
+                                Image(systemName: "arrow.right")
+                                    .font(.system(size: 11, weight: .semibold))
+                            }
+                            .foregroundStyle(Color.brindooCoral)
+                            .padding(.horizontal, BrindooSpacing.md)
+                            .padding(.vertical, BrindooSpacing.sm)
+                            .frame(maxWidth: 320)
+                            .background(Color.brindooCoral.opacity(0.08))
+                            .clipShape(RoundedRectangle(cornerRadius: BrindooRadius.md))
+                        }
+                        .buttonStyle(.plain)
+                    }
+                }
+                .padding(.horizontal, BrindooSpacing.md)
+            }
 
             Text("Brindoo sta arrivando in tutto il Lazio. Aiutaci a crescere!")
                 .font(BrindooFont.caption)
@@ -190,6 +235,8 @@ struct BoardEmptyView: View {
             }
             .padding(.bottom, BrindooSpacing.xl)
         }
+        }
+        .scrollBounceBehavior(.basedOnSize)
     }
 }
 

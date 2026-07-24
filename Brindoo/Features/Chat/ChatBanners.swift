@@ -176,3 +176,29 @@ struct ChatSystemNote: View {
             .padding(.vertical, BrindooSpacing.xxs)
     }
 }
+
+// MARK: - Messaggi in attesa di rete
+
+/// Compare quando un messaggio è stato scritto senza linea: dice che non
+/// è andato perso e che partirà da solo.
+struct ChatPendingBanner: View {
+    let count: Int
+
+    var body: some View {
+        HStack(spacing: BrindooSpacing.xs) {
+            Image(systemName: "arrow.clockwise.icloud")
+                .font(.system(size: 13, weight: .semibold))
+            Text(count == 1
+                 ? "1 messaggio in attesa di rete: partirà da solo."
+                 : "\(count) messaggi in attesa di rete: partiranno da soli.")
+                .font(BrindooFont.caption.weight(.medium))
+            Spacer(minLength: 0)
+        }
+        .foregroundStyle(Color.brindooWarning)
+        .padding(.horizontal, BrindooSpacing.md)
+        .padding(.vertical, BrindooSpacing.xs)
+        .frame(maxWidth: .infinity)
+        .background(Color.brindooWarning.opacity(0.12))
+        .accessibilityElement(children: .combine)
+    }
+}

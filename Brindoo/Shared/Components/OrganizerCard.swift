@@ -8,10 +8,14 @@
 import SwiftUI
 
 struct OrganizerCard: View {
-    
+
     let organizer: Profile
     let categories: [ServiceCategory]
-    
+
+    /// Colore guida della card: quello della prima categoria del professionista.
+    /// Aiuta a riconoscere "a colpo d'occhio" di che tipo di servizio si tratta.
+    private var accent: Color { categories.first?.tint ?? .brindooCoral }
+
     var body: some View {
         HStack(spacing: BrindooSpacing.md) {
             // Avatar tondo (foto reale se presente, altrimenti iniziali)
@@ -59,10 +63,10 @@ struct OrganizerCard: View {
                                     .font(.system(size: 11, weight: .medium))
                                     .lineLimit(1)
                             }
-                            .foregroundStyle(Color.brindooCoral)
+                            .foregroundStyle(category.tint)
                             .padding(.horizontal, 8)
                             .padding(.vertical, 3)
-                            .background(Color.brindooCoral.opacity(0.1))
+                            .background(category.tint.opacity(0.12))
                             .clipShape(Capsule())
                         }
                         
@@ -85,12 +89,21 @@ struct OrganizerCard: View {
         .padding(BrindooSpacing.md)
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(Color.brindooBackground)
+        // Striscia laterale col colore della categoria principale.
+        .overlay(alignment: .leading) {
+            Rectangle()
+                .fill(accent)
+                .frame(width: 4)
+                .allowsHitTesting(false)
+        }
         .overlay(
             RoundedRectangle(cornerRadius: BrindooRadius.lg)
-                .strokeBorder(Color.brindooBorder, lineWidth: 1)
+                .strokeBorder(organizer.isBoosted ? accent.opacity(0.5) : Color.brindooBorder,
+                              lineWidth: organizer.isBoosted ? 1.5 : 1)
         )
         .clipShape(RoundedRectangle(cornerRadius: BrindooRadius.lg))
-        .brindooCardShadow()
+        // Chi è in vetrina "sta sopra": ombra più marcata.
+        .brindooElevation(organizer.isBoosted ? .raised : .card)
     }
 }
 

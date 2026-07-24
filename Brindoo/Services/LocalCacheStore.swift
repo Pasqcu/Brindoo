@@ -52,10 +52,12 @@ actor LocalCacheStore {
 }
 
 enum BrindooCacheKey {
-    static let recentConversations = "recent_conversations"
-    static let recentOffers = "recent_offers"
-    static let savedFilters = "saved_filters"
-    static let onboardingSeen = "onboarding_seen"
+    /// Ultima bacheca mostrata, per l'apertura istantanea.
     static let boardSnapshot = "board_snapshot_v1"
+    /// Ricerche salvate dal cliente (con eventuale avviso attivo).
+    static let savedSearches = "saved_searches_v1"
+    /// Azioni scritte mentre l'utente era offline, in attesa di reinvio.
+    static let outbox = "offline_outbox_v1"
+    /// Bozza di messaggio per conversazione.
     static func draft(conversationID: UUID) -> String { "chat_draft_\(conversationID.uuidString)" }
 }

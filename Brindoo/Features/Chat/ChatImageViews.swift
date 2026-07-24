@@ -32,7 +32,7 @@ struct FullScreenImageView: View {
         ZStack(alignment: .topTrailing) {
             Color.black.ignoresSafeArea()
 
-            AsyncImage(url: URL(string: url)) { image in
+            BrindooCachedImage(url: URL(string: url)) { image in
                 image.resizable().scaledToFit()
             } placeholder: {
                 ProgressView().tint(.white)
@@ -187,7 +187,7 @@ struct BombImageViewer: View {
 
                 if let urlString = message.imageUrl,
                    let url = URL(string: urlString) {
-                    AsyncImage(url: url) { image in
+                    BrindooCachedImage(url: url) { image in
                         image.resizable().scaledToFit()
                     } placeholder: {
                         ProgressView().tint(.white)

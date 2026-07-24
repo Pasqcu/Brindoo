@@ -317,6 +317,11 @@ struct PaywallView: View {
     
     // MARK: - Actions
     
+    /// Quanto resta a schermo il messaggio di riuscita, e la pausa prima
+    /// di chiudere: tempi di lettura, non attese tecniche.
+    private static let successToastSeconds: Double = 2
+    private static let dismissAfterToastSeconds: Double = 0.3
+
     private func purchase(_ product: Product) async {
         isLoading = true
         errorMessage = nil
@@ -326,17 +331,16 @@ struct PaywallView: View {
         
         switch result {
         case .success:
-            // Aggiorna il profilo locale (entitlement appena scritto su DB)
-            try? await Task.sleep(nanoseconds: 500_000_000)
-            if let userId = session.userID,
-               let profile = try? await ProfileService.shared.fetchProfile(userID: userId) {
+            // Aspetta che il server abbia davvero registrato l'abbonamento,
+            // invece di scommettere su mezzo secondo.
+            if let profile = await ProfileService.shared.awaitProfile(where: { $0.isPro }) {
                 session.updateLocalProfile(profile)
             }
-            
+
             withAnimation { showSuccessToast = true }
-            try? await Task.sleep(nanoseconds: 2_000_000_000)
+            try? await Task.sleep(for: .seconds(Self.successToastSeconds))
             withAnimation { showSuccessToast = false }
-            try? await Task.sleep(nanoseconds: 300_000_000)
+            try? await Task.sleep(for: .seconds(Self.dismissAfterToastSeconds))
             dismiss()
             
         case .userCancelled:

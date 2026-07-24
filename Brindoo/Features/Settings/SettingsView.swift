@@ -20,6 +20,10 @@ struct SettingsView: View {
     @State private var showChangeEmail: Bool = false
     @State private var readReceiptsEnabled: Bool = true
     @State private var pushEnabled: Bool = true
+    // Quali notifiche ricevere: prima era tutto-o-niente.
+    @State private var notifyMessages: Bool = true
+    @State private var notifyNegotiations: Bool = true
+    @State private var notifyReminders: Bool = true
 
     // Diagnostica (rapporto errori da inviare al supporto)
     @State private var diagnosticsPayload: DiagnosticsPayload?
@@ -129,6 +133,49 @@ struct SettingsView: View {
                                     if newValue {
                                         await NotificationService.shared.requestAuthorization()
                                     }
+                                }
+                            }
+
+                            // Scelta per tipo: chi non vuole i promemoria non
+                            // deve spegnere anche i messaggi (e sparire).
+                            if pushEnabled {
+                                Divider().padding(.leading, 56)
+
+                                SettingsToggleRow(
+                                    icon: "bubble.left.fill",
+                                    iconColor: .brindooCoral,
+                                    title: "Messaggi",
+                                    subtitle: "Quando ricevi un messaggio in chat",
+                                    isOn: $notifyMessages
+                                )
+                                .onChange(of: notifyMessages) { _, _ in
+                                    Task { await saveNotificationPreferences() }
+                                }
+
+                                Divider().padding(.leading, 56)
+
+                                SettingsToggleRow(
+                                    icon: "arrow.left.arrow.right",
+                                    iconColor: .brindooCoral,
+                                    title: "Trattative",
+                                    subtitle: "Proposte, controproposte e accordi chiusi",
+                                    isOn: $notifyNegotiations
+                                )
+                                .onChange(of: notifyNegotiations) { _, _ in
+                                    Task { await saveNotificationPreferences() }
+                                }
+
+                                Divider().padding(.leading, 56)
+
+                                SettingsToggleRow(
+                                    icon: "calendar.badge.clock",
+                                    iconColor: .brindooCoral,
+                                    title: "Promemoria eventi",
+                                    subtitle: "Avvisi prima degli eventi in agenda",
+                                    isOn: $notifyReminders
+                                )
+                                .onChange(of: notifyReminders) { _, _ in
+                                    Task { await saveNotificationPreferences() }
                                 }
                             }
 
@@ -365,6 +412,10 @@ struct SettingsView: View {
         guard let profile = session.currentProfile else { return }
         readReceiptsEnabled = profile.readReceiptsEnabled
         pushEnabled = await NotificationService.shared.isAuthorized()
+        notifyMessages = profile.notifyMessages
+        notifyNegotiations = profile.notifyNegotiations
+        notifyReminders = profile.notifyReminders
+        LocalReminderService.remindersEnabled = profile.notifyReminders
 
         if let until = profile.vacationUntil, profile.isOnVacation {
             vacationOn = true
@@ -380,6 +431,30 @@ struct SettingsView: View {
             try await ProfileService.shared.updateReadReceipts(enabled: enabled)
         } catch {
             BrindooLog.error("\(error)")
+        }
+    }
+
+    /// Salva le tre preferenze insieme e aggiorna il profilo in memoria.
+    private func saveNotificationPreferences() async {
+        guard session.userID != nil else { return }
+        do {
+            try await ProfileService.shared.updateNotificationPreferences(
+                messages: notifyMessages,
+                negotiations: notifyNegotiations,
+                reminders: notifyReminders
+            )
+            // I promemoria locali sono generati dal telefono: vanno tolti
+            // subito, non basta il filtro sul server.
+            LocalReminderService.remindersEnabled = notifyReminders
+            if !notifyReminders {
+                await LocalReminderService.cancelAllEventReminders()
+            }
+            if let userId = session.userID,
+               let profile = try? await ProfileService.shared.fetchProfile(userID: userId) {
+                session.updateLocalProfile(profile)
+            }
+        } catch {
+            BrindooLog.error("Preferenze notifiche: \(error)")
         }
     }
 

@@ -83,7 +83,20 @@ enum AgreementSummary {
         if let date = proposal.eventDateDisplay {
             lines.append("Data evento: \(date)")
         }
-        lines.append("Acconto: \(proposal.isDepositPaid ? "versato" : "non ancora versato")")
+        // Nel riepilogo condivisibile diciamo anche quanto e come.
+        if proposal.isDepositPaid {
+            let amount = proposal.depositAmountDisplay.map { " di \($0)" } ?? ""
+            let method = proposal.depositMethod.map { " (\($0.shortLabel))" } ?? ""
+            lines.append("Acconto\(amount)\(method): versato e confermato")
+        } else if proposal.isDepositAwaitingConfirmation {
+            let amount = proposal.depositAmountDisplay.map { " di \($0)" } ?? ""
+            lines.append("Acconto\(amount): dichiarato, in attesa di conferma")
+        } else {
+            lines.append("Acconto: non ancora versato")
+        }
+        if let balance = proposal.balanceMethod {
+            lines.append("Saldo: \(balance.shortLabel)")
+        }
         if let message = proposal.lastMessage, !message.isEmpty {
             lines.append("Note: \(message)")
         }

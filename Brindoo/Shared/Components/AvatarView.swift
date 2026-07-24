@@ -23,7 +23,8 @@ struct AvatarView: View {
     var body: some View {
         Group {
             if let urlString = url, !urlString.isEmpty, let validUrl = URL(string: urlString) {
-                AsyncImage(url: validUrl) { phase in
+                // L'avatar è piccolo: chiediamo un'anteprima leggera.
+                BrindooCachedImage(url: validUrl, maxPixelSize: max(size, 120)) { phase in
                     switch phase {
                     case .empty:
                         loadingPlaceholder
