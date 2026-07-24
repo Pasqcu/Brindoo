@@ -52,6 +52,17 @@ struct LoginView: View {
                 .disabled(!hasAcceptedTerms)
                 .opacity(hasAcceptedTerms ? 1 : 0.4)
                 .allowsHitTesting(hasAcceptedTerms)
+
+                // Accesso con Google, alle stesse condizioni di quello Apple.
+                GoogleSignInButton { } onError: { error in
+                    if error != .googleSignInCancelled {
+                        generalError = error.errorDescription
+                    }
+                }
+                .padding(.top, BrindooSpacing.xs)
+                .disabled(!hasAcceptedTerms)
+                .opacity(hasAcceptedTerms ? 1 : 0.4)
+                .allowsHitTesting(hasAcceptedTerms)
                 
                 HStack {
                     Rectangle().fill(Color.brindooBorder).frame(height: 1)

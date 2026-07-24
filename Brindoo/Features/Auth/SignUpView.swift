@@ -118,6 +118,16 @@ struct SignUpView: View {
             .opacity(acceptedTermsAndAge ? 1 : 0.4)
             .allowsHitTesting(acceptedTermsAndAge && !isLoading)
 
+            // Registrazione con Google: stesse condizioni di Apple.
+            GoogleSignInButton { } onError: { error in
+                if error != .googleSignInCancelled {
+                    generalError = error.errorDescription
+                }
+            }
+            .disabled(!acceptedTermsAndAge || isLoading)
+            .opacity(acceptedTermsAndAge ? 1 : 0.4)
+            .allowsHitTesting(acceptedTermsAndAge && !isLoading)
+
             HStack {
                 Rectangle().fill(Color.brindooBorder).frame(height: 1)
                 Text("oppure")

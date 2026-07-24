@@ -29,6 +29,8 @@ enum BrindooAuthError: LocalizedError, Equatable {
     case emailNotConfirmed
     case appleSignInCancelled
     case appleSignInFailed
+    case googleSignInCancelled
+    case googleSignInFailed
     case unknown(String)
 
     var errorDescription: String? {
@@ -55,6 +57,10 @@ enum BrindooAuthError: LocalizedError, Equatable {
             return "Accesso con Apple annullato"
         case .appleSignInFailed:
             return "Impossibile accedere con Apple. Riprova."
+        case .googleSignInCancelled:
+            return "Accesso con Google annullato"
+        case .googleSignInFailed:
+            return "Impossibile accedere con Google. Riprova."
         case .unknown(let message):
             return message
         }
@@ -73,7 +79,9 @@ enum BrindooAuthError: LocalizedError, Equatable {
              (.networkError, .networkError),
              (.emailNotConfirmed, .emailNotConfirmed),
              (.appleSignInCancelled, .appleSignInCancelled),
-             (.appleSignInFailed, .appleSignInFailed):
+             (.appleSignInFailed, .appleSignInFailed),
+             (.googleSignInCancelled, .googleSignInCancelled),
+             (.googleSignInFailed, .googleSignInFailed):
             return true
         case (.unknown(let a), .unknown(let b)):
             return a == b
@@ -251,6 +259,45 @@ final class AuthService {
             BrindooLog.error("Errore login Apple: \(error)")
             throw mapError(error)
         }
+    }
+
+    // MARK: - Sign in with Google
+
+    /// Indirizzo a cui Google rimanda al termine dell'accesso. Lo schema
+    /// `com.pasqcu.brindoo` è già registrato in Info.plist.
+    static let oauthRedirectURL = URL(string: "com.pasqcu.brindoo://login-callback")!
+
+    /// Accesso con account Google.
+    ///
+    /// Apre la pagina di Google in una finestra sicura di sistema
+    /// (`ASWebAuthenticationSession`): la password viene digitata da Google,
+    /// l'app non la vede mai. Al ritorno Supabase crea o ritrova l'account
+    /// con la stessa email.
+    func signInWithGoogle() async throws {
+        do {
+            try await auth.signInWithOAuth(
+                provider: .google,
+                redirectTo: Self.oauthRedirectURL
+            ) { session in
+                // Riusa la sessione Google già attiva su Safari, se c'è:
+                // così spesso basta un tocco senza ridigitare nulla.
+                session.prefersEphemeralWebBrowserSession = false
+            }
+            BrindooLog.info("Login con Google effettuato")
+        } catch {
+            if Self.isUserCancellation(error) {
+                throw BrindooAuthError.googleSignInCancelled
+            }
+            BrindooLog.error("Errore login Google: \(error)")
+            throw mapError(error)
+        }
+    }
+
+    /// L'utente ha chiuso la finestra di Google senza completare.
+    private static func isUserCancellation(_ error: Error) -> Bool {
+        let nsError = error as NSError
+        return nsError.domain == ASWebAuthenticationSessionErrorDomain
+            && nsError.code == ASWebAuthenticationSessionError.canceledLogin.rawValue
     }
 
     // MARK: - Deep link

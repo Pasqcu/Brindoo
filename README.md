@@ -63,6 +63,30 @@ xcodebuild test -project Brindoo.xcodeproj -scheme Brindoo \
   -only-testing:BrindooTests CODE_SIGNING_ALLOWED=NO
 ```
 
+## Accesso con Google
+
+L'app apre la pagina di Google in una finestra sicura di sistema
+(`ASWebAuthenticationSession`): la password la digita l'utente su Google,
+Brindoo non la vede mai. Al ritorno Supabase crea o ritrova l'account con
+la stessa email.
+
+Il codice è pronto; per attivarlo servono tre passaggi **fuori dal
+repository**, perche' richiedono credenziali personali:
+
+1. **Google Cloud Console** — crea un progetto e un client OAuth di tipo
+   *Web application*. Come *Authorized redirect URI* metti:
+   `https://ulpuaphxdpwhyusrqqpk.supabase.co/auth/v1/callback`
+2. **Supabase** — Authentication → Providers → Google: attiva il provider e
+   incolla *Client ID* e *Client Secret* presi al punto 1.
+3. **Supabase** — Authentication → URL Configuration → Redirect URLs:
+   aggiungi `com.pasqcu.brindoo://login-callback` (lo schema e' gia'
+   registrato in `Info.plist`).
+
+Facoltativo ma consigliato: le linee guida di Google chiedono il loro logo
+sul bottone. Scarica l'asset dal kit di branding ufficiale e aggiungilo
+agli Asset con nome `GoogleLogo`: il bottone lo usa da solo. Senza asset
+resta un segnaposto neutro, mai un'imitazione del marchio.
+
 ## Database
 
 Migrazioni in `supabase/migrations/`, applicate al progetto prod con la
