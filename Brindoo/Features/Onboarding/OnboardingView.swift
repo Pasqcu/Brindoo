@@ -10,6 +10,8 @@ import SwiftUI
 
 struct OnboardingView: View {
 
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+
     @State private var currentSlide: Int = 0
     @State private var navigateToLogin: Bool = false
     @State private var navigateToSignUp: Bool = false
@@ -71,9 +73,8 @@ struct OnboardingView: View {
                         }
                     }
                     
-                    Spacer()
-                    
-                    // TabView con le slide
+                    // TabView con le slide (occupa lo spazio verticale disponibile;
+                    // il contenuto interno di ogni slide è centrato/scorrevole).
                     TabView(selection: $currentSlide) {
                         ForEach(slides.indices, id: \.self) { index in
                             slideView(slides[index])
@@ -234,14 +235,22 @@ struct OnboardingView: View {
     
     @ViewBuilder
     private func slideView(_ slide: OnboardingSlide) -> some View {
-        VStack(spacing: BrindooSpacing.xl) {
-            Spacer()
+        // A dimensioni di testo Accessibilità il contenuto può eccedere l'altezza:
+        // lo racchiudiamo in una ScrollView che lo centra quando entra e lo rende
+        // scorrevole (senza troncare titolo/icona) quando è troppo alto.
+        GeometryReader { geo in
+            ScrollView(.vertical, showsIndicators: false) {
+                VStack(spacing: BrindooSpacing.xl) {
+            Spacer(minLength: 0)
 
-            // Icona grande con cerchio corallo sfumato
+            // Icona grande con cerchio corallo sfumato. A dimensioni di testo
+            // Accessibilità la rimpiccioliamo per lasciare spazio a titolo e
+            // descrizione (che invece crescono col Dynamic Type).
+            let iconScale: CGFloat = dynamicTypeSize.isAccessibilitySize ? 0.6 : 1.0
             ZStack {
                 Circle()
                     .fill(Color.brindooCoral.opacity(0.10))
-                    .frame(width: 200, height: 200)
+                    .frame(width: 200 * iconScale, height: 200 * iconScale)
 
                 Circle()
                     .fill(
@@ -251,11 +260,11 @@ struct OnboardingView: View {
                             endPoint: .bottomTrailing
                         )
                     )
-                    .frame(width: 150, height: 150)
+                    .frame(width: 150 * iconScale, height: 150 * iconScale)
                     .shadow(color: Color.brindooCoral.opacity(0.35), radius: 18, x: 0, y: 10)
 
                 Image(systemName: slide.icon)
-                    .font(.system(size: 70, weight: .semibold))
+                    .font(.system(size: 70 * iconScale, weight: .semibold))
                     .foregroundStyle(.white)
             }
 
@@ -277,7 +286,10 @@ struct OnboardingView: View {
                 swipeHint
             }
 
-            Spacer()
+            Spacer(minLength: 0)
+                }
+                .frame(maxWidth: .infinity, minHeight: geo.size.height)
+            }
         }
     }
 
