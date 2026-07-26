@@ -23,6 +23,9 @@ chat in tempo reale, recensioni verificate, agenda eventi. Backend Supabase.
   promemoria locali e calendario iPhone
 - **Profili**: portfolio foto, categorie, zone di copertura su mappa,
   disponibilità, FAQ, distintivi, recensioni con foto e risposta
+- **Calendario senza doppie prenotazioni**: un giorno risulta occupato sia
+  quando il professionista lo segna a mano sia quando ha già un evento
+  confermato; un'offerta con accordi confermati non si può eliminare
 - **Fiducia a due sensi**: recensioni "verificate" (solo dopo un evento
   davvero svolto, non al momento dell'accordo), badge "identità
   verificata" assegnato dall'amministrazione e
@@ -95,8 +98,8 @@ resta un segnaposto neutro, mai un'imitazione del marchio.
 
 Migrazioni in `supabase/migrations/`, applicate al progetto prod con la
 CLI `supabase db push`. Al 26 luglio 2026 sono tutte applicate, comprese
-preferenze notifiche, affidabilità cliente, dettagli acconto e premio
-invito. Il badge `identity_verified` sui profili si
+preferenze notifiche, affidabilità cliente, dettagli acconto, premio
+invito e protezione delle offerte con accordi confermati. Il badge `identity_verified` sui profili si
 assegna solo dalla dashboard Supabase (un trigger blocca l'auto-assegnazione
 via API).
 

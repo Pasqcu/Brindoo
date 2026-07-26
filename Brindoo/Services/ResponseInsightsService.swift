@@ -58,10 +58,13 @@ final class ResponseInsightsService {
 
             // Con meno di 3 risposte il dato non è affidabile: non salvare nulla.
             if samples.count >= 3, let median = Self.medianMinutes(samples) {
-                struct Payload: Encodable { let response_minutes: Int }
+                // Si aggiorna anche la data del profilo: serve a sapere se
+                // la velocità dichiarata è ancora un dato di adesso o il
+                // ricordo di un professionista che non si vede da mesi.
+                struct Payload: Encodable { let response_minutes: Int; let updated_at: Date }
                 try await client
                     .from("profiles")
-                    .update(Payload(response_minutes: median))
+                    .update(Payload(response_minutes: median, updated_at: Date()))
                     .eq("id", value: profile.id)
                     .execute()
             }

@@ -189,7 +189,14 @@ struct ChatView: View {
                 Task { await blockUser() }
             }
         } message: {
-            Text("Non riceverete più messaggi e i vostri profili saranno nascosti reciprocamente.")
+            // Bloccare chi ha un evento in programma con te lascia un
+            // impegno preso senza più un modo per parlarsi: va detto prima,
+            // non scoperto la settimana della festa.
+            if let pending = pendingEventWarning {
+                Text("Attenzione: \(pending)\n\nBloccando non riuscirete più a scrivervi, ma l'accordo resta. Se non vuoi più farlo, annullalo prima dall'agenda.")
+            } else {
+                Text("Non riceverete più messaggi e i vostri profili saranno nascosti reciprocamente.")
+            }
         }
         .alert("Eliminare la conversazione?", isPresented: $showDeleteConvConfirm) {
             Button("Annulla", role: .cancel) {}
@@ -367,6 +374,19 @@ struct ChatView: View {
     }
 
     // MARK: - Collegamento alla trattativa
+
+    /// Descrizione dell'evento ancora da svolgere con questa persona,
+    /// se ce n'è uno: serve solo ad avvisare prima di bloccare.
+    private var pendingEventWarning: String? {
+        guard let p = linkedProposal,
+              p.status == .accepted,
+              p.effectiveBooking == .confirmed,
+              !p.isEventPast else { return nil }
+        if let date = p.eventDateDisplay {
+            return "avete un evento concordato il \(date) per \(p.currentPriceDisplay)"
+        }
+        return "avete un accordo chiuso per \(p.currentPriceDisplay), con data ancora da fissare"
+    }
 
     private func loadLinkedProposal() async {
         let all = (try? await OfferProposalService.shared.fetchMyOngoingProposals()) ?? []

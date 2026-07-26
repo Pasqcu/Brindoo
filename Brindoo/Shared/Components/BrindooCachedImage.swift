@@ -125,26 +125,41 @@ final class BrindooImageLoader: @unchecked Sendable {
         memory.object(forKey: key(url, maxPixelSize) as NSString)
     }
 
+    /// Restituisce la richiesta già in corso per questa foto, oppure ne
+    /// registra una nuova. Tutto dentro un metodo non asincrono: prendere
+    /// un lucchetto in un contesto asincrono è un errore in Swift 6, perché
+    /// il lavoro potrebbe fermarsi proprio mentre lo tiene.
+    private func existingOrNewTask(
+        for k: String,
+        make: () -> Task<UIImage?, Never>
+    ) -> Task<UIImage?, Never> {
+        lock.lock()
+        defer { lock.unlock() }
+        if let running = inFlight[k] { return running }
+        let task = make()
+        inFlight[k] = task
+        return task
+    }
+
+    private func clearInFlight(_ k: String) {
+        lock.lock()
+        defer { lock.unlock() }
+        inFlight[k] = nil
+    }
+
     func image(for url: URL, maxPixelSize: CGFloat) async -> UIImage? {
         let k = key(url, maxPixelSize)
         if let hit = memory.object(forKey: k as NSString) { return hit }
 
         // Una sola richiesta per foto anche se dieci celle la chiedono insieme.
-        lock.lock()
-        if let running = inFlight[k] {
-            lock.unlock()
-            return await running.value
+        let task = existingOrNewTask(for: k) {
+            Task<UIImage?, Never> { [weak self] in
+                guard let self else { return nil }
+                let image = await self.fetch(url: url, key: k, maxPixelSize: maxPixelSize)
+                self.clearInFlight(k)
+                return image
+            }
         }
-        let task = Task<UIImage?, Never> { [weak self] in
-            guard let self else { return nil }
-            let image = await self.fetch(url: url, key: k, maxPixelSize: maxPixelSize)
-            self.lock.lock()
-            self.inFlight[k] = nil
-            self.lock.unlock()
-            return image
-        }
-        inFlight[k] = task
-        lock.unlock()
         return await task.value
     }
 

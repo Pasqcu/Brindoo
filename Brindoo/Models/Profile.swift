@@ -231,9 +231,19 @@ struct Profile: Identifiable, Codable, Hashable, Equatable {
         return f.string(from: vacationUntil)
     }
 
-    /// Velocità di risposta in chat, se nota e ragionevole.
+    /// Oltre questo tempo senza farsi vedere, quello che sappiamo sulla
+    /// velocità di risposta è un ricordo, non una promessa.
+    static let responseSpeedFreshnessDays = 45
+
+    /// Velocità di risposta in chat, se nota, ragionevole e ancora attuale.
+    ///
+    /// "Risponde entro un'ora" appiccicato a chi non apre l'app da mesi è
+    /// una promessa che il cliente incassa e il professionista non mantiene:
+    /// scaduta la freschezza si preferisce non dire niente.
     var responseSpeed: ResponseSpeed? {
-        ResponseSpeed(minutes: responseMinutes)
+        let days = Calendar.current.dateComponents([.day], from: updatedAt, to: Date()).day ?? 0
+        guard days <= Self.responseSpeedFreshnessDays else { return nil }
+        return ResponseSpeed(minutes: responseMinutes)
     }
 }
 

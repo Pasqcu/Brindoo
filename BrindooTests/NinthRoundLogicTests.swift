@@ -122,10 +122,22 @@ final class NinthRoundLogicTests: XCTestCase {
         func day(month: Int) -> Date {
             cal.date(from: DateComponents(year: 2026, month: month, day: 15))!
         }
+        XCTAssertTrue(Seasonality.isPeak(day(month: 5)))
         XCTAssertTrue(Seasonality.isPeak(day(month: 6)))
+        XCTAssertTrue(Seasonality.isPeak(day(month: 7)), "luglio è pieno di matrimoni")
         XCTAssertTrue(Seasonality.isPeak(day(month: 9)))
         XCTAssertTrue(Seasonality.isPeak(day(month: 12)))
         XCTAssertFalse(Seasonality.isPeak(day(month: 2)))
-        XCTAssertFalse(Seasonality.isPeak(day(month: 8)))
+        XCTAssertFalse(Seasonality.isPeak(day(month: 8)), "ad agosto il Lazio si svuota")
+    }
+
+    /// Sotto il mese di preavviso il consiglio cambia: non ha più senso
+    /// dire "muoviti in anticipo" a chi l'anticipo non ce l'ha più.
+    func test_preavvisoBreve() {
+        let oggi = Date()
+        let cal = Calendar.current
+        XCTAssertTrue(Seasonality.isShortNotice(cal.date(byAdding: .day, value: 10, to: oggi)!, from: oggi))
+        XCTAssertTrue(Seasonality.isShortNotice(oggi, from: oggi))
+        XCTAssertFalse(Seasonality.isShortNotice(cal.date(byAdding: .day, value: 90, to: oggi)!, from: oggi))
     }
 }
