@@ -28,6 +28,46 @@ enum BrindooFormat {
         return euroFormatter.string(from: NSNumber(value: value)) ?? "\(Int(value)) €"
     }
 
+    /// Tetto di buon senso per un servizio per eventi. Non è un limite di
+    /// mercato: serve a fermare gli zeri di troppo battuti per sbaglio,
+    /// che in trattativa fanno perdere tempo a tutti e due.
+    static let maxPrice: Double = 100_000
+
+    /// Legge un prezzo scritto a mano ("1.200,50" o "1200.50") e lo accetta
+    /// solo se ha senso: maggiore di zero e sotto il tetto.
+    ///
+    /// Prima ogni schermata faceva la sua conversione: stessa riga copiata
+    /// in sei punti, con controlli leggermente diversi.
+    static func price(from text: String) -> Double? {
+        var s = text
+            .replacingOccurrences(of: "€", with: "")
+            .replacingOccurrences(of: " ", with: "")
+            .replacingOccurrences(of: "\u{00A0}", with: "")
+            .trimmingCharacters(in: .whitespaces)
+        guard !s.isEmpty else { return nil }
+
+        let hasComma = s.contains(",")
+        let dots = s.filter { $0 == "." }.count
+
+        if hasComma {
+            // Stile italiano: il punto separa le migliaia, la virgola i centesimi.
+            s = s.replacingOccurrences(of: ".", with: "")
+                 .replacingOccurrences(of: ",", with: ".")
+        } else if dots == 1 {
+            // Un punto solo e' ambiguo. "1.200" sono milleduecento,
+            // "12.50" sono dodici e cinquanta: decide quanto viene dopo.
+            let parts = s.split(separator: ".", omittingEmptySubsequences: false)
+            if parts.count == 2, parts[1].count == 3, !parts[0].isEmpty {
+                s = parts.joined()
+            }
+        } else if dots > 1 {
+            s = s.replacingOccurrences(of: ".", with: "")
+        }
+
+        guard let value = Double(s), value > 0, value <= maxPrice else { return nil }
+        return value
+    }
+
     // MARK: - Giorno "yyyy-MM-dd" (formato usato dal database)
 
     private static let dayFormatter: DateFormatter = {
@@ -59,6 +99,11 @@ enum BrindooFormat {
     /// "2026-09-12" → "12 settembre 2026" (nil se il formato non è valido).
     static func italianDate(fromDay string: String) -> String? {
         day(from: string).map { italianDateFormatter.string(from: $0) }
+    }
+
+    /// "12 settembre 2026" a partire da una data vera.
+    static func italianDate(from date: Date) -> String {
+        italianDateFormatter.string(from: date)
     }
 
     // MARK: - Tempo relativo

@@ -133,7 +133,7 @@ struct CreateOfferView: View {
                             placeholder: "Es. 350",
                             text: $price,
                             icon: "eurosign",
-                            keyboardType: .numberPad,
+                            keyboardType: .decimalPad,
                             errorMessage: priceError,
                             isDisabled: isLoading
                         )
@@ -334,14 +334,15 @@ struct CreateOfferView: View {
 
         let tTitle = title.trimmingCharacters(in: .whitespaces)
         let tDesc = description.trimmingCharacters(in: .whitespaces)
-        let priceVal = Double(price.replacingOccurrences(of: ",", with: "."))
+        let priceVal = BrindooFormat.price(from: price)
 
         var hasError = false
         if tTitle.count < 5 { titleError = "Titolo troppo corto (min 5)"; hasError = true }
         if tDesc.count < 20 { descError = "Descrizione troppo breve (min 20)"; hasError = true }
         if selectedCategoryIds.isEmpty { categoryError = "Seleziona almeno una categoria"; hasError = true }
-        if priceVal == nil || (priceVal ?? 0) <= 0 {
-            priceError = "Inserisci un prezzo valido"; hasError = true
+        if priceVal == nil {
+            priceError = "Inserisci un prezzo valido (fino a \(BrindooFormat.euro(BrindooFormat.maxPrice)))"
+            hasError = true
         }
 
         // Pacchetti: si considerano solo quelli con nome e prezzo compilati;
@@ -351,8 +352,8 @@ struct CreateOfferView: View {
             let name = draft.name.trimmingCharacters(in: .whitespaces)
             let priceText = draft.price.trimmingCharacters(in: .whitespaces)
             guard !name.isEmpty || !priceText.isEmpty else { continue }
-            let value = Double(priceText.replacingOccurrences(of: ",", with: "."))
-            if name.isEmpty || value == nil || value! <= 0 {
+            let value = BrindooFormat.price(from: priceText)
+            if name.isEmpty || value == nil {
                 generalError = "Completa nome e prezzo di ogni pacchetto (o rimuovilo)."
                 hasError = true
                 break

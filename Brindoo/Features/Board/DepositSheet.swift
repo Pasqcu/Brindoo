@@ -52,11 +52,7 @@ struct DepositSheet: View {
     private var iCollect: Bool { me == proposal.organizerId }
 
     private var amount: Double? {
-        let cleaned = amountText
-            .replacingOccurrences(of: ",", with: ".")
-            .trimmingCharacters(in: .whitespaces)
-        guard let value = Double(cleaned), value > 0 else { return nil }
-        return value
+        BrindooFormat.price(from: amountText)
     }
 
     private var canDeclare: Bool {

@@ -202,3 +202,38 @@ struct ChatPendingBanner: View {
         .accessibilityElement(children: .combine)
     }
 }
+
+/// Messaggi che dopo più tentativi non sono partiti. Restano scritti: la
+/// persona decide se riprovare o buttarli, invece di scoprire più tardi
+/// che le sue parole erano sparite da sole.
+struct ChatFailedBanner: View {
+    let count: Int
+    let onRetry: () -> Void
+    let onDiscard: () -> Void
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: BrindooSpacing.xxs) {
+            HStack(spacing: BrindooSpacing.xs) {
+                Image(systemName: "exclamationmark.arrow.circlepath")
+                    .font(.system(size: 13, weight: .semibold))
+                Text(count == 1
+                     ? "1 messaggio non è partito."
+                     : "\(count) messaggi non sono partiti.")
+                    .font(BrindooFont.caption.weight(.semibold))
+                Spacer(minLength: 0)
+            }
+            HStack(spacing: BrindooSpacing.md) {
+                Button("Riprova", action: onRetry)
+                    .font(BrindooFont.caption.weight(.semibold))
+                Button("Elimina", role: .destructive, action: onDiscard)
+                    .font(BrindooFont.caption)
+                Spacer(minLength: 0)
+            }
+        }
+        .foregroundStyle(Color.brindooError)
+        .padding(.horizontal, BrindooSpacing.md)
+        .padding(.vertical, BrindooSpacing.xs)
+        .frame(maxWidth: .infinity)
+        .background(Color.brindooError.opacity(0.12))
+    }
+}

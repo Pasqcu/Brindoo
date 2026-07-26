@@ -36,6 +36,18 @@ final class OfferDetailViewModel {
 
     // Lato organizzatore: proposte ricevute e chi le ha mandate
     private(set) var receivedProposals: [OfferProposal] = []
+
+    /// Accordi chiusi su questa offerta e non annullati: finché ce ne sono,
+    /// l'offerta non si elimina.
+    var hasConfirmedAgreements: Bool {
+        receivedProposals.contains { $0.status == .accepted && $0.effectiveBooking != .cancelled }
+    }
+
+    /// Trattative ancora in attesa di risposta: sparirebbero con l'offerta,
+    /// e chi le ha aperte va almeno contato prima di confermare.
+    var openProposalsCount: Int {
+        receivedProposals.filter { $0.status == .pending }.count
+    }
     private(set) var clientProfilesMap: [UUID: Profile] = [:]
 
     // Stato modificabile

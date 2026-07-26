@@ -90,6 +90,9 @@ struct ClientNegotiationSection: View {
     /// Chiamata dopo l'invio di una recensione (per ricaricare i dati).
     var onReviewSubmitted: () -> Void
 
+    /// Serve solo a firmare il riepilogo dell'accordo col nome del cliente.
+    @Environment(SessionStore.self) private var session
+
     @State private var showWriteReview: Bool = false
     @State private var selectedPackageId: UUID?
 
@@ -235,6 +238,7 @@ struct ClientNegotiationSection: View {
                 ShareLink(item: AgreementSummary.text(
                     offer: offer,
                     organizerName: org.displayName,
+                    clientName: session.currentProfile?.displayName,
                     proposal: proposal
                 )) {
                     Label("Condividi riepilogo accordo", systemImage: "doc.text")

@@ -66,15 +66,33 @@ final class NinthRoundLogicTests: XCTestCase {
         XCTAssertTrue(text.contains("Regole di annullamento"))
     }
 
-    func test_riepilogo_senzaNomeEData_ometteLeRighe() {
+    /// Il nome mancante si omette, la data mancante no: in un promemoria
+    /// d'accordo il silenzio sulla data si legge come dimenticanza, quindi
+    /// va scritto che è ancora da fissare.
+    func test_riepilogo_senzaNome_ometteLaRiga_maDichiaraLaDataMancante() {
         let text = AgreementSummary.text(
             offer: offer(),
             organizerName: nil,
             proposal: proposal(eventDate: nil, depositPaid: nil)
         )
         XCTAssertFalse(text.contains("Professionista:"))
-        XCTAssertFalse(text.contains("Data evento:"))
+        XCTAssertFalse(text.contains("Cliente:"))
+        XCTAssertTrue(text.contains("Data evento: ancora da definire"))
         XCTAssertTrue(text.contains("Acconto: non ancora versato"))
+    }
+
+    /// Il riepilogo vale come promemoria fra due persone: entrambe vanno
+    /// nominate, e ci va la data in cui l'accordo è stato chiuso.
+    func test_riepilogo_nominaEntrambeLePartiEPortaLaData() {
+        let text = AgreementSummary.text(
+            offer: offer(),
+            organizerName: "Studio Rossi",
+            clientName: "Anna Bianchi",
+            proposal: proposal(eventDate: "2026-09-12", depositPaid: nil)
+        )
+        XCTAssertTrue(text.contains("Professionista: Studio Rossi"))
+        XCTAssertTrue(text.contains("Cliente: Anna Bianchi"))
+        XCTAssertTrue(text.contains("Accordo del "))
     }
 
     // MARK: - Regole di annullamento

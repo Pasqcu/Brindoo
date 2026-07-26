@@ -300,7 +300,7 @@ struct GuidedQuoteView: View {
                 offers.removeAll { onVacation.contains($0.organizerId) }
             }
 
-            if let max = Double(budget.replacingOccurrences(of: ",", with: ".")), max > 0 {
+            if let max = BrindooFormat.price(from: budget) {
                 offers.removeAll { $0.price > max }
             }
 

@@ -67,6 +67,15 @@ struct ChatView: View {
                 ChatPendingBanner(count: outbox.pendingMessages(for: conversation.id).count)
             }
 
+            let failedCount = outbox.failedMessages(for: conversation.id).count
+            if failedCount > 0 {
+                ChatFailedBanner(
+                    count: failedCount,
+                    onRetry: { Task { await outbox.retryFailed(for: conversation.id) } },
+                    onDiscard: { Task { await outbox.discardFailed(for: conversation.id) } }
+                )
+            }
+
             if isBlocked {
                 ChatBlockedBanner { Task { await unblock() } }
             } else {

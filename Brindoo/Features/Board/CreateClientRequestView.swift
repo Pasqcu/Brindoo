@@ -230,9 +230,9 @@ struct CreateClientRequestView: View {
             hasError = true
         }
 
-        let budgetValue = Double(budget.replacingOccurrences(of: ",", with: "."))
-        if !budget.trimmingCharacters(in: .whitespaces).isEmpty && (budgetValue == nil || budgetValue! <= 0) {
-            generalError = "Il budget non è un numero valido."
+        let budgetValue = BrindooFormat.price(from: budget)
+        if !budget.trimmingCharacters(in: .whitespaces).isEmpty && budgetValue == nil {
+            generalError = "Il budget non è un numero valido (fino a \(BrindooFormat.euro(BrindooFormat.maxPrice)))."
             hasError = true
         }
         if hasError { return }

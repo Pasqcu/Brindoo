@@ -21,11 +21,9 @@ enum PushActionHandler {
             await handleReplyMessage(userInfo: userInfo, response: response)
         case BrindooPushAction.markRead.rawValue:
             await handleMarkRead(userInfo: userInfo)
-        case BrindooPushAction.acceptOffer.rawValue:
-            await handleAcceptOffer(userInfo: userInfo)
-        case BrindooPushAction.rejectOffer.rawValue:
-            await handleRejectOffer(userInfo: userInfo)
-        case BrindooPushAction.viewReview.rawValue,
+        case BrindooPushAction.acceptOffer.rawValue,
+             BrindooPushAction.rejectOffer.rawValue,
+             BrindooPushAction.viewReview.rawValue,
              UNNotificationDefaultActionIdentifier:
             if let payload = NotificationPayload(userInfo: userInfo) {
                 await DeepLinkRouter.shared.handle(payload: payload)
@@ -55,17 +53,4 @@ enum PushActionHandler {
         try? await MessageService.shared.markMessagesAsRead(conversationId: conversationID)
     }
 
-    private static func handleAcceptOffer(userInfo: [AnyHashable: Any]) async {
-        // Stub: implementare quando OfferProposalService espone fetchProposal(id:).
-        // Per ora apre l'app sulla schermata corretta.
-        if let payload = NotificationPayload(userInfo: userInfo) {
-            await DeepLinkRouter.shared.handle(payload: payload)
-        }
-    }
-
-    private static func handleRejectOffer(userInfo: [AnyHashable: Any]) async {
-        if let payload = NotificationPayload(userInfo: userInfo) {
-            await DeepLinkRouter.shared.handle(payload: payload)
-        }
-    }
 }

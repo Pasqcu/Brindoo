@@ -246,7 +246,9 @@ struct OfferDetailView: View {
             }
             Button("Annulla", role: .cancel) {}
         } message: {
-            Text("L'azione non può essere annullata.")
+            Text(vm.openProposalsCount > 0
+                 ? "L'azione non può essere annullata. Verranno chiuse anche \(vm.openProposalsCount) trattative ancora aperte su questa offerta."
+                 : "L'azione non può essere annullata.")
         }
     }
 
@@ -277,12 +279,22 @@ struct OfferDetailView: View {
                 Task { await togglePause() }
             }
 
+            // Con accordi confermati il tasto resta spento e spiega perché:
+            // meglio di un errore che arriva dopo aver toccato "Elimina".
             BrindooButton(
                 "Elimina offerta",
                 style: .destructive,
                 size: .medium
             ) {
                 showDeleteConfirm = true
+            }
+            .disabled(vm.hasConfirmedAgreements)
+
+            if vm.hasConfirmedAgreements {
+                Text("Non eliminabile: ci sono eventi già concordati su questa offerta. Puoi metterla in pausa per toglierla dalla bacheca.")
+                    .font(BrindooFont.caption)
+                    .foregroundStyle(Color.brindooTextSecondary)
+                    .fixedSize(horizontal: false, vertical: true)
             }
         }
     }
@@ -362,6 +374,16 @@ struct OfferDetailView: View {
     }
 
     private func deleteOffer() async {
+        // Il server rifiuta la cancellazione se ci sono accordi confermati:
+        // porterebbe via anche prezzo, data e acconto di impegni presi.
+        if vm.hasConfirmedAgreements {
+            toastCenter.show(BrindooToast(
+                "Offerta con accordi confermati",
+                message: "Non si può eliminare finché ci sono eventi concordati. Puoi toglierla dalla bacheca.",
+                style: .error
+            ))
+            return
+        }
         if await vm.deleteOffer() {
             onChange?()
             dismiss()

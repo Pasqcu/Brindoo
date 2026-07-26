@@ -46,20 +46,20 @@ enum NotificationCategoriesRegistrar {
             options: [.customDismissAction]
         )
 
-        // Offerta: accetta / rifiuta
-        let acceptAction = UNNotificationAction(
+        // Trattativa: si apre, non si chiude da qui.
+        //
+        // I bottoni dicevano "Accetta" e "Rifiuta" ma aprivano soltanto
+        // l'app: chi toccava "Accetta" credeva di aver chiuso l'accordo e
+        // non era vero. Un accordo da centinaia di euro va comunque letto
+        // per intero, regole di annullamento comprese, prima di dire sì.
+        let openProposalAction = UNNotificationAction(
             identifier: BrindooPushAction.acceptOffer.rawValue,
-            title: "Accetta",
-            options: [.authenticationRequired]
-        )
-        let rejectAction = UNNotificationAction(
-            identifier: BrindooPushAction.rejectOffer.rawValue,
-            title: "Rifiuta",
-            options: [.destructive, .authenticationRequired]
+            title: "Apri la trattativa",
+            options: [.foreground, .authenticationRequired]
         )
         let offerCategory = UNNotificationCategory(
             identifier: BrindooPushCategory.offer.rawValue,
-            actions: [acceptAction, rejectAction],
+            actions: [openProposalAction],
             intentIdentifiers: [],
             options: []
         )

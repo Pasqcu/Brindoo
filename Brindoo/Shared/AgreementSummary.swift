@@ -71,17 +71,34 @@ enum AgreementSummary {
 
     /// Testo del riepilogo per un accordo chiuso: chi, cosa, quanto,
     /// quando, acconto e regole di annullamento.
-    static func text(offer: ServiceOffer, organizerName: String?, proposal: OfferProposal) -> String {
+    ///
+    /// Vale come promemoria scritto fra le parti, quindi deve nominarle
+    /// entrambe e portare la data in cui l'accordo è stato chiuso: un
+    /// foglio con una parte sola e senza data serve a poco se poi si
+    /// discute.
+    static func text(
+        offer: ServiceOffer,
+        organizerName: String?,
+        clientName: String? = nil,
+        proposal: OfferProposal
+    ) -> String {
         var lines: [String] = []
         lines.append("RIEPILOGO ACCORDO — Brindoo")
+        lines.append("Accordo del \(BrindooFormat.italianDate(from: proposal.updatedAt))")
         lines.append("")
         lines.append("Servizio: \(offer.title)")
         if let organizerName, !organizerName.isEmpty {
             lines.append("Professionista: \(organizerName)")
         }
+        if let clientName, !clientName.isEmpty {
+            lines.append("Cliente: \(clientName)")
+        }
         lines.append("Prezzo concordato: \(proposal.currentPriceDisplay)")
         if let date = proposal.eventDateDisplay {
             lines.append("Data evento: \(date)")
+        } else {
+            // Il silenzio si legge come dimenticanza: meglio dichiararlo.
+            lines.append("Data evento: ancora da definire")
         }
         // Nel riepilogo condivisibile diciamo anche quanto e come.
         if proposal.isDepositPaid {
@@ -94,7 +111,11 @@ enum AgreementSummary {
         } else {
             lines.append("Acconto: non ancora versato")
         }
-        if let balance = proposal.balanceMethod {
+        // Il numero che serve davvero il giorno dell'evento: quanto resta.
+        if let due = proposal.balanceDueDisplay {
+            let method = proposal.balanceMethod.map { " — \($0.shortLabel)" } ?? ""
+            lines.append("Saldo da versare: \(due)\(method)")
+        } else if let balance = proposal.balanceMethod {
             lines.append("Saldo: \(balance.shortLabel)")
         }
         if let message = proposal.lastMessage, !message.isEmpty {

@@ -247,6 +247,7 @@ struct NegotiationsView: View {
                     ShareLink(item: AgreementSummary.text(
                         offer: offer,
                         organizerName: profileMap[proposal.organizerId]?.displayName,
+                        clientName: profileMap[proposal.clientId]?.displayName,
                         proposal: proposal
                     )) {
                         Image(systemName: "doc.text")

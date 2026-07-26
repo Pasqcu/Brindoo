@@ -359,6 +359,7 @@ struct ReceivedProposalsSection: View {
                 ShareLink(item: AgreementSummary.text(
                     offer: offer,
                     organizerName: nil,
+                    clientName: client.displayName,
                     proposal: proposal
                 )) {
                     Label("Condividi riepilogo accordo", systemImage: "doc.text")

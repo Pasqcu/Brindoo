@@ -92,7 +92,9 @@ struct NegotiateOfferView: View {
                         placeholder: "Es. 250",
                         text: $price,
                         icon: "eurosign",
-                        keyboardType: .numberPad,
+                        // Serve la virgola: un prezzo può avere i centesimi,
+                        // e la tastiera numerica secca non la offre.
+                        keyboardType: .decimalPad,
                         errorMessage: priceError,
                         isDisabled: isLoading
                     )
@@ -216,9 +218,8 @@ struct NegotiateOfferView: View {
     private func submit() async {
         priceError = nil; generalError = nil
 
-        guard let priceVal = Double(price.replacingOccurrences(of: ",", with: ".")),
-              priceVal > 0 else {
-            priceError = "Inserisci un prezzo valido"
+        guard let priceVal = BrindooFormat.price(from: price) else {
+            priceError = "Inserisci un prezzo valido (fino a \(BrindooFormat.euro(BrindooFormat.maxPrice)))"
             return
         }
 

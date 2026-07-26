@@ -92,4 +92,42 @@ final class OfflineOutboxPersistenceTests: XCTestCase {
         let reloaded = await LocalCacheStore.shared.load([PendingAction].self, for: makeKey())
         XCTAssertNil(reloaded)
     }
+
+    /// Un messaggio arreso resta in coda e resta arreso anche dopo il
+    /// riavvio: se si perdesse il contrassegno ricomincerebbe a ritentare.
+    func test_messaggioArresoRestaTaleDopoIlRiavvio() async {
+        let key = makeKey()
+        let action = PendingAction(conversationId: UUID(), text: "Non è mai partito", attempts: 5, failed: true)
+
+        await LocalCacheStore.shared.save([action], for: key)
+        let reloaded = await LocalCacheStore.shared.load([PendingAction].self, for: key) ?? []
+
+        XCTAssertEqual(reloaded.count, 1, "il messaggio non deve sparire")
+        XCTAssertEqual(reloaded.first?.failed, true)
+        XCTAssertEqual(reloaded.first?.text, "Non è mai partito")
+        await LocalCacheStore.shared.remove(for: key)
+    }
+
+    /// Code scritte dalle versioni precedenti non avevano il contrassegno:
+    /// vanno lette lo stesso, come messaggi ancora da inviare.
+    func test_codaVecchiaSenzaContrassegnoSiLeggeAncora() async {
+        let key = makeKey()
+        let legacy = """
+        [{"id":"\(UUID().uuidString)","kind":"sendMessage","createdAt":"2026-07-01T10:00:00Z",\
+        "conversationId":"\(UUID().uuidString)","text":"Vecchia bozza","attempts":1}]
+        """
+        await LocalCacheStore.shared.save(legacy, for: key)
+
+        // Il valore salvato è una stringa JSON: la rileggiamo e decodifichiamo
+        // con lo stesso tipo che usa l'app, per riprodurre l'aggiornamento.
+        let raw = await LocalCacheStore.shared.load(String.self, for: key) ?? ""
+        let decoder = JSONDecoder()
+        decoder.dateDecodingStrategy = .iso8601
+        let decoded = try? decoder.decode([PendingAction].self, from: Data(raw.utf8))
+
+        XCTAssertEqual(decoded?.count, 1)
+        XCTAssertEqual(decoded?.first?.failed, false)
+        XCTAssertEqual(decoded?.first?.attempts, 1)
+        await LocalCacheStore.shared.remove(for: key)
+    }
 }
