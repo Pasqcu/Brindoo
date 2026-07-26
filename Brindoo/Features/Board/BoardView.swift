@@ -148,6 +148,11 @@ struct BoardView: View {
                                 Text(mode.label).tag(mode)
                             }
                         }
+                        // Trasparenza sul criterio: senza spiegazione
+                        // "Consigliati" sembra un ordine a pagamento.
+                        Section("Come funziona") {
+                            Text(BoardSortMode.recommended.hint)
+                        }
                     } label: {
                         // La variante "piena" segnala un ordinamento diverso da quello di default.
                         Image(systemName: vm.sortMode == .recommended ? "arrow.up.arrow.down.circle" : "arrow.up.arrow.down.circle.fill")
@@ -282,7 +287,8 @@ struct BoardView: View {
                 showClear: vm.hasActiveFilters,
                 onClear: { clearAllFilters() },
                 suggestions: vm.noResultSuggestions,
-                onSuggestion: { s in Task { await vm.apply(s) } }
+                onSuggestion: { s in Task { await vm.apply(s) } },
+                showGuidedQuote: isClient
             )
         } else if vm.sortedOrganizers.isEmpty {
             // I filtri extra (stelle/prezzo) tagliano tutto il caricato:
@@ -305,7 +311,8 @@ struct BoardView: View {
                     showClear: true,
                     onClear: { clearAllFilters() },
                     suggestions: vm.noResultSuggestions,
-                    onSuggestion: { s in Task { await vm.apply(s) } }
+                    onSuggestion: { s in Task { await vm.apply(s) } },
+                    showGuidedQuote: isClient
                 )
             }
         } else {

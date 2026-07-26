@@ -32,6 +32,9 @@ struct DepositSheet: View {
     @State private var note: String
     @State private var saving = false
     @State private var showClearConfirm = false
+    /// Riguarda soldi già passati di mano: si chiede una seconda volta,
+    /// come si fa per l'annullamento.
+    @State private var showConfirmDeposit = false
 
     init(proposal: OfferProposal, onChange: @escaping () async -> Void) {
         self.proposal = proposal
@@ -99,6 +102,18 @@ struct DepositSheet: View {
                 Button("Lascia com'è", role: .cancel) {}
             } message: {
                 Text("L'importo e la conferma verranno cancellati. Potrai registrarli di nuovo.")
+            }
+            .confirmationDialog(
+                "Confermi di aver ricevuto l'acconto?",
+                isPresented: $showConfirmDeposit,
+                titleVisibility: .visible
+            ) {
+                Button("Sì, l'ho ricevuto") {
+                    Task { await confirm() }
+                }
+                Button("Non ancora", role: .cancel) {}
+            } message: {
+                Text("Stai dichiarando che \(proposal.depositAmountDisplay ?? "l'acconto") è passato di mano davvero. L'altra parte lo vedrà come confermato.")
             }
         }
     }
@@ -277,7 +292,7 @@ struct DepositSheet: View {
                 .foregroundStyle(Color.brindooTextSecondary)
 
             Button {
-                Task { await confirm() }
+                showConfirmDeposit = true
             } label: {
                 if saving {
                     ProgressView().tint(.white).frame(maxWidth: .infinity)

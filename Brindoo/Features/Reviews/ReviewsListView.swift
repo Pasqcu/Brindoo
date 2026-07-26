@@ -37,7 +37,8 @@ struct ReviewsListView: View {
         session.userID == organizer.id
     }
     /// True se il cliente ha una trattativa conclusa con questo organizzatore.
-    @State private var hasAcceptedDeal: Bool = false
+    /// Vero solo quando l'evento con questo professionista è già stato svolto.
+    @State private var hasCompletedDeal: Bool = false
     
     var body: some View {
         Group {
@@ -115,7 +116,7 @@ struct ReviewsListView: View {
                         ) {
                             showWriteReview = true
                         }
-                    } else if hasAcceptedDeal {
+                    } else if hasCompletedDeal {
                         BrindooButton(
                             "Scrivi una recensione",
                             style: .primary,
@@ -156,7 +157,7 @@ struct ReviewsListView: View {
             VStack(alignment: .leading, spacing: 2) {
                 Text("Recensioni verificate")
                     .font(BrindooFont.bodyMedium.weight(.semibold))
-                Text("Potrai lasciare una recensione dopo aver concluso una trattativa con questo professionista.")
+                Text("Potrai lasciare una recensione quando l'evento sarà stato svolto: così il voto racconta il lavoro, non solo l'accordo.")
                     .font(BrindooFont.bodySmall)
                     .foregroundStyle(Color.brindooTextSecondary)
                     .fixedSize(horizontal: false, vertical: true)
@@ -384,7 +385,7 @@ struct ReviewsListView: View {
 
             // Verifica se il cliente può lasciare una recensione (trattativa conclusa).
             if canWriteReview {
-                self.hasAcceptedDeal = (try? await ReviewService.shared.hasAcceptedDeal(withOrganizer: organizer.id)) ?? false
+                self.hasCompletedDeal = (try? await ReviewService.shared.hasCompletedDeal(withOrganizer: organizer.id)) ?? false
             }
 
             // Carica i profili dei clienti che hanno recensito

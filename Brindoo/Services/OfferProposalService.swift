@@ -293,7 +293,9 @@ final class OfferProposalService {
         )
     }
 
-    /// Solo il cliente può ritirare la sua trattativa.
+    /// Ritira la propria proposta mentre si aspetta l'altra parte.
+    /// Vale per entrambi i ruoli: anche il professionista che scopre la data
+    /// occupata deve poter uscire senza dover "rifiutare" il cliente.
     func withdraw(proposal: OfferProposal) async throws {
         try await updateStatus(proposalId: proposal.id, status: .withdrawn)
         await LiveActivityManager.shared.endNegotiation(

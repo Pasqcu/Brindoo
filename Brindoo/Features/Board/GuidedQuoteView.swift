@@ -21,6 +21,9 @@ struct GuidedQuoteView: View {
     @State private var hasSearched = false
     @State private var searchFailed = false
     @State private var results: [ServiceOffer] = []
+    /// Valutazioni dei professionisti dei risultati: senza, l'unico dato
+    /// visibile è il prezzo e la scelta diventa una gara al ribasso.
+    @State private var resultRatings: [UUID: OrganizerRating] = [:]
 
     /// `prefilledDate`: data già nota (es. arrivando da "Completa il tuo evento").
     init(prefilledDate: Date? = nil) {
@@ -176,9 +179,12 @@ struct GuidedQuoteView: View {
                     message: "Prova ad alzare il budget o a togliere la data."
                 )
             } else {
-                Text("\(results.count) offerte adatte, dalla più conveniente")
+                Text("\(results.count) offerte adatte, dalla meno cara")
                     .font(BrindooFont.titleSmall)
                     .foregroundStyle(Color.brindooTextPrimary)
+                Text("Il prezzo più basso non è sempre la scelta giusta: guarda anche le stelle.")
+                    .font(BrindooFont.caption)
+                    .foregroundStyle(Color.brindooTextSecondary)
                 ForEach(results) { offer in
                     resultRow(offer)
                 }
@@ -203,6 +209,23 @@ struct GuidedQuoteView: View {
                         .font(BrindooFont.caption)
                         .foregroundStyle(Color.brindooTextSecondary)
                         .lineLimit(1)
+
+                    if let rating = resultRatings[offer.organizerId], rating.reviewCount > 0 {
+                        HStack(spacing: 3) {
+                            Image(systemName: "star.fill")
+                                .font(.system(size: 9))
+                            Text(String(format: "%.1f", rating.avgRating))
+                                .font(BrindooFont.caption.weight(.semibold))
+                            Text("(\(rating.reviewCount))")
+                                .font(BrindooFont.caption)
+                                .foregroundStyle(Color.brindooTextSecondary)
+                        }
+                        .foregroundStyle(Color.brindooWarning)
+                    } else {
+                        Text("Ancora senza recensioni")
+                            .font(BrindooFont.caption)
+                            .foregroundStyle(Color.brindooTextTertiary)
+                    }
                 }
 
                 Spacer()
@@ -270,6 +293,8 @@ struct GuidedQuoteView: View {
             }
 
             results = offers.sorted { $0.price < $1.price }
+            let organizerIds = Array(Set(results.map(\.organizerId)))
+            resultRatings = (try? await ReviewService.shared.fetchRatings(organizerIds: organizerIds)) ?? [:]
         } catch {
             searchFailed = true
             BrindooLog.error("Preventivo guidato: \(error)")

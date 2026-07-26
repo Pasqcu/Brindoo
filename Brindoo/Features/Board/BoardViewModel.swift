@@ -19,6 +19,18 @@ enum BoardSortMode: String, CaseIterable, Identifiable {
         case .nameAsc:     return "Nome (A-Z)"
         }
     }
+
+    /// Spiegazione in chiaro del criterio, mostrata nel menu di ordinamento.
+    var hint: String {
+        switch self {
+        case .recommended:
+            return "«Consigliati»: prima i profili con Boost attivo, poi i Pro, poi chi ha aggiornato il profilo di recente."
+        case .recent:
+            return "«Più recenti»: prima chi si è iscritto da meno tempo."
+        case .nameAsc:
+            return "«Nome (A-Z)»: ordine alfabetico."
+        }
+    }
 }
 
 /// Ultima lista mostrata in bacheca, salvata su disco per l'apertura istantanea.

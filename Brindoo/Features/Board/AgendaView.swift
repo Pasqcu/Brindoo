@@ -122,7 +122,8 @@ struct AgendaView: View {
             EventChecklistView(
                 proposalId: entry.proposal.id,
                 eventDate: entry.date,
-                offerTitle: offerMap[entry.proposal.offerId]?.title ?? "Evento"
+                offerTitle: offerMap[entry.proposal.offerId]?.title ?? "Evento",
+                depositSettled: entry.proposal.isDepositPaid
             )
         }
         .task { await loadData() }
@@ -413,11 +414,29 @@ struct AgendaView: View {
         if let me = session.userID { profileIds.remove(me) }
         let missingProfiles = profileIds.filter { profileMap[$0] == nil }
 
-        if let offers = try? await ServiceOfferService.shared.fetchOffers(ids: Array(offerIds)) {
+        // Senza questi dati gli eventi restano in agenda ma con titoli e nomi
+        // generici: meglio dirlo che far credere che l'evento sia cambiato.
+        var partial = false
+        do {
+            let offers = try await ServiceOfferService.shared.fetchOffers(ids: Array(offerIds))
             for o in offers { offerMap[o.id] = o }
+        } catch {
+            partial = true
+            BrindooLog.error("Offerte dell'agenda non caricate: \(error)")
         }
-        if let profiles = try? await ProfileService.shared.fetchProfiles(ids: Array(missingProfiles)) {
+        do {
+            let profiles = try await ProfileService.shared.fetchProfiles(ids: Array(missingProfiles))
             for p in profiles { profileMap[p.id] = p }
+        } catch {
+            partial = true
+            BrindooLog.error("Profili dell'agenda non caricati: \(error)")
+        }
+        if partial {
+            toastCenter.show(BrindooToast(
+                "Agenda caricata solo in parte",
+                message: BrindooText.retryHint,
+                style: .error
+            ))
         }
 
         // Solo per il professionista: eventi passati ancora senza esito.
@@ -448,68 +467,5 @@ struct AgendaView: View {
             BrindooLog.error("Esito cliente: \(error)")
             toastCenter.show(BrindooToast("Non è stato possibile salvare l'esito", style: .error))
         }
-    }
-}
-
-// MARK: - "Com'è andata col cliente?"
-
-/// Richiesta leggera mostrata al professionista dopo un evento passato.
-/// Un tap e sparisce; si può anche saltare.
-struct ClientFeedbackPrompt: View {
-
-    let clientName: String
-    let isSending: Bool
-    let onChoose: (ClientOutcome) -> Void
-    let onSkip: () -> Void
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: BrindooSpacing.sm) {
-            HStack(spacing: BrindooSpacing.xs) {
-                Image(systemName: "hand.thumbsup")
-                    .font(.system(size: 15, weight: .semibold))
-                Text("Com'è andata con \(clientName)?")
-                    .font(BrindooFont.titleSmall)
-                Spacer(minLength: 0)
-                Button("Salta", action: onSkip)
-                    .font(BrindooFont.bodySmall)
-                    .foregroundStyle(Color.brindooTextSecondary)
-            }
-            .foregroundStyle(Color.brindooCoral)
-
-            Text("Resta un conteggio, non una recensione: nessuno leggerà commenti sul cliente.")
-                .font(BrindooFont.caption)
-                .foregroundStyle(Color.brindooTextSecondary)
-
-            if isSending {
-                ProgressView().frame(maxWidth: .infinity)
-            } else {
-                VStack(spacing: BrindooSpacing.xs) {
-                    ForEach(ClientOutcome.allCases) { outcome in
-                        Button {
-                            onChoose(outcome)
-                        } label: {
-                            HStack(spacing: BrindooSpacing.xs) {
-                                Image(systemName: outcome.icon)
-                                    .frame(width: 20)
-                                Text(outcome.label)
-                                    .font(BrindooFont.bodyMedium.weight(.medium))
-                                Spacer(minLength: 0)
-                            }
-                            .foregroundStyle(outcome == .honored ? Color.brindooSuccess : Color.brindooTextPrimary)
-                            .padding(.horizontal, BrindooSpacing.sm)
-                            .padding(.vertical, BrindooSpacing.xs)
-                            .frame(maxWidth: .infinity)
-                            .background(Color.brindooSurfaceElevated)
-                            .clipShape(RoundedRectangle(cornerRadius: BrindooRadius.sm))
-                        }
-                        .buttonStyle(.plain)
-                    }
-                }
-            }
-        }
-        .padding(BrindooSpacing.md)
-        .background(Color.brindooSurface)
-        .clipShape(RoundedRectangle(cornerRadius: BrindooRadius.md))
-        .brindooElevation(.card)
     }
 }

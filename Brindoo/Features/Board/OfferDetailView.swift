@@ -142,6 +142,7 @@ struct OfferDetailView: View {
                         onAccept: { p in Task { await acceptProposal(p) } },
                         onReject: { p in Task { await vm.rejectProposal(p) } },
                         onCounter: { p in showNegotiateSheet = .counter(proposal: p, role: .organizer, offer: offer) },
+                        onWithdraw: { p in Task { await vm.withdrawProposal(p) } },
                         onOpenChat: { client in Task { await openChat(with: client) } },
                         onMarkBooking: { p, status in Task { await markBooking(p, status) } },
                         onMoveDate: { p in moveDateTarget = p },

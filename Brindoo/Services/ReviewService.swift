@@ -108,12 +108,17 @@ final class ReviewService {
         }
     }
 
-    // MARK: - Trattativa conclusa (per recensioni verificate)
+    // MARK: - Evento svolto (per recensioni verificate)
 
-    /// True se il cliente corrente ha almeno una trattativa ACCETTATA con questo organizzatore.
-    /// È la condizione per poter lasciare una recensione "verificata".
-    func hasAcceptedDeal(withOrganizer organizerId: UUID) async throws -> Bool {
+    /// True se il cliente corrente ha almeno una trattativa accettata con questo
+    /// organizzatore **e il servizio è già stato reso**: appuntamento segnato
+    /// come "svolto" oppure data dell'evento ormai passata.
+    ///
+    /// L'accordo da solo non basta: una recensione scritta prima della festa
+    /// non dice nulla sul lavoro e il professionista la sente ingiusta.
+    func hasCompletedDeal(withOrganizer organizerId: UUID) async throws -> Bool {
         guard let userId = SupabaseManager.shared.currentUserID else { return false }
+        let today = BrindooFormat.dayString(from: Date())
         struct Row: Decodable { let id: UUID }
         let rows: [Row] = try await client
             .from("offer_proposals")
@@ -121,6 +126,7 @@ final class ReviewService {
             .eq("client_id", value: userId)
             .eq("organizer_id", value: organizerId)
             .eq("status", value: OfferProposalStatus.accepted.rawValue)
+            .or("booking_status.eq.\(BookingStatus.completed.rawValue),event_date.lt.\(today)")
             .limit(1)
             .execute()
             .value
@@ -155,8 +161,8 @@ final class ReviewService {
         let trimmedComment = comment?.trimmingCharacters(in: .whitespacesAndNewlines)
         let finalComment = (trimmedComment?.isEmpty ?? true) ? nil : trimmedComment
 
-        // Verificata se esiste una trattativa conclusa con questo organizzatore.
-        let isVerified = (try? await hasAcceptedDeal(withOrganizer: organizerId)) ?? false
+        // Verificata se il servizio con questo organizzatore è già stato reso.
+        let isVerified = (try? await hasCompletedDeal(withOrganizer: organizerId)) ?? false
 
         let payload = NewReview(
             client_id: userId,

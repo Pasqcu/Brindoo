@@ -170,6 +170,36 @@ struct NegotiationsView: View {
         }
     }
 
+    /// Riga di ripiego quando il dettaglio dell'offerta non è arrivato
+    /// (rete caduta a metà): la trattativa resta visibile e riprovabile,
+    /// invece di sparire lasciando una sezione vuota che si contraddice
+    /// con il numero mostrato nel titolo.
+    @ViewBuilder
+    private func unavailableRow(_ proposal: OfferProposal) -> some View {
+        HStack(spacing: BrindooSpacing.sm) {
+            Image(systemName: "arrow.clockwise")
+                .font(.system(size: 16, weight: .semibold))
+                .foregroundStyle(Color.brindooTextSecondary)
+                .frame(width: 44, height: 44)
+            VStack(alignment: .leading, spacing: 2) {
+                Text("Dettagli non caricati")
+                    .font(BrindooFont.bodyMedium.weight(.semibold))
+                Text("Tocca per riprovare")
+                    .font(BrindooFont.caption)
+                    .foregroundStyle(Color.brindooTextSecondary)
+            }
+            Spacer()
+            Text(proposal.currentPriceDisplay)
+                .font(BrindooFont.titleSmall)
+                .foregroundStyle(Color.brindooCoral)
+        }
+        .padding(BrindooSpacing.md)
+        .background(Color.brindooSurface)
+        .clipShape(RoundedRectangle(cornerRadius: BrindooRadius.md))
+        .contentShape(Rectangle())
+        .onTapGesture { Task { await loadData() } }
+    }
+
     @ViewBuilder
     private func proposalRow(_ proposal: OfferProposal) -> some View {
         if let offer = offerMap[proposal.offerId] {
@@ -229,7 +259,27 @@ struct NegotiationsView: View {
                     .accessibilityLabel("Condividi riepilogo accordo")
                 }
             }
+        } else {
+            unavailableRow(proposal)
         }
+    }
+
+    /// Frase esplicita su chi deve muoversi adesso. Il pallino sulla scheda
+    /// dice solo che qualcosa pende: qui si legge *cosa* e *a chi tocca*,
+    /// anche per il passaggio dell'acconto (dichiara uno, conferma l'altro).
+    private func waitingLabel(for proposal: OfferProposal) -> (text: String, isMine: Bool)? {
+        guard let me = currentUserId else { return nil }
+        if proposal.status == .pending {
+            return proposal.awaitingAction(by: me)
+                ? ("Tocca a te rispondere", true)
+                : ("In attesa dell'altra parte", false)
+        }
+        if proposal.status == .accepted, proposal.isDepositAwaitingConfirmation {
+            return proposal.canConfirmDeposit(as: me)
+                ? ("Tocca a te confermare l'acconto", true)
+                : ("In attesa che confermino l'acconto", false)
+        }
+        return nil
     }
 
     /// Il cliente può recensire quando l'evento è svolto o la data è passata.
@@ -303,15 +353,30 @@ struct NegotiationsView: View {
                     }
                     .foregroundStyle(proposal.effectiveBooking == .cancelled ? Color.brindooError : Color.brindooSuccess)
                 }
+                if let waiting = waitingLabel(for: proposal) {
+                    HStack(spacing: 3) {
+                        Image(systemName: waiting.isMine ? "exclamationmark.circle.fill" : "clock")
+                            .font(.system(size: 10))
+                        Text(waiting.text)
+                            .font(BrindooFont.caption.weight(.semibold))
+                            .lineLimit(2)
+                    }
+                    .foregroundStyle(waiting.isMine ? Color.brindooCoral : Color.brindooTextSecondary)
+                    .accessibilityLabel(waiting.text)
+                }
                 Text(proposal.updatedAtDisplay)
                     .font(BrindooFont.caption)
                     .foregroundStyle(Color.brindooTextSecondary)
             }
-            Spacer()
+            Spacer(minLength: BrindooSpacing.xs)
             VStack(alignment: .trailing, spacing: 2) {
+                // Il prezzo è il dato che si cerca per primo: sta sopra
+                // agli altri anche per dimensione.
                 Text(proposal.currentPriceDisplay)
-                    .font(BrindooFont.bodyMedium.weight(.semibold))
+                    .font(BrindooFont.titleSmall)
                     .foregroundStyle(Color.brindooCoral)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.7)
                 Image(systemName: "chevron.right")
                     .font(.system(size: 11, weight: .semibold))
                     .foregroundStyle(Color.brindooTextSecondary)
@@ -348,11 +413,29 @@ struct NegotiationsView: View {
         if let me = currentUserId { profileIds.remove(me) }
         let missingProfiles = profileIds.filter { profileMap[$0] == nil }
 
-        if let offers = try? await ServiceOfferService.shared.fetchOffers(ids: Array(offerIds)) {
+        // Se questi due passaggi falliscono la lista resta a metà: va detto,
+        // altrimenti sembra che le trattative non ci siano più.
+        var partial = false
+        do {
+            let offers = try await ServiceOfferService.shared.fetchOffers(ids: Array(offerIds))
             for o in offers { offerMap[o.id] = o }
+        } catch {
+            partial = true
+            BrindooLog.error("Offerte delle trattative non caricate: \(error)")
         }
-        if let profiles = try? await ProfileService.shared.fetchProfiles(ids: Array(missingProfiles)) {
+        do {
+            let profiles = try await ProfileService.shared.fetchProfiles(ids: Array(missingProfiles))
             for p in profiles { profileMap[p.id] = p }
+        } catch {
+            partial = true
+            BrindooLog.error("Profili delle trattative non caricati: \(error)")
+        }
+        if partial {
+            toastCenter.show(BrindooToast(
+                "Trattative caricate solo in parte",
+                message: BrindooText.retryHint,
+                style: .error
+            ))
         }
 
         // Affidabilità dei clienti: serve solo a chi sta dall'altra parte.

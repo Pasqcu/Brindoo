@@ -96,7 +96,32 @@ struct ClientRequestsView: View {
         }
     }
 
+    /// Azioni del cliente sulla propria richiesta, condivise dal menu a
+    /// vista e da quello che compare tenendo premuto.
     @ViewBuilder
+    private func requestActions(_ request: ClientRequest) -> some View {
+        if isClient {
+            if request.status == .open {
+                Button {
+                    Task { await close(request) }
+                } label: {
+                    Label("Segna come chiusa", systemImage: "checkmark.circle")
+                }
+            } else {
+                Button {
+                    Task { await reopen(request) }
+                } label: {
+                    Label("Riapri", systemImage: "arrow.counterclockwise")
+                }
+            }
+            Button(role: .destructive) {
+                Task { await delete(request) }
+            } label: {
+                Label("Elimina", systemImage: "trash")
+            }
+        }
+    }
+
     private var list: some View {
         ScrollView {
             LazyVStack(spacing: BrindooSpacing.md) {
@@ -108,35 +133,23 @@ struct ClientRequestsView: View {
                         isContacting: contactingId == request.id,
                         onContact: isClient ? nil : { Task { await contact(request) } }
                     )
-                    .contextMenu {
+                    .contextMenu { requestActions(request) }
+                    // Il tenere premuto non lo scopre nessuno: le stesse
+                    // azioni stanno anche dietro un bottone sempre visibile.
+                    .overlay(alignment: .topTrailing) {
                         if isClient {
-                            if request.status == .open {
-                                Button {
-                                    Task { await close(request) }
-                                } label: {
-                                    Label("Segna come chiusa", systemImage: "checkmark.circle")
-                                }
-                            } else {
-                                Button {
-                                    Task { await reopen(request) }
-                                } label: {
-                                    Label("Riapri", systemImage: "arrow.counterclockwise")
-                                }
-                            }
-                            Button(role: .destructive) {
-                                Task { await delete(request) }
+                            Menu {
+                                requestActions(request)
                             } label: {
-                                Label("Elimina", systemImage: "trash")
+                                Image(systemName: "ellipsis.circle.fill")
+                                    .font(.system(size: 20))
+                                    .symbolRenderingMode(.hierarchical)
+                                    .foregroundStyle(Color.brindooTextSecondary)
+                                    .padding(BrindooSpacing.xs)
                             }
+                            .accessibilityLabel("Azioni sulla richiesta")
                         }
                     }
-                }
-
-                if isClient {
-                    Text("Tieni premuto su una richiesta per chiuderla o eliminarla.")
-                        .font(BrindooFont.caption)
-                        .foregroundStyle(Color.brindooTextSecondary)
-                        .padding(.top, BrindooSpacing.xs)
                 }
             }
             .padding(BrindooSpacing.md)

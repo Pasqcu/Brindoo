@@ -107,14 +107,12 @@ struct OrganizerDashboardView: View {
         .refreshable { await vm.refresh() }
     }
 
+    /// Niente saluto: due righe di cortesia in cima alla schermata più
+    /// consultata rubavano lo spazio ai numeri per cui la si apre.
     private var header: some View {
-        VStack(alignment: .leading, spacing: BrindooSpacing.xxs) {
-            Text("Ciao, \(session.currentProfile?.fullName ?? "Organizer") 👋")
-                .font(BrindooFont.titleMedium)
-            Text("Ecco un riepilogo della tua attività.")
-                .font(BrindooFont.bodySmall)
-                .foregroundStyle(Color.brindooTextSecondary)
-        }
+        Text("Situazione di adesso, non uno storico.")
+            .font(BrindooFont.bodySmall)
+            .foregroundStyle(Color.brindooTextSecondary)
     }
 
     private var skeleton: some View {
@@ -132,27 +130,31 @@ struct OrganizerDashboardView: View {
         let columns = [GridItem(.flexible(), spacing: BrindooSpacing.md),
                        GridItem(.flexible(), spacing: BrindooSpacing.md)]
         return LazyVGrid(columns: columns, spacing: BrindooSpacing.md) {
+            // I nomi seguono il dato vero: qui si contano le trattative in
+            // corso, non quante offerte sono state pubblicate.
             BrindooStatTile(
                 icon: BrindooIcon.send,
                 value: "\(s.sentOffers)",
-                label: "Offerte inviate"
+                label: "Trattative aperte"
             )
             BrindooStatTile(
                 icon: BrindooIcon.success,
                 value: "\(s.acceptedOffers)",
-                label: "Accettate",
+                label: "Accordi chiusi",
                 tint: .brindooSuccess
             )
             BrindooStatTile(
                 icon: BrindooIcon.chart,
-                value: percent(s.conversionRate),
-                label: "Conversione",
+                value: Self.hasEnoughDeals(s) ? percent(s.conversionRate) : "—",
+                label: "Accordi su trattative",
                 tint: .blue
             )
+            // Con zero recensioni "0,0" sembra un voto pessimo: è un dato
+            // che manca, e va scritto che manca.
             BrindooStatTile(
                 icon: BrindooIcon.starFilled,
-                value: String(format: "%.1f", s.avgRating),
-                label: "\(s.reviewsCount) recensioni",
+                value: s.reviewsCount > 0 ? String(format: "%.1f", s.avgRating) : "—",
+                label: s.reviewsCount > 0 ? "\(s.reviewsCount) recensioni" : "Nessuna recensione",
                 tint: .brindooWarning
             )
             BrindooStatTile(
@@ -161,21 +163,25 @@ struct OrganizerDashboardView: View {
                 label: "Messaggi non letti",
                 tint: .brindooCoral
             )
-            BrindooStatTile(
-                icon: BrindooIcon.profile,
-                value: "\(s.profileViews)",
-                label: "Visite profilo",
-                tint: .purple
-            )
         }
+    }
+
+    /// Sotto questa soglia una percentuale non racconta niente: due
+    /// trattative andate male darebbero "0%" a un professionista bravo.
+    private static let minDealsForRate = 5
+
+    private static func hasEnoughDeals(_ s: OrganizerDashboardStats) -> Bool {
+        s.sentOffers >= minDealsForRate
     }
 
     @ViewBuilder
     private func insightsCard(_ s: OrganizerDashboardStats) -> some View {
-        if s.sentOffers > 0 && s.conversionRate < 0.2 {
+        // L'avviso arriva solo quando c'è abbastanza storia alle spalle:
+        // rimproverare chi ha appena iniziato lo fa solo smettere.
+        if Self.hasEnoughDeals(s) && s.conversionRate < 0.2 {
             BrindooBanner(
                 style: .warning,
-                title: "Conversione bassa",
+                title: "Poche trattative chiuse",
                 message: "Prova a personalizzare di più le tue offerte: chi riceve un messaggio dedicato accetta il doppio delle volte."
             )
         } else if s.sentOffers == 0 {
@@ -184,7 +190,7 @@ struct OrganizerDashboardView: View {
                 title: "Pubblica la tua prima offerta",
                 message: "Crea un'offerta dalla bacheca per farti trovare dai clienti."
             )
-        } else if s.avgRating >= 4.5 {
+        } else if s.reviewsCount >= 3 && s.avgRating >= 4.5 {
             BrindooBanner(
                 style: .success,
                 title: "Ottime recensioni!",

@@ -9,7 +9,8 @@ chat in tempo reale, recensioni verificate, agenda eventi. Backend Supabase.
 
 - **Bacheca doppia**: offerte dei professionisti (con filtri, ricerca,
   vetrina Boost) e richieste dei clienti (bacheca inversa, urgenti in cima)
-- **Trattative**: proposta / controproposta / accettazione, pacchetti
+- **Trattative**: proposta / controproposta / accettazione / ritiro della
+  propria proposta (da entrambe le parti), pacchetti
   prezzo (Base/Completo/Premium), riepilogo accordo condivisibile,
   regole di annullamento mostrate prima di accettare
 - **Acconto e pagamento**: si concorda come pagare (contanti o bonifico),
@@ -22,12 +23,15 @@ chat in tempo reale, recensioni verificate, agenda eventi. Backend Supabase.
   promemoria locali e calendario iPhone
 - **Profili**: portfolio foto, categorie, zone di copertura su mappa,
   disponibilità, FAQ, distintivi, recensioni con foto e risposta
-- **Fiducia a due sensi**: recensioni "verificate" (solo da trattative
-  concluse), badge "identità verificata" assegnato dall'amministrazione e
+- **Fiducia a due sensi**: recensioni "verificate" (solo dopo un evento
+  davvero svolto, non al momento dell'accordo), badge "identità
+  verificata" assegnato dall'amministrazione e
   distintivo di affidabilità del cliente ricavato dagli esiti degli eventi
 - **Ricerche salvate**: filtri messi da parte con avviso quando compaiono
   professionisti nuovi
-- **Extra**: piano Pro (StoreKit), Boost, referral, preventivo guidato,
+- **Extra**: piano Pro (StoreKit), Boost, codice invito (conta gli inviti;
+  il mese Pro **non** viene assegnato in automatico, va riconosciuto a
+  mano finché non esiste una regola sul server), preventivo guidato,
   Live Activity per le trattative, notifiche push scegliendo le categorie
   (messaggi / trattative / promemoria)
 - **Legale e GDPR**: accettazione Termini con prova sul server (data +
@@ -90,8 +94,7 @@ resta un segnaposto neutro, mai un'imitazione del marchio.
 ## Database
 
 Migrazioni in `supabase/migrations/`, applicate al progetto prod con la
-CLI `supabase db push`. Le ultime due (preferenze notifiche + affidabilità
-cliente, dettagli acconto) vanno applicate perché le relative schermate
-funzionino: senza, l'app continua a partire e usa i valori di partenza. Il badge `identity_verified` sui profili si
+CLI `supabase db push`. Al 26 luglio 2026 sono tutte applicate, comprese
+preferenze notifiche, affidabilità cliente e dettagli acconto. Il badge `identity_verified` sui profili si
 assegna solo dalla dashboard Supabase (un trigger blocca l'auto-assegnazione
 via API).

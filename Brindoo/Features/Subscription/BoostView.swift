@@ -299,11 +299,10 @@ struct BoostView: View {
     
     // MARK: - Helpers
     
+    /// Il Boost è attivo solo finché non scade: `isBoosted` confronta
+    /// `boost_expires_at` con adesso, così un Boost finito torna comprabile.
     private var isCurrentlyBoosted: Bool {
-        // Per ora basato sul profilo. Se aggiungiamo il campo boost_expires_at al modello
-        // Profile, possiamo controllare la scadenza.
-        // Versione semplice: false
-        return false
+        session.currentProfile?.isBoosted ?? false
     }
     
     // MARK: - Actions

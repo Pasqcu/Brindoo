@@ -24,6 +24,12 @@ struct SettingsView: View {
     @State private var notifyMessages: Bool = true
     @State private var notifyNegotiations: Bool = true
     @State private var notifyReminders: Bool = true
+    /// Salvataggio rimandato: chi tocca tre interruttori di fila manda una
+    /// scrittura sola, non tre che possono accavallarsi con poca linea.
+    @State private var notifySaveTask: Task<Void, Never>?
+    /// Mostrato quando le preferenze non hanno raggiunto il server: prima
+    /// l'interruttore restava acceso e nessuno lo sapeva.
+    @State private var notifySaveFailed: Bool = false
 
     // Diagnostica (rapporto errori da inviare al supporto)
     @State private var diagnosticsPayload: DiagnosticsPayload?
@@ -149,7 +155,7 @@ struct SettingsView: View {
                                     isOn: $notifyMessages
                                 )
                                 .onChange(of: notifyMessages) { _, _ in
-                                    Task { await saveNotificationPreferences() }
+                                    scheduleNotificationSave()
                                 }
 
                                 Divider().padding(.leading, 56)
@@ -162,7 +168,7 @@ struct SettingsView: View {
                                     isOn: $notifyNegotiations
                                 )
                                 .onChange(of: notifyNegotiations) { _, _ in
-                                    Task { await saveNotificationPreferences() }
+                                    scheduleNotificationSave()
                                 }
 
                                 Divider().padding(.leading, 56)
@@ -175,7 +181,7 @@ struct SettingsView: View {
                                     isOn: $notifyReminders
                                 )
                                 .onChange(of: notifyReminders) { _, _ in
-                                    Task { await saveNotificationPreferences() }
+                                    scheduleNotificationSave()
                                 }
                             }
 
@@ -232,7 +238,7 @@ struct SettingsView: View {
                             NavigationLink {
                                 ReferralView()
                             } label: {
-                                SettingsRow(icon: BrindooIcon.gift, iconColor: Color.brindooProGold, title: "Invita amici", subtitle: "1 mese Pro per ogni amico")
+                                SettingsRow(icon: BrindooIcon.gift, iconColor: Color.brindooProGold, title: "Invita amici", subtitle: "Condividi il tuo codice e tieni il conto")
                             }
                             .buttonStyle(.plain)
                         }
@@ -397,6 +403,12 @@ struct SettingsView: View {
                     Task { await AuthService.shared.signOut() }
                 }
             }
+            .alert("Preferenze non salvate", isPresented: $notifySaveFailed) {
+                Button("Riprova") { scheduleNotificationSave() }
+                Button("Annulla", role: .cancel) {}
+            } message: {
+                Text("Le scelte sulle notifiche non hanno raggiunto il server. Con la linea attiva riprova.")
+            }
         }
     }
 
@@ -434,6 +446,16 @@ struct SettingsView: View {
         }
     }
 
+    /// Aspetta che l'utente finisca di toccare, poi salva una volta sola.
+    private func scheduleNotificationSave() {
+        notifySaveTask?.cancel()
+        notifySaveTask = Task {
+            try? await Task.sleep(for: .milliseconds(700))
+            guard !Task.isCancelled else { return }
+            await saveNotificationPreferences()
+        }
+    }
+
     /// Salva le tre preferenze insieme e aggiorna il profilo in memoria.
     private func saveNotificationPreferences() async {
         guard session.userID != nil else { return }
@@ -455,6 +477,7 @@ struct SettingsView: View {
             }
         } catch {
             BrindooLog.error("Preferenze notifiche: \(error)")
+            notifySaveFailed = true
         }
     }
 

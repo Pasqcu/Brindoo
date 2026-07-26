@@ -53,7 +53,7 @@ struct CompareOrganizersView: View {
                                     .font(BrindooFont.caption)
                                     .foregroundStyle(Color.brindooTextSecondary)
                                 if bestRatingId == profile.id {
-                                    bestTag
+                                    bestTag("Più votato")
                                 }
                             }
                         } else {
@@ -96,7 +96,7 @@ struct CompareOrganizersView: View {
                                     .font(BrindooFont.bodyMedium.weight(.semibold))
                                     .foregroundStyle(Color.brindooCoral)
                                 if bestPriceId == profile.id {
-                                    bestTag
+                                    bestTag("Più economico")
                                 }
                             }
                         } else {
@@ -186,8 +186,11 @@ struct CompareOrganizersView: View {
         return minPrices.min { $0.value < $1.value }?.key
     }
 
-    private var bestTag: some View {
-        Text("Migliore")
+    /// Etichetta che dice *perché* quella riga spicca. "Migliore" attaccato
+    /// al prezzo più basso diceva una cosa falsa: nei servizi per eventi il
+    /// più economico non è il migliore, e il professionista bravo ci perde.
+    private func bestTag(_ label: String) -> some View {
+        Text(label)
             .font(.system(size: 9, weight: .bold))
             .textCase(.uppercase)
             .padding(.horizontal, 6)

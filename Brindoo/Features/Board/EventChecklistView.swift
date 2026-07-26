@@ -26,8 +26,18 @@ struct EventChecklistView: View {
     let proposalId: UUID
     let eventDate: Date
     let offerTitle: String
+    /// L'acconto è già registrato e confermato altrove: se risulta fatto,
+    /// la voce si spunta da sola invece di far rifare lo stesso lavoro.
+    var depositSettled: Bool = false
 
     @State private var done: Set<String> = []
+
+    /// Chiave della voce che l'app sa già come sta andando.
+    private static let depositKey = "acconto"
+
+    private func isAutoDone(_ key: String) -> Bool {
+        key == Self.depositKey && depositSettled
+    }
 
     private static let tasks: [ChecklistTask] = [
         .init(key: "conferma-dettagli", title: "Conferma i dettagli con il professionista", daysBefore: 30),
@@ -39,8 +49,14 @@ struct EventChecklistView: View {
 
     private var storageKey: String { "event-checklist-\(proposalId.uuidString)" }
 
+    /// Voci risultate fatte: spuntate a mano più quella dell'acconto,
+    /// che l'app ricava dalla trattativa.
+    private var completedKeys: Set<String> {
+        depositSettled ? done.union([Self.depositKey]) : done
+    }
+
     private var progress: Double {
-        Double(done.count) / Double(Self.tasks.count)
+        Double(completedKeys.count) / Double(Self.tasks.count)
     }
 
     var body: some View {
@@ -86,9 +102,15 @@ struct EventChecklistView: View {
 
             Text(progress == 1
                  ? "Tutto pronto per il grande giorno! 🎉"
-                 : "\(done.count) su \(Self.tasks.count) completati")
+                 : "\(completedKeys.count) su \(Self.tasks.count) completati")
                 .font(BrindooFont.caption)
                 .foregroundStyle(progress == 1 ? Color.brindooSuccess : Color.brindooTextSecondary)
+
+            // Chiarisce l'ambito: è un promemoria di chi la apre, non un
+            // documento condiviso con l'altra parte.
+            Text("Promemoria personale: resta su questo telefono e l'altra parte non lo vede.")
+                .font(BrindooFont.caption)
+                .foregroundStyle(Color.brindooTextTertiary)
         }
         .padding(BrindooSpacing.md)
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -98,9 +120,13 @@ struct EventChecklistView: View {
 
     @ViewBuilder
     private func taskRow(_ task: ChecklistTask) -> some View {
-        let isDone = done.contains(task.key)
+        let autoDone = isAutoDone(task.key)
+        let isDone = autoDone || done.contains(task.key)
 
         Button {
+            // La voce spuntata dall'app non si toglie a mano: cambia solo
+            // registrando l'acconto nella schermata dedicata.
+            guard !autoDone else { return }
             if isDone {
                 done.remove(task.key)
             } else {
@@ -120,7 +146,7 @@ struct EventChecklistView: View {
                         .foregroundStyle(Color.brindooTextPrimary)
                         .strikethrough(isDone, color: Color.brindooTextSecondary)
                         .multilineTextAlignment(.leading)
-                    Text(dueLabel(task))
+                    Text(autoDone ? "Registrato nella scheda acconto" : dueLabel(task))
                         .font(BrindooFont.caption)
                         .foregroundStyle(isOverdue(task) && !isDone ? Color.brindooError : Color.brindooTextSecondary)
                 }

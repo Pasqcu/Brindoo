@@ -171,6 +171,9 @@ struct BoardEmptyView: View {
     /// di allargare la ricerca un pezzo per volta.
     var suggestions: [BoardViewModel.Suggestion] = []
     var onSuggestion: ((BoardViewModel.Suggestion) -> Void)? = nil
+    /// Il preventivo guidato serve soprattutto qui: la ricerca a mano non ha
+    /// dato nulla, tre domande portano subito alle offerte adatte.
+    var showGuidedQuote: Bool = false
 
     var body: some View {
         ScrollView {
@@ -216,6 +219,21 @@ struct BoardEmptyView: View {
                     }
                 }
                 .padding(.horizontal, BrindooSpacing.md)
+            }
+
+            if showGuidedQuote {
+                NavigationLink {
+                    GuidedQuoteView()
+                } label: {
+                    Label("Fatti guidare: 3 domande", systemImage: "wand.and.stars")
+                        .font(BrindooFont.button)
+                        .foregroundStyle(Color.brindooCoral)
+                        .frame(maxWidth: 260)
+                        .padding(.vertical, BrindooSpacing.sm)
+                        .background(Color.brindooCoral.opacity(0.12))
+                        .clipShape(RoundedRectangle(cornerRadius: BrindooRadius.md))
+                }
+                .buttonStyle(.plain)
             }
 
             Text("Brindoo sta arrivando in tutto il Lazio. Aiutaci a crescere!")

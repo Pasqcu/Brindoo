@@ -36,7 +36,7 @@ struct AppGuideView: View {
             Step(icon: "calendar", title: "Agenda",
                  text: "Gli eventi confermati finiscono in agenda con conto alla rovescia. Tocca ⋯ su un evento per segnare l'acconto versato o aprire la checklist dei preparativi."),
             Step(icon: "star", title: "Recensioni",
-                 text: "A evento svolto, lascia una recensione (anche con foto). Solo chi ha davvero concluso una trattativa può recensire: per questo trovi il contrassegno «Verificata»."),
+                 text: "A evento svolto, lascia una recensione (anche con foto). Si può recensire solo dopo che l'evento è passato o è stato segnato come svolto: per questo trovi il contrassegno «Verificata»."),
             Step(icon: "heart", title: "Preferiti e confronto",
                  text: "Salva i profili che ti piacciono col cuore. Dai preferiti puoi confrontarne 2-3 fianco a fianco: valutazione, velocità di risposta, identità verificata, prezzo di partenza.")
         ]

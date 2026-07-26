@@ -19,7 +19,9 @@ struct ProposalStatusPill: View {
             switch status {
             case .pending:   return .brindooWarning
             case .accepted:  return .brindooSuccess
-            case .rejected:  return .brindooError
+            // "Rifiutata" non è un guasto dell'app: colore neutro, non rosso
+            // d'errore, per non allarmare chi legge la propria trattativa.
+            case .rejected:  return .brindooTextSecondary
             case .withdrawn: return .brindooTextSecondary
             }
         }()
@@ -252,6 +254,7 @@ struct ReceivedProposalsSection: View {
     let onAccept: (OfferProposal) -> Void
     let onReject: (OfferProposal) -> Void
     let onCounter: (OfferProposal) -> Void
+    let onWithdraw: (OfferProposal) -> Void
     let onOpenChat: (Profile) -> Void
     let onMarkBooking: (OfferProposal, BookingStatus) -> Void
     let onMoveDate: (OfferProposal) -> Void
@@ -400,9 +403,22 @@ struct ReceivedProposalsSection: View {
                 }
             }
         } else if proposal.status == .pending && proposal.lastProposer == .organizer {
-            Text("In attesa di risposta dal cliente.")
-                .font(BrindooFont.bodySmall)
-                .foregroundStyle(Color.brindooTextSecondary)
+            VStack(spacing: BrindooSpacing.sm) {
+                Text("In attesa di risposta dal cliente.")
+                    .font(BrindooFont.bodySmall)
+                    .foregroundStyle(Color.brindooTextSecondary)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+
+                // Via d'uscita pulita: se la data non è più libera si ritira
+                // la propria proposta, senza dover rifiutare il cliente.
+                BrindooButton(
+                    "Ritira proposta",
+                    style: .tertiary,
+                    size: .medium
+                ) {
+                    onWithdraw(proposal)
+                }
+            }
         }
     }
 }
