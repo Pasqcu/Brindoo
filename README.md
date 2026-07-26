@@ -29,9 +29,9 @@ chat in tempo reale, recensioni verificate, agenda eventi. Backend Supabase.
   distintivo di affidabilità del cliente ricavato dagli esiti degli eventi
 - **Ricerche salvate**: filtri messi da parte con avviso quando compaiono
   professionisti nuovi
-- **Extra**: piano Pro (StoreKit), Boost, codice invito (conta gli inviti;
-  il mese Pro **non** viene assegnato in automatico, va riconosciuto a
-  mano finché non esiste una regola sul server), preventivo guidato,
+- **Extra**: piano Pro (StoreKit), Boost, codice invito (un mese Pro a chi
+  invita e a chi accetta, assegnato dal server quando l'invitato completa
+  nome, foto e descrizione), preventivo guidato,
   Live Activity per le trattative, notifiche push scegliendo le categorie
   (messaggi / trattative / promemoria)
 - **Legale e GDPR**: accettazione Termini con prova sul server (data +
@@ -95,6 +95,12 @@ resta un segnaposto neutro, mai un'imitazione del marchio.
 
 Migrazioni in `supabase/migrations/`, applicate al progetto prod con la
 CLI `supabase db push`. Al 26 luglio 2026 sono tutte applicate, comprese
-preferenze notifiche, affidabilità cliente e dettagli acconto. Il badge `identity_verified` sui profili si
+preferenze notifiche, affidabilità cliente, dettagli acconto e premio
+invito. Il badge `identity_verified` sui profili si
 assegna solo dalla dashboard Supabase (un trigger blocca l'auto-assegnazione
 via API).
+
+La scadenza del piano Pro (`pro_expires_at`) resta scrivibile solo dal
+ruolo di servizio. Il premio invito fa eccezione tramite un contrassegno
+valido per la sola transazione, alzato unicamente dalle funzioni del
+server: i client passano dall'API e non possono alzarlo.

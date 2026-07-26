@@ -70,7 +70,7 @@ struct ReferralView: View {
         .sheet(isPresented: $showShare) {
             if let url = vm.code?.shareURL {
                 ShareSheet(items: [
-                    "Usa il mio codice \(vm.code?.displayCode ?? "") quando ti iscrivi a Brindoo, l'app per organizzare feste ed eventi nel Lazio!",
+                    "Usa il mio codice \(vm.code?.displayCode ?? "") su Brindoo e ottieni 1 mese Pro gratis!",
                     url
                 ])
             }
@@ -89,14 +89,14 @@ struct ReferralView: View {
                     .font(.system(size: 38, weight: .semibold))
                     .foregroundStyle(.white)
             }
-            // Il testo dice solo quello che l'app fa davvero: conta gli
-            // inviti. Il mese Pro non viene assegnato in automatico, quindi
-            // non va promesso come immediato.
-            Text("Invita un amico su Brindoo")
+            // La promessa e' mantenuta dal server: il premio scatta da solo
+            // quando l'invitato completa il profilo. Il testo dice esatta-
+            // mente quando, per non lasciare nessuno ad aspettare.
+            Text("Invita un amico, ottieni 1 mese Pro gratis")
                 .font(BrindooFont.titleMedium)
                 .foregroundStyle(.white)
                 .multilineTextAlignment(.center)
-            Text("Chi si iscrive con il tuo codice resta collegato a te. Gli inviti andati a buon fine li conti qui sotto: il mese Pro te lo riconosce Brindoo dopo la verifica.")
+            Text("Quando un amico si iscrive con il tuo codice e completa il profilo (nome, foto e descrizione), il mese Pro arriva da solo. Anche a lui!")
                 .font(BrindooFont.bodySmall)
                 .foregroundStyle(.white.opacity(0.85))
                 .multilineTextAlignment(.center)
@@ -153,7 +153,7 @@ struct ReferralView: View {
             BrindooStatTile(
                 icon: BrindooIcon.crown,
                 value: "\(vm.stats.proMonthsEarned)",
-                label: "Mesi Pro riconosciuti",
+                label: "Mesi Pro ottenuti",
                 tint: Color(red: 0.95, green: 0.6, blue: 0.15)
             )
         }
