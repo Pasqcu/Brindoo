@@ -13,6 +13,10 @@ struct AvailabilityView: View {
     @Environment(\.dismiss) private var dismiss
 
     @State private var selected: Set<DateComponents> = []
+    /// Giorni già impegnati da eventi confermati: l'app li conosce da sé,
+    /// qui si mostrano soltanto perché chi guarda il calendario deve
+    /// vederli senza andarli a cercare in agenda.
+    @State private var booked: [Date] = []
     @State private var isLoading: Bool = true
     @State private var isSaving: Bool = false
     @State private var error: String?
@@ -26,7 +30,7 @@ struct AvailabilityView: View {
                     HStack(alignment: .top, spacing: BrindooSpacing.sm) {
                         Image(systemName: "info.circle.fill")
                             .foregroundStyle(Color.brindooCoral)
-                        Text("Tocca i giorni in cui non sei disponibile. I clienti non potranno fissare l'evento in quelle date.")
+                        Text("Tocca i giorni in cui non sei disponibile. I clienti non potranno fissare l'evento in quelle date. I giorni degli eventi già confermati risultano occupati da soli.")
                             .font(BrindooFont.bodySmall)
                             .foregroundStyle(Color.brindooTextSecondary)
                             .fixedSize(horizontal: false, vertical: true)
@@ -51,6 +55,10 @@ struct AvailabilityView: View {
                         Text("\(selected.count) giorni segnati come non disponibili")
                             .font(BrindooFont.caption)
                             .foregroundStyle(Color.brindooTextSecondary)
+
+                        if !booked.isEmpty {
+                            bookedSection
+                        }
                     }
 
                     if let error {
@@ -78,12 +86,46 @@ struct AvailabilityView: View {
         }
     }
 
+    /// Elenco di sola lettura: questi giorni non si tolgono da qui, si
+    /// liberano annullando o spostando l'evento.
+    @ViewBuilder
+    private var bookedSection: some View {
+        VStack(alignment: .leading, spacing: BrindooSpacing.xs) {
+            HStack(spacing: BrindooSpacing.xxs) {
+                Image(systemName: "calendar.badge.checkmark")
+                    .font(.system(size: 12))
+                Text("Già impegnato con eventi confermati")
+                    .font(BrindooFont.caption.weight(.semibold))
+            }
+            .foregroundStyle(Color.brindooSuccess)
+
+            ForEach(booked, id: \.self) { day in
+                Text(day.formatted(.dateTime.day().month(.wide).year().locale(Locale(identifier: "it_IT"))))
+                    .font(BrindooFont.caption)
+                    .foregroundStyle(Color.brindooTextSecondary)
+            }
+
+            Text("Per liberare uno di questi giorni sposta o annulla l'evento dall'agenda.")
+                .font(BrindooFont.caption)
+                .foregroundStyle(Color.brindooTextTertiary)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+        .padding(BrindooSpacing.md)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(Color.brindooSurface)
+        .clipShape(RoundedRectangle(cornerRadius: BrindooRadius.md))
+    }
+
     private func load() async {
         isLoading = true
         defer { isLoading = false }
         do {
             let dates = try await AvailabilityService.shared.fetchMyUnavailableDays()
             selected = Set(dates.map { calendar.dateComponents([.year, .month, .day], from: $0) })
+            let today = calendar.startOfDay(for: Date())
+            booked = ((try? await AvailabilityService.shared.fetchMyBookedDays()) ?? [])
+                .filter { $0 >= today }
+                .sorted()
         } catch {
             self.error = BrindooText.loadError("il calendario.")
             BrindooLog.error("\(error)")

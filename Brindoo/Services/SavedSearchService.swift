@@ -158,6 +158,11 @@ final class SavedSearchService {
     }
 
     private func notify(search: SavedSearch, newCount: Int) async {
+        // Questi avvisi passano dallo stesso interruttore dei promemoria:
+        // prima erano gli unici a saltare le scelte fatte in Impostazioni,
+        // e arrivavano anche a chi aveva spento tutto.
+        guard LocalReminderService.remindersEnabled else { return }
+
         let title = newCount == 1
             ? "Un nuovo profilo per «\(search.name)»"
             : "\(newCount) nuovi profili per «\(search.name)»"

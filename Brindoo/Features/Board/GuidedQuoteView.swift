@@ -286,6 +286,18 @@ struct GuidedQuoteView: View {
                 let busy = (try? await AvailabilityService.shared
                     .fetchBusyOrganizerIds(on: eventDate)) ?? []
                 offers.removeAll { busy.contains($0.organizerId) }
+
+                // Stessa regola della bacheca: chi è in vacanza in quella
+                // data non deve comparire. Prima le due strade davano
+                // risposte diverse alla stessa domanda.
+                let ids = Array(Set(offers.map(\.organizerId)))
+                let profiles = (try? await ProfileService.shared.fetchProfiles(ids: ids)) ?? []
+                let day = Calendar.current.startOfDay(for: eventDate)
+                let onVacation = Set(profiles.filter { p in
+                    guard let until = p.vacationUntil else { return false }
+                    return day <= Calendar.current.startOfDay(for: until)
+                }.map(\.id))
+                offers.removeAll { onVacation.contains($0.organizerId) }
             }
 
             if let max = Double(budget.replacingOccurrences(of: ",", with: ".")), max > 0 {

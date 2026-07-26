@@ -70,23 +70,25 @@ struct ChatView: View {
             if isBlocked {
                 ChatBlockedBanner { Task { await unblock() } }
             } else {
-                if otherIsTyping {
-                    ChatTypingIndicator(
-                        userName: otherUser.displayName,
-                        isAnimating: otherIsTyping
-                    )
-                }
+                // Una striscia sola per volta sopra la barra di scrittura:
+                // stanno tutte fra i messaggi e la tastiera, e sommate
+                // riducevano la conversazione a una fessura. Vince quella
+                // che riguarda il gesto in corso.
                 if editingMessage != nil {
                     ChatEditBanner {
                         editingMessage = nil
                         inputText = ""
                     }
-                }
-                if let replyingTo {
+                } else if let replyingTo {
                     ChatReplyBanner(
                         message: replyingTo,
                         replyToName: replyingTo.senderId == session.userID ? "te stesso" : otherUser.displayName,
                         onClose: { self.replyingTo = nil }
+                    )
+                } else if otherIsTyping {
+                    ChatTypingIndicator(
+                        userName: otherUser.displayName,
+                        isAnimating: otherIsTyping
                     )
                 }
                 composer
@@ -96,7 +98,7 @@ struct ChatView: View {
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .principal) {
-                ChatHeaderView(user: otherUser, isOnline: otherIsTyping) {
+                ChatHeaderView(user: otherUser) {
                     navigateToProfile = true
                 }
             }

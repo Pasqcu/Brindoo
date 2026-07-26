@@ -141,8 +141,12 @@ struct NegotiateOfferView: View {
                                 if isDateUnavailable(eventDate) {
                                     HStack(spacing: BrindooSpacing.xxs) {
                                         Image(systemName: "exclamationmark.triangle.fill")
-                                        Text("Il professionista non è disponibile in questa data")
+                                        // Non è un errore da correggere: la
+                                        // proposta parte lo stesso. Dirlo
+                                        // evita che sembri un blocco.
+                                        Text("Il professionista risulta occupato in questa data: puoi proporla lo stesso, ma dovrà confermarti lui se riesce.")
                                             .font(BrindooFont.caption)
+                                            .fixedSize(horizontal: false, vertical: true)
                                     }
                                     .foregroundStyle(Color.brindooWarning)
                                 }
