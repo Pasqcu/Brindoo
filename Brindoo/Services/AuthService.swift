@@ -31,6 +31,7 @@ enum BrindooAuthError: LocalizedError, Equatable {
     case appleSignInFailed
     case googleSignInCancelled
     case googleSignInFailed
+    case googleSignInExpired
     case unknown(String)
 
     var errorDescription: String? {
@@ -61,6 +62,8 @@ enum BrindooAuthError: LocalizedError, Equatable {
             return "Accesso con Google annullato"
         case .googleSignInFailed:
             return "Impossibile accedere con Google. Riprova."
+        case .googleSignInExpired:
+            return "L'accesso ha impiegato troppo tempo ed è scaduto. Tocca di nuovo \"Continua con Google\": stavolta sarà più rapido."
         case .unknown(let message):
             return message
         }
@@ -81,7 +84,8 @@ enum BrindooAuthError: LocalizedError, Equatable {
              (.appleSignInCancelled, .appleSignInCancelled),
              (.appleSignInFailed, .appleSignInFailed),
              (.googleSignInCancelled, .googleSignInCancelled),
-             (.googleSignInFailed, .googleSignInFailed):
+             (.googleSignInFailed, .googleSignInFailed),
+             (.googleSignInExpired, .googleSignInExpired):
             return true
         case (.unknown(let a), .unknown(let b)):
             return a == b
@@ -279,14 +283,27 @@ final class AuthService {
                 provider: .google,
                 redirectTo: Self.oauthRedirectURL
             ) { session in
-                // Riusa la sessione Google già attiva su Safari, se c'è:
-                // così spesso basta un tocco senza ridigitare nulla.
-                session.prefersEphemeralWebBrowserSession = false
+                // Ogni tentativo parte pulito.
+                //
+                // Con la sessione condivisa di Safari, dopo un tentativo
+                // fallito il browser rigiocava la pagina di ritorno vecchia:
+                // il secondo tentativo arrivava con un codice già consumato
+                // ("both auth code and code verifier should be non-empty").
+                // Perdiamo il riconoscimento automatico dell'account Google
+                // già attivo, ma il giro diventa ripetibile e prevedibile.
+                session.prefersEphemeralWebBrowserSession = true
             }
             BrindooLog.info("Login con Google effettuato")
         } catch {
             if Self.isUserCancellation(error) {
                 throw BrindooAuthError.googleSignInCancelled
+            }
+            // Il gettone temporaneo di Supabase dura pochi minuti: se
+            // l'utente ci mette troppo sulla pagina di Google, scade.
+            if "\(error)".contains("bad_oauth_state")
+                || "\(error)".contains("OAuth state has expired") {
+                BrindooLog.error("Accesso Google scaduto: \(error)")
+                throw BrindooAuthError.googleSignInExpired
             }
             BrindooLog.error("Errore login Google: \(error)")
             throw mapError(error)
