@@ -13,8 +13,11 @@
 import Foundation
 import ActivityKit
 
-@MainActor
-final class LiveActivityManager {
+// Fuori dal main actor di proposito: ActivityKit lavora per conto suo e
+// le sue `Activity` non sono Sendable, quindi passarle dal main actor a una
+// chiamata asincrona e' una gara di dati in Swift 6. Qui non attraversano
+// nessun confine. Per chi chiama non cambia nulla: erano gia' `await`.
+nonisolated final class LiveActivityManager: Sendable {
 
     static let shared = LiveActivityManager()
     private init() {}

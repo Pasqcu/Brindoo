@@ -104,7 +104,7 @@ final class BrindooImageLoader: @unchecked Sendable {
     private var inFlight: [String: Task<UIImage?, Never>] = [:]
     private let lock = NSLock()
 
-    private static let maxDiskAge: TimeInterval = 7 * 24 * 60 * 60
+    nonisolated private static let maxDiskAge: TimeInterval = 7 * 24 * 60 * 60
 
     private init() {
         memory.totalCostLimit = 60 * 1024 * 1024 // ~60 MB di anteprime

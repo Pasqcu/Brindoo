@@ -14,7 +14,7 @@
 import Foundation
 import ActivityKit
 
-struct NegotiationActivityAttributes: ActivityAttributes {
+nonisolated struct NegotiationActivityAttributes: ActivityAttributes {
 
     public struct ContentState: Codable, Hashable {
         /// Prezzo corrente della trattativa, in euro.

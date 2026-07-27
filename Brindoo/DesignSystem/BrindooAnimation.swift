@@ -7,20 +7,22 @@
 
 import SwiftUI
 
-enum BrindooAnimation {
+nonisolated enum BrindooAnimation {
     static let snappy = Animation.spring(response: 0.32, dampingFraction: 0.78)
     static let smooth = Animation.spring(response: 0.45, dampingFraction: 0.85)
     static let bouncy = Animation.spring(response: 0.5, dampingFraction: 0.62)
     static let quickEase = Animation.easeInOut(duration: 0.18)
     static let standardEase = Animation.easeInOut(duration: 0.28)
 
-    static let pageTransition: AnyTransition = .asymmetric(
+    // Calcolate invece che memorizzate: `AnyTransition` non e' Sendable,
+    // e una costante globale non Sendable e' un errore in Swift 6.
+    static var pageTransition: AnyTransition { .asymmetric(
         insertion: .opacity.combined(with: .move(edge: .trailing)),
         removal: .opacity.combined(with: .move(edge: .leading))
-    )
+    ) }
 
-    static let sheetTransition: AnyTransition = .move(edge: .bottom).combined(with: .opacity)
-    static let scaleFade: AnyTransition = .scale(scale: 0.92).combined(with: .opacity)
+    static var sheetTransition: AnyTransition { .move(edge: .bottom).combined(with: .opacity) }
+    static var scaleFade: AnyTransition { .scale(scale: 0.92).combined(with: .opacity) }
 }
 
 extension View {

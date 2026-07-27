@@ -14,7 +14,23 @@ import UIKit
 
 // MARK: - Colori di sistema (helper semantici)
 
-extension Color {
+nonisolated extension Color {
+
+    // I tre colori del marchio sono dichiarati qui invece di arrivare dai
+    // simboli generati da Xcode: quelli nascono legati al main actor (il
+    // progetto usa SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor) e rendevano
+    // impossibile usare un colore dentro una closure Sendable, cioe' in
+    // mezzo alle etichette di PhotosPicker. Il valore resta quello degli
+    // Asset: cambia solo chi lo dichiara.
+
+    /// Corallo del marchio.
+    static let brindooCoral = Color("BrindooCoral", bundle: .main)
+
+    /// Corallo chiaro (sfumature e sfondi tenui).
+    static let brindooCoralLight = Color("BrindooCoralLight", bundle: .main)
+
+    /// Corallo scuro (fine dei gradienti, stati premuti).
+    static let brindooCoralDark = Color("BrindooCoralDark", bundle: .main)
 
     /// Sfondo principale dell'app
     static let brindooBackground = Color(.systemBackground)
@@ -88,7 +104,7 @@ extension Color {
 
 // MARK: - Spaziature
 
-enum BrindooSpacing {
+nonisolated enum BrindooSpacing {
     static let xxs: CGFloat = 4
     static let xs: CGFloat = 8
     static let sm: CGFloat = 12
@@ -101,7 +117,7 @@ enum BrindooSpacing {
 
 // MARK: - Raggi
 
-enum BrindooRadius {
+nonisolated enum BrindooRadius {
     static let xs: CGFloat = 4
     static let sm: CGFloat = 8
     static let md: CGFloat = 12
@@ -116,7 +132,7 @@ enum BrindooRadius {
 // nelle impostazioni di sistema (Dynamic Type / accessibilità). Vengono ancorati
 // allo stile di testo più vicino tramite UIFontMetrics, mantenendo design e peso.
 
-private func brindooScaledFont(
+nonisolated private func brindooScaledFont(
     size: CGFloat,
     weight: UIFont.Weight,
     rounded: Bool,
@@ -134,7 +150,7 @@ private func brindooScaledFont(
     return Font(scaled as CTFont)
 }
 
-enum BrindooFont {
+nonisolated enum BrindooFont {
     static let displayLarge  = brindooScaledFont(size: 34, weight: .bold,     rounded: true,  relativeTo: .largeTitle)
     static let displayMedium = brindooScaledFont(size: 28, weight: .bold,     rounded: true,  relativeTo: .title1)
     static let titleLarge    = brindooScaledFont(size: 22, weight: .semibold, rounded: true,  relativeTo: .title2)
@@ -165,7 +181,7 @@ enum BrindooFont {
 
 // Tre livelli di profondità invece di uno solo: l'occhio capisce subito
 // cosa sta "sopra" a cosa (card normale < card in evidenza < pannello).
-enum BrindooElevation {
+nonisolated enum BrindooElevation {
     case flat      // elementi a filo di sfondo
     case card      // card standard di lista
     case raised    // card in evidenza (Boost, vetrina, selezionata)
@@ -217,7 +233,12 @@ extension View {
         self.padding(.horizontal, BrindooSpacing.md)
     }
 
-    /// Limita la larghezza dei contenuti su schermi grandi (iPad), restando centrati.
+    /// Limita la larghezza dei contenuti su schermi grandi, restando centrati.
+    ///
+    /// Oggi non entra mai in gioco: il target e' solo iPhone e solo verticale
+    /// (TARGETED_DEVICE_FAMILY = 1, orientamento Portrait), quindi la larghezza
+    /// disponibile non supera i ~440 pt. Resta qui perche' il giorno in cui
+    /// l'app girera' anche su iPad basta togliere quei due vincoli.
     func brindooReadableWidth(_ maxWidth: CGFloat = 680) -> some View {
         self
             .frame(maxWidth: maxWidth)

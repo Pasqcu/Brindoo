@@ -8,7 +8,7 @@
 
 import SwiftUI
 
-enum BrindooIcon {
+nonisolated enum BrindooIcon {
     // Navigation
     static let home = "house.fill"
     static let explore = "sparkles"

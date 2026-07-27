@@ -7,7 +7,7 @@
 
 import SwiftUI
 
-enum BrindooGradient {
+nonisolated enum BrindooGradient {
     static let coral = LinearGradient(
         colors: [Color.brindooCoral, Color.brindooCoralDark],
         startPoint: .topLeading,

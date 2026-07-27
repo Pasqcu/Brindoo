@@ -11,8 +11,10 @@ import Foundation
 actor LocalCacheStore {
     static let shared = LocalCacheStore()
 
-    private let fm = FileManager.default
+    // `FileManager` non e' Sendable: tenerne una copia dentro l'attore la
+    // farebbe uscire dal suo confine. Si prende all'uso, che e' gratis.
     private lazy var root: URL = {
+        let fm = FileManager.default
         let base = fm.urls(for: .cachesDirectory, in: .userDomainMask).first!
         let url = base.appendingPathComponent("BrindooCache", isDirectory: true)
         if !fm.fileExists(atPath: url.path) {
@@ -35,7 +37,7 @@ actor LocalCacheStore {
 
     func load<T: Decodable>(_ type: T.Type, for key: String) -> T? {
         let url = url(for: key)
-        guard fm.fileExists(atPath: url.path),
+        guard FileManager.default.fileExists(atPath: url.path),
               let data = try? Data(contentsOf: url) else { return nil }
         let decoder = JSONDecoder()
         decoder.dateDecodingStrategy = .iso8601
@@ -43,11 +45,11 @@ actor LocalCacheStore {
     }
 
     func remove(for key: String) {
-        try? fm.removeItem(at: url(for: key))
+        try? FileManager.default.removeItem(at: url(for: key))
     }
 
     func clearAll() {
-        try? fm.removeItem(at: root)
+        try? FileManager.default.removeItem(at: root)
     }
 }
 
