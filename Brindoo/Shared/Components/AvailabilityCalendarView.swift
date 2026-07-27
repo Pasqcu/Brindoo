@@ -15,15 +15,8 @@ struct AvailabilityCalendarView: View {
 
     @State private var monthOffset: Int = 0
 
-    private let calendar = Calendar.current
+    private let calendar = BrindooFormat.dayCalendar
     private let maxMonthsAhead = 5
-
-    private static let dayKey: DateFormatter = {
-        let f = DateFormatter()
-        f.dateFormat = "yyyy-MM-dd"
-        f.timeZone = TimeZone(identifier: "UTC")
-        return f
-    }()
 
     private static let monthTitle: DateFormatter = {
         let f = DateFormatter()
@@ -49,6 +42,7 @@ struct AvailabilityCalendarView: View {
                         .foregroundStyle(monthOffset > 0 ? Color.brindooCoral : Color.brindooTextTertiary)
                 }
                 .disabled(monthOffset <= 0)
+                .accessibilityLabel("Mese precedente")
 
                 Spacer()
 
@@ -65,6 +59,7 @@ struct AvailabilityCalendarView: View {
                         .foregroundStyle(monthOffset < maxMonthsAhead ? Color.brindooCoral : Color.brindooTextTertiary)
                 }
                 .disabled(monthOffset >= maxMonthsAhead)
+                .accessibilityLabel("Mese successivo")
             }
 
             // Iniziali dei giorni della settimana (lun → dom)
@@ -107,7 +102,7 @@ struct AvailabilityCalendarView: View {
 
     @ViewBuilder
     private func dayCell(_ date: Date) -> some View {
-        let key = Self.dayKey.string(from: date)
+        let key = BrindooFormat.dayString(from: date)
         let isBusy = unavailableDays.contains(key)
         let isPast = date < calendar.startOfDay(for: Date())
         let isToday = calendar.isDateInToday(date)

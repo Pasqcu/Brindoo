@@ -27,7 +27,9 @@ struct NegotiateOfferView: View {
     @State private var message: String = ""
 
     @State private var includeEventDate: Bool = false
-    @State private var eventDate: Date = Calendar.current.date(byAdding: .day, value: 14, to: Date()) ?? Date()
+    @State private var eventDate: Date = BrindooFormat.dayCalendar.date(
+        byAdding: .day, value: 14, to: BrindooFormat.startOfDay()
+    ) ?? Date()
     @State private var unavailableDays: Set<String> = []
 
     @State private var priceError: String?
@@ -204,15 +206,8 @@ struct NegotiateOfferView: View {
         }
     }
 
-    private func dayString(_ date: Date) -> String {
-        let f = DateFormatter()
-        f.dateFormat = "yyyy-MM-dd"
-        f.timeZone = TimeZone(identifier: "UTC")
-        return f.string(from: date)
-    }
-
     private func isDateUnavailable(_ date: Date) -> Bool {
-        unavailableDays.contains(dayString(date))
+        unavailableDays.contains(BrindooFormat.dayString(from: date))
     }
 
     private func submit() async {
@@ -235,7 +230,7 @@ struct NegotiateOfferView: View {
                 generalError = "Il professionista non è disponibile nella data scelta. Scegli un altro giorno."
                 return
             }
-            eventDateString = dayString(eventDate)
+            eventDateString = BrindooFormat.dayString(from: eventDate)
         }
 
         do {

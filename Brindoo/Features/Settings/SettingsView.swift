@@ -41,7 +41,9 @@ struct SettingsView: View {
 
     // Vacanza (solo organizzatori Pro)
     @State private var vacationOn: Bool = false
-    @State private var vacationUntil: Date = Calendar.current.date(byAdding: .day, value: 7, to: Date()) ?? Date()
+    @State private var vacationUntil: Date = BrindooFormat.dayCalendar.date(
+        byAdding: .day, value: 7, to: BrindooFormat.startOfDay()
+    ) ?? Date()
     @State private var vacationSaving: Bool = false
 
     private var isOrganizer: Bool {

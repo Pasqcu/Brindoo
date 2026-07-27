@@ -219,7 +219,7 @@ struct Profile: Identifiable, Codable, Hashable, Equatable {
     /// True quando l'organizzatore è in vacanza adesso.
     var isOnVacation: Bool {
         guard let vacationUntil else { return false }
-        return vacationUntil >= Calendar.current.startOfDay(for: Date())
+        return vacationUntil >= BrindooFormat.startOfDay()
     }
 
     /// "Fino al 21 maggio" — usato nei banner.

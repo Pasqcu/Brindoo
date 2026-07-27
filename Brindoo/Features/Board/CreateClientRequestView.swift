@@ -18,7 +18,9 @@ struct CreateClientRequestView: View {
     @State private var budget: String = ""
 
     @State private var hasEventDate: Bool = false
-    @State private var eventDate: Date = Calendar.current.date(byAdding: .day, value: 14, to: Date()) ?? Date()
+    @State private var eventDate: Date = BrindooFormat.dayCalendar.date(
+        byAdding: .day, value: 14, to: BrindooFormat.startOfDay()
+    ) ?? Date()
     @State private var isUrgent: Bool = false
 
     @State private var allCategories: [ServiceCategory] = []

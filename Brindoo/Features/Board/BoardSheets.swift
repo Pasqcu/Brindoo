@@ -134,7 +134,7 @@ struct BoardFiltersSheet: View {
     @State private var workingDate: Date = Date()
 
     private var tomorrow: Date {
-        Calendar.current.date(byAdding: .day, value: 1, to: Calendar.current.startOfDay(for: Date())) ?? Date()
+        BrindooFormat.dayCalendar.date(byAdding: .day, value: 1, to: BrindooFormat.startOfDay()) ?? Date()
     }
 
     var body: some View {
@@ -211,7 +211,7 @@ struct BoardFiltersSheet: View {
                 }
                 ToolbarItem(placement: .topBarTrailing) {
                     Button("Applica") {
-                        eventDate = dateEnabled ? Calendar.current.startOfDay(for: workingDate) : nil
+                        eventDate = dateEnabled ? BrindooFormat.startOfDay(workingDate) : nil
                         dismiss()
                     }
                     .font(BrindooFont.bodyMedium.weight(.semibold))

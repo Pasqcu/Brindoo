@@ -344,12 +344,7 @@ final class ProfileService {
     func setVacation(until: Date?) async throws {
         guard let userID = SupabaseManager.shared.currentUserID else { return }
 
-        let dateString: String? = until.map { date in
-            let fmt = DateFormatter()
-            fmt.dateFormat = "yyyy-MM-dd"
-            fmt.timeZone = TimeZone(identifier: "UTC")
-            return fmt.string(from: date)
-        }
+        let dateString: String? = until.map(BrindooFormat.dayString(from:))
 
         // Usa NullableColumnUpdate per garantire che `vacation_until: null`
         // arrivi davvero al DB (il sintetizzato di Encodable ometterebbe la

@@ -154,8 +154,7 @@ struct OfferProposal: Identifiable, Codable, Hashable, Equatable {
     /// True se l'evento ha una data già passata.
     var isEventPast: Bool {
         guard let eventDate, !eventDate.isEmpty else { return false }
-        guard let d = BrindooFormat.day(from: eventDate) else { return false }
-        return d < Calendar.current.startOfDay(for: Date())
+        return BrindooFormat.isPastDay(eventDate)
     }
 
     /// "21 maggio 2026" oppure nil se non impostata.

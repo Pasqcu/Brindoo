@@ -313,11 +313,11 @@ final class BoardViewModel {
     /// Esclude chi è occupato o in vacanza nella data evento selezionata.
     private func applyDateFilter(_ profiles: [Profile], busyIds: Set<UUID>) -> [Profile] {
         guard let eventDate else { return profiles }
-        let day = Calendar.current.startOfDay(for: eventDate)
+        let day = BrindooFormat.startOfDay(eventDate)
         return profiles.filter { p in
             if busyIds.contains(p.id) { return false }
             if let vacation = p.vacationUntil,
-               day <= Calendar.current.startOfDay(for: vacation) {
+               day <= BrindooFormat.startOfDay(vacation) {
                 return false
             }
             return true

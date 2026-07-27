@@ -26,13 +26,6 @@ struct AgendaView: View {
 
     private var proposals: [OfferProposal] { state.value ?? [] }
 
-    private static let dayParser: DateFormatter = {
-        let f = DateFormatter()
-        f.dateFormat = "yyyy-MM-dd"
-        f.timeZone = TimeZone(identifier: "UTC")
-        return f
-    }()
-
     /// Riga dell'agenda: trattativa conclusa con una data evento valida.
     private struct Entry: Identifiable {
         let proposal: OfferProposal
@@ -45,18 +38,18 @@ struct AgendaView: View {
             guard p.status == .accepted,
                   p.effectiveBooking != .cancelled,
                   let dateString = p.eventDate,
-                  let date = Self.dayParser.date(from: dateString) else { return nil }
+                  let date = BrindooFormat.day(from: dateString) else { return nil }
             return Entry(proposal: p, date: date)
         }
     }
 
     private var upcoming: [Entry] {
-        let today = Calendar.current.startOfDay(for: Date())
+        let today = BrindooFormat.startOfDay()
         return entries.filter { $0.date >= today }.sorted { $0.date < $1.date }
     }
 
     private var past: [Entry] {
-        let today = Calendar.current.startOfDay(for: Date())
+        let today = BrindooFormat.startOfDay()
         return entries.filter { $0.date < today }.sorted { $0.date > $1.date }
     }
 
@@ -230,7 +223,7 @@ struct AgendaView: View {
             } label: {
                 Label(depositLabel(proposal), systemImage: "eurosign.circle")
             }
-            if entry.date >= Calendar.current.startOfDay(for: Date()) {
+            if entry.date >= BrindooFormat.startOfDay() {
                 Button {
                     checklistEntry = entry
                 } label: {
@@ -248,14 +241,14 @@ struct AgendaView: View {
             // Riquadro data stile calendario
             VStack(spacing: 0) {
                 Text(entry.date.formatted(.dateTime.month(.abbreviated).locale(Locale(identifier: "it_IT"))))
-                    .font(.system(size: 11, weight: .bold))
+                    .font(BrindooFont.scaled(11, weight: .bold, relativeTo: .caption1))
                     .textCase(.uppercase)
                     .foregroundStyle(.white)
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 3)
                     .background(Color.brindooCoral)
                 Text(entry.date.formatted(.dateTime.day()))
-                    .font(.system(size: 22, weight: .bold, design: .rounded))
+                    .font(BrindooFont.scaled(22, weight: .bold, rounded: true, relativeTo: .title2))
                     .foregroundStyle(Color.brindooTextPrimary)
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 4)
@@ -313,7 +306,7 @@ struct AgendaView: View {
                     .foregroundStyle(Color.brindooCoral)
 
                 // "Aggiungi al calendario iPhone" solo per gli eventi futuri.
-                if entry.date >= Calendar.current.startOfDay(for: Date()) {
+                if entry.date >= BrindooFormat.startOfDay() {
                     Button {
                         Task { await addToCalendar(entry, offerTitle: offer?.title) }
                     } label: {

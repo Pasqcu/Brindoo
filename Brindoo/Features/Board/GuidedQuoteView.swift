@@ -292,10 +292,10 @@ struct GuidedQuoteView: View {
                 // risposte diverse alla stessa domanda.
                 let ids = Array(Set(offers.map(\.organizerId)))
                 let profiles = (try? await ProfileService.shared.fetchProfiles(ids: ids)) ?? []
-                let day = Calendar.current.startOfDay(for: eventDate)
+                let day = BrindooFormat.startOfDay(eventDate)
                 let onVacation = Set(profiles.filter { p in
                     guard let until = p.vacationUntil else { return false }
-                    return day <= Calendar.current.startOfDay(for: until)
+                    return day <= BrindooFormat.startOfDay(until)
                 }.map(\.id))
                 offers.removeAll { onVacation.contains($0.organizerId) }
             }

@@ -190,13 +190,6 @@ struct MoveEventDateSheet: View {
     @Environment(\.dismiss) private var dismiss
     @State private var selectedDate: Date = Date()
 
-    private static let dayFormatter: DateFormatter = {
-        let f = DateFormatter()
-        f.dateFormat = "yyyy-MM-dd"
-        f.timeZone = TimeZone(identifier: "UTC")
-        return f
-    }()
-
     var body: some View {
         NavigationStack {
             VStack(alignment: .leading, spacing: BrindooSpacing.lg) {
@@ -207,7 +200,7 @@ struct MoveEventDateSheet: View {
                 DatePicker(
                     "Nuova data",
                     selection: $selectedDate,
-                    in: Calendar.current.startOfDay(for: Date())...,
+                    in: BrindooFormat.startOfDay()...,
                     displayedComponents: .date
                 )
                 .datePickerStyle(.graphical)
@@ -226,7 +219,7 @@ struct MoveEventDateSheet: View {
                 }
                 ToolbarItem(placement: .topBarTrailing) {
                     Button("Conferma") {
-                        onConfirm(Self.dayFormatter.string(from: selectedDate))
+                        onConfirm(BrindooFormat.dayString(from: selectedDate))
                         dismiss()
                     }
                     .font(BrindooFont.bodyMedium.weight(.semibold))
@@ -234,7 +227,7 @@ struct MoveEventDateSheet: View {
             }
             .onAppear {
                 if let current = proposal.eventDate,
-                   let d = Self.dayFormatter.date(from: current), d > Date() {
+                   let d = BrindooFormat.day(from: current), d > Date() {
                     selectedDate = d
                 }
             }

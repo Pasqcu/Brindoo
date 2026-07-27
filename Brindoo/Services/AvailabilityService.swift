@@ -19,13 +19,6 @@ final class AvailabilityService {
         SupabaseManager.shared.client
     }
 
-    private static let fmt: DateFormatter = {
-        let f = DateFormatter()
-        f.dateFormat = "yyyy-MM-dd"
-        f.timeZone = TimeZone(identifier: "UTC")
-        return f
-    }()
-
     struct Row: Decodable { let day: String }
 
     /// Giorni segnati a mano come non disponibili da un organizzatore.
@@ -70,7 +63,7 @@ final class AvailabilityService {
     /// ID degli organizzatori occupati nel giorno dato, per qualunque
     /// motivo: giorno segnato a mano oppure evento già confermato.
     func fetchBusyOrganizerIds(on day: Date) async throws -> Set<UUID> {
-        let dayString = Self.fmt.string(from: day)
+        let dayString = BrindooFormat.dayString(from: day)
         struct IdRow: Decodable { let organizer_id: UUID }
         struct BookedRow: Decodable { let organizer_id: UUID }
 
@@ -100,14 +93,14 @@ final class AvailabilityService {
     func fetchMyUnavailableDays() async throws -> Set<Date> {
         guard let userId = SupabaseManager.shared.currentUserID else { return [] }
         let days = try await fetchMarkedUnavailableDays(organizerId: userId)
-        return Set(days.compactMap { Self.fmt.date(from: $0) })
+        return Set(days.compactMap { BrindooFormat.day(from: $0) })
     }
 
     /// Giorni dell'utente corrente già impegnati da eventi confermati.
     func fetchMyBookedDays() async throws -> Set<Date> {
         guard let userId = SupabaseManager.shared.currentUserID else { return [] }
         let days = try await fetchBookedDays(organizerId: userId)
-        return Set(days.compactMap { Self.fmt.date(from: $0) })
+        return Set(days.compactMap { BrindooFormat.day(from: $0) })
     }
 
     /// Sovrascrive l'insieme dei giorni non disponibili dell'utente corrente.
@@ -124,7 +117,7 @@ final class AvailabilityService {
         guard !dates.isEmpty else { return }
 
         struct Insert: Encodable { let organizer_id: UUID; let day: String }
-        let payload = dates.map { Insert(organizer_id: userId, day: Self.fmt.string(from: $0)) }
+        let payload = dates.map { Insert(organizer_id: userId, day: BrindooFormat.dayString(from: $0)) }
         try await client
             .from("organizer_unavailable_dates")
             .insert(payload)

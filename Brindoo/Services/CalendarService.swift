@@ -23,17 +23,10 @@ enum CalendarServiceError: LocalizedError {
 @MainActor
 enum CalendarService {
 
-    private static let dayParser: DateFormatter = {
-        let f = DateFormatter()
-        f.dateFormat = "yyyy-MM-dd"
-        f.timeZone = TimeZone(identifier: "UTC")
-        return f
-    }()
-
     /// Crea un evento "tutto il giorno" nel calendario di default,
     /// con promemoria il giorno prima alle 9. `dayString` in "yyyy-MM-dd".
     static func addAllDayEvent(title: String, dayString: String, notes: String? = nil) async throws {
-        guard let utcDay = dayParser.date(from: dayString) else {
+        guard let eventDay = BrindooFormat.day(from: dayString) else {
             throw NSError(domain: "CalendarService", code: 400,
                           userInfo: [NSLocalizedDescriptionKey: "Data non valida"])
         }
@@ -42,12 +35,12 @@ enum CalendarService {
         let granted = (try? await store.requestWriteOnlyAccessToEvents()) ?? false
         guard granted else { throw CalendarServiceError.accessDenied }
 
-        // Trasforma il giorno UTC nel giorno "locale" corrispondente.
-        var comps = Calendar.current.dateComponents(in: TimeZone(identifier: "UTC")!, from: utcDay)
-        comps.timeZone = TimeZone.current
+        // Stesso giorno del calendario, ma a mezzanotte locale: è così che
+        // iOS si aspetta un evento "tutto il giorno".
+        let comps = BrindooFormat.dayCalendar.dateComponents([.year, .month, .day], from: eventDay)
         let localDay = Calendar.current.date(from: DateComponents(
             year: comps.year, month: comps.month, day: comps.day
-        )) ?? utcDay
+        )) ?? eventDay
 
         let event = EKEvent(eventStore: store)
         event.calendar = store.defaultCalendarForNewEvents

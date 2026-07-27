@@ -21,7 +21,7 @@ struct AvailabilityView: View {
     @State private var isSaving: Bool = false
     @State private var error: String?
 
-    private let calendar = Calendar.current
+    private let calendar = BrindooFormat.dayCalendar
 
     var body: some View {
         NavigationStack {

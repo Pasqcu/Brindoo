@@ -117,12 +117,7 @@ final class ServiceOfferService {
         guard !ids.isEmpty else { return [] }
         struct Row: Decodable { let id: UUID }
 
-        let todayStr: String = {
-            let f = DateFormatter()
-            f.dateFormat = "yyyy-MM-dd"
-            f.timeZone = TimeZone(identifier: "UTC")
-            return f.string(from: Date())
-        }()
+        let todayStr = BrindooFormat.todayString
 
         let rows: [Row] = try await client
             .from("profiles")

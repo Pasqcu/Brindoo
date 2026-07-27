@@ -118,7 +118,7 @@ final class ReviewService {
     /// non dice nulla sul lavoro e il professionista la sente ingiusta.
     func hasCompletedDeal(withOrganizer organizerId: UUID) async throws -> Bool {
         guard let userId = SupabaseManager.shared.currentUserID else { return false }
-        let today = BrindooFormat.dayString(from: Date())
+        let today = BrindooFormat.todayString
         struct Row: Decodable { let id: UUID }
         let rows: [Row] = try await client
             .from("offer_proposals")

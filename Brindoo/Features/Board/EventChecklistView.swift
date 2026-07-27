@@ -163,11 +163,11 @@ struct EventChecklistView: View {
     // MARK: - Scadenze
 
     private func dueDate(_ task: ChecklistTask) -> Date {
-        Calendar.current.date(byAdding: .day, value: -task.daysBefore, to: eventDate) ?? eventDate
+        BrindooFormat.dayCalendar.date(byAdding: .day, value: -task.daysBefore, to: eventDate) ?? eventDate
     }
 
     private func isOverdue(_ task: ChecklistTask) -> Bool {
-        dueDate(task) < Calendar.current.startOfDay(for: Date())
+        dueDate(task) < BrindooFormat.startOfDay()
     }
 
     private func dueLabel(_ task: ChecklistTask) -> String {

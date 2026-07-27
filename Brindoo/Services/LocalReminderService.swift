@@ -25,10 +25,7 @@ enum LocalReminderService {
         // Rispetta la scelta fatta in Impostazioni.
         guard remindersEnabled else { return }
 
-        let parser = DateFormatter()
-        parser.dateFormat = "yyyy-MM-dd"
-        parser.timeZone = TimeZone.current
-        guard let day = parser.date(from: eventDate) else { return }
+        guard let day = BrindooFormat.day(from: eventDate) else { return }
 
         // Avviso il giorno prima alle 10:00.
         guard let remindDate = Calendar.current.date(byAdding: .day, value: -1, to: day) else { return }

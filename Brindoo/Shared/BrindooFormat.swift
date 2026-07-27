@@ -69,22 +69,66 @@ enum BrindooFormat {
     }
 
     // MARK: - Giorno "yyyy-MM-dd" (formato usato dal database)
+    //
+    // La data di un evento è un *giorno civile*: sul database è una colonna
+    // `date` senza orario né fuso. Va quindi trattata sempre con lo stesso
+    // calendario, altrimenti chi la scrive, chi la legge e chi la confronta
+    // con "oggi" possono sfalsarsi di un giorno — ed è successo: le date
+    // venivano lette in UTC ma confrontate col calendario locale.
+    //
+    // Il riferimento è l'ora di Roma, perché gli eventi si svolgono nel Lazio:
+    // così il giorno resta quello giusto anche per chi apre l'app dall'estero.
+
+    /// Fuso di riferimento dei giorni evento (dove le feste si svolgono davvero).
+    static let dayTimeZone = TimeZone(identifier: "Europe/Rome") ?? .current
+
+    /// Calendario da usare per ogni confronto fra giorni evento.
+    static let dayCalendar: Calendar = {
+        var c = Calendar(identifier: .gregorian)
+        c.timeZone = dayTimeZone
+        c.locale = Locale(identifier: "it_IT")
+        return c
+    }()
 
     private static let dayFormatter: DateFormatter = {
         let f = DateFormatter()
         f.dateFormat = "yyyy-MM-dd"
-        f.timeZone = TimeZone(identifier: "UTC")
+        f.locale = Locale(identifier: "en_US_POSIX")
+        f.timeZone = dayTimeZone
         return f
     }()
 
-    /// "2026-09-12" → Date (nil se il formato non è valido).
+    /// "2026-09-12" → Date (mezzanotte a Roma), nil se il formato non è valido.
     static func day(from string: String) -> Date? {
         dayFormatter.date(from: string)
     }
 
-    /// Date → "2026-09-12".
+    /// Date → "2026-09-12". Sempre nello stesso fuso di `day(from:)`, così
+    /// scrivere e rileggere una data restituisce lo stesso giorno.
     static func dayString(from date: Date) -> String {
         dayFormatter.string(from: date)
+    }
+
+    /// Mezzanotte del giorno di `date` secondo il calendario degli eventi.
+    static func startOfDay(_ date: Date = Date()) -> Date {
+        dayCalendar.startOfDay(for: date)
+    }
+
+    /// Oggi nel formato del database.
+    static var todayString: String {
+        dayFormatter.string(from: Date())
+    }
+
+    /// Giorni che mancano a un giorno "yyyy-MM-dd" (negativo se già passato).
+    static func daysUntil(day string: String, from now: Date = Date()) -> Int? {
+        guard let target = day(from: string) else { return nil }
+        return dayCalendar.dateComponents([.day], from: startOfDay(now), to: target).day
+    }
+
+    /// True se il giorno "yyyy-MM-dd" è precedente a oggi.
+    static func isPastDay(_ string: String, now: Date = Date()) -> Bool {
+        guard let target = day(from: string) else { return false }
+        return target < startOfDay(now)
     }
 
     // MARK: - Data leggibile in italiano
@@ -93,6 +137,7 @@ enum BrindooFormat {
         let f = DateFormatter()
         f.locale = Locale(identifier: "it_IT")
         f.dateFormat = "d MMMM yyyy"
+        f.timeZone = dayTimeZone
         return f
     }()
 
