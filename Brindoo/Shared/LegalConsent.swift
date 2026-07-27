@@ -22,6 +22,38 @@ enum LegalVersion {
 
 /// Schermata bloccante mostrata quando manca (o è vecchia) l'accettazione
 /// registrata sul server. Registra data e versione sul profilo.
+/// Quale documento legale mostrare.
+enum LegalDocument: String, Identifiable {
+    case terms
+    case privacy
+    var id: String { rawValue }
+}
+
+/// Foglio con Termini o Privacy Policy e il pulsante per chiudere.
+///
+/// Un solo foglio con `item:` invece di due `isPresented:` incatenati sulla
+/// stessa vista: SwiftUI ne onora uno solo, e il secondo resta muto.
+struct LegalDocumentSheet: View {
+    let document: LegalDocument
+    @Environment(\.dismiss) private var dismiss
+
+    var body: some View {
+        NavigationStack {
+            Group {
+                switch document {
+                case .terms:   TermsOfServiceView()
+                case .privacy: PrivacyPolicyView()
+                }
+            }
+            .toolbar {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button("Chiudi") { dismiss() }
+                }
+            }
+        }
+    }
+}
+
 struct LegalConsentGate: View {
 
     @Environment(SessionStore.self) private var session
@@ -29,8 +61,7 @@ struct LegalConsentGate: View {
     @State private var accepted = false
     @State private var isSaving = false
     @State private var errorMessage: String?
-    @State private var showTerms = false
-    @State private var showPrivacy = false
+    @State private var legalDocument: LegalDocument?
 
     var body: some View {
         NavigationStack {
@@ -55,9 +86,9 @@ struct LegalConsentGate: View {
                     .clipShape(RoundedRectangle(cornerRadius: BrindooRadius.md))
 
                     HStack(spacing: BrindooSpacing.xs) {
-                        Button("Leggi i Termini") { showTerms = true }
+                        Button("Leggi i Termini") { legalDocument = .terms }
                         Text("·").foregroundStyle(Color.brindooTextSecondary)
-                        Button("Privacy Policy") { showPrivacy = true }
+                        Button("Privacy Policy") { legalDocument = .privacy }
                     }
                     .font(BrindooFont.bodySmall.weight(.medium))
                     .tint(Color.brindooCoral)
@@ -84,12 +115,7 @@ struct LegalConsentGate: View {
             .navigationTitle("Condizioni d'uso")
             .navigationBarTitleDisplayMode(.inline)
             .interactiveDismissDisabled()
-            .sheet(isPresented: $showTerms) {
-                NavigationStack { TermsOfServiceView() }
-            }
-            .sheet(isPresented: $showPrivacy) {
-                NavigationStack { PrivacyPolicyView() }
-            }
+            .sheet(item: $legalDocument) { LegalDocumentSheet(document: $0) }
         }
     }
 

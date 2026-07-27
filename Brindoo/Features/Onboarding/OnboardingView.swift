@@ -23,8 +23,7 @@ struct OnboardingView: View {
 
     /// Stato visivo della checkbox. Sincronizzato con AppStorage.
     @State private var acceptedTermsAndAge: Bool = false
-    @State private var showTerms: Bool = false
-    @State private var showPrivacy: Bool = false
+    @State private var legalDocument: LegalDocument?
 
     private var isLastSlide: Bool {
         currentSlide >= slides.count - 1
@@ -159,26 +158,7 @@ struct OnboardingView: View {
             .navigationDestination(isPresented: $navigateToSignUp) {
                 SignUpView()
             }
-            .sheet(isPresented: $showTerms) {
-                NavigationStack {
-                    TermsOfServiceView()
-                        .toolbar {
-                            ToolbarItem(placement: .topBarTrailing) {
-                                Button("Chiudi") { showTerms = false }
-                            }
-                        }
-                }
-            }
-            .sheet(isPresented: $showPrivacy) {
-                NavigationStack {
-                    PrivacyPolicyView()
-                        .toolbar {
-                            ToolbarItem(placement: .topBarTrailing) {
-                                Button("Chiudi") { showPrivacy = false }
-                            }
-                        }
-                }
-            }
+            .sheet(item: $legalDocument) { LegalDocumentSheet(document: $0) }
             .onAppear {
                 // Ripristina lo stato della checkbox dall'AppStorage
                 acceptedTermsAndAge = !acceptedTermsAt.isEmpty
@@ -195,43 +175,50 @@ struct OnboardingView: View {
 
     @ViewBuilder
     private var consentCheckbox: some View {
-        Button {
-            withAnimation(.easeInOut(duration: 0.15)) {
-                acceptedTermsAndAge.toggle()
-            }
-        } label: {
-            HStack(alignment: .top, spacing: BrindooSpacing.sm) {
-                Image(systemName: acceptedTermsAndAge ? "checkmark.square.fill" : "square")
-                    .font(.system(size: 20))
-                    .foregroundStyle(
-                        acceptedTermsAndAge ? Color.brindooCoral : Color.brindooBorder
-                    )
+        // I link ai documenti stanno fuori dal pulsante della spunta: dentro il suo
+        // label il tocco verrebbe intercettato e non si aprirebbero mai.
+        VStack(alignment: .leading, spacing: BrindooSpacing.xs) {
+            Button {
+                withAnimation(.easeInOut(duration: 0.15)) {
+                    acceptedTermsAndAge.toggle()
+                }
+            } label: {
+                HStack(alignment: .top, spacing: BrindooSpacing.sm) {
+                    Image(systemName: acceptedTermsAndAge ? "checkmark.square.fill" : "square")
+                        .font(.system(size: 20))
+                        .foregroundStyle(
+                            acceptedTermsAndAge ? Color.brindooCoral : Color.brindooBorder
+                        )
 
-                VStack(alignment: .leading, spacing: 4) {
                     Text("Confermo di avere almeno 18 anni e di accettare i Termini e la Privacy Policy.")
                         .font(BrindooFont.caption)
                         .foregroundStyle(Color.brindooTextPrimary)
                         .multilineTextAlignment(.leading)
                         .fixedSize(horizontal: false, vertical: true)
 
-                    HStack(spacing: BrindooSpacing.xs) {
-                        Button("Termini") { showTerms = true }
-                            .font(BrindooFont.caption.weight(.semibold))
-                            .foregroundStyle(Color.brindooCoral)
-                        Text("•").foregroundStyle(Color.brindooTextSecondary)
-                        Button("Privacy") { showPrivacy = true }
-                            .font(BrindooFont.caption.weight(.semibold))
-                            .foregroundStyle(Color.brindooCoral)
-                    }
+                    Spacer(minLength: 0)
                 }
-                Spacer(minLength: 0)
+                .contentShape(Rectangle())
             }
-            .padding(BrindooSpacing.sm)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .background(Color.brindooSurface.opacity(0.5))
-            .clipShape(RoundedRectangle(cornerRadius: BrindooRadius.md))
+            .buttonStyle(.plain)
+            .accessibilityAddTraits(acceptedTermsAndAge ? [.isSelected] : [])
+
+            HStack(spacing: BrindooSpacing.xs) {
+                Button("Termini") { legalDocument = .terms }
+                    .font(BrindooFont.caption.weight(.semibold))
+                    .foregroundStyle(Color.brindooCoral)
+                Text("•").foregroundStyle(Color.brindooTextSecondary)
+                Button("Privacy") { legalDocument = .privacy }
+                    .font(BrindooFont.caption.weight(.semibold))
+                    .foregroundStyle(Color.brindooCoral)
+            }
+            .buttonStyle(.plain)
+            .padding(.leading, 20 + BrindooSpacing.sm)
         }
-        .buttonStyle(.plain)
+        .padding(BrindooSpacing.sm)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(Color.brindooSurface.opacity(0.5))
+        .clipShape(RoundedRectangle(cornerRadius: BrindooRadius.md))
     }
 
     // MARK: - Slide

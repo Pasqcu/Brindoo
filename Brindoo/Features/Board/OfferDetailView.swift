@@ -130,6 +130,10 @@ struct OfferDetailView: View {
                         onAddToCalendar: { p in Task { await addToCalendar(p) } },
                         onReviewSubmitted: { Task { await vm.loadData() } }
                     )
+                    // Mentre una mossa è in volo i comandi restano fermi:
+                    // niente doppio invio, e si vede che sta succedendo.
+                    .disabled(vm.isActing)
+                    .opacity(vm.isActing ? 0.6 : 1)
                 }
 
                 if isOwnOffer {
@@ -148,6 +152,8 @@ struct OfferDetailView: View {
                         onMoveDate: { p in moveDateTarget = p },
                         onAddToCalendar: { p in Task { await addToCalendar(p) } }
                     )
+                    .disabled(vm.isActing)
+                    .opacity(vm.isActing ? 0.6 : 1)
                 }
             }
             .padding(BrindooSpacing.md)

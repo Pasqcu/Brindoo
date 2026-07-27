@@ -83,62 +83,74 @@ struct EditCategoryRow: View {
         let isExpanded = expandedId == category.id
 
         VStack(spacing: 0) {
-            Button {
-                withAnimation(.easeInOut(duration: 0.2)) {
-                    if isSelected {
-                        expandedId = isExpanded ? nil : category.id
-                    } else {
-                        selectedIds.insert(category.id)
-                        expandedId = category.id
-                    }
-                }
-            } label: {
-                HStack(spacing: BrindooSpacing.sm) {
-                    Image(systemName: category.icon)
-                        .font(.system(size: 18, weight: .medium))
-                        .foregroundStyle(isSelected ? .white : Color.brindooCoral)
-                        .frame(width: 32, height: 32)
-                        .background(isSelected ? Color.brindooCoral : Color.brindooCoral.opacity(0.1))
-                        .clipShape(Circle())
-
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text(category.name)
-                            .font(BrindooFont.bodyMedium.weight(.medium))
-                            .foregroundStyle(Color.brindooTextPrimary)
-                        if isSelected, let desc = descriptions[category.id], !desc.isEmpty {
-                            Text(desc)
-                                .font(BrindooFont.caption)
-                                .foregroundStyle(Color.brindooTextSecondary)
-                                .lineLimit(1)
+            // La X di rimozione è un pulsante fratello, non annidato nel label:
+            // dentro il label il tocco finiva sempre al pulsante della riga e la
+            // categoria non si poteva più togliere.
+            HStack(spacing: BrindooSpacing.sm) {
+                Button {
+                    withAnimation(.easeInOut(duration: 0.2)) {
+                        if isSelected {
+                            expandedId = isExpanded ? nil : category.id
+                        } else {
+                            selectedIds.insert(category.id)
+                            expandedId = category.id
                         }
                     }
+                } label: {
+                    HStack(spacing: BrindooSpacing.sm) {
+                        Image(systemName: category.icon)
+                            .font(.system(size: 18, weight: .medium))
+                            .foregroundStyle(isSelected ? .white : Color.brindooCoral)
+                            .frame(width: 32, height: 32)
+                            .background(isSelected ? Color.brindooCoral : Color.brindooCoral.opacity(0.1))
+                            .clipShape(Circle())
 
-                    Spacer()
-
-                    if isSelected {
-                        Button {
-                            withAnimation {
-                                selectedIds.remove(category.id)
-                                descriptions[category.id] = nil
-                                if expandedId == category.id { expandedId = nil }
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text(category.name)
+                                .font(BrindooFont.bodyMedium.weight(.medium))
+                                .foregroundStyle(Color.brindooTextPrimary)
+                            if isSelected, let desc = descriptions[category.id], !desc.isEmpty {
+                                Text(desc)
+                                    .font(BrindooFont.caption)
+                                    .foregroundStyle(Color.brindooTextSecondary)
+                                    .lineLimit(1)
                             }
-                        } label: {
-                            Image(systemName: "xmark.circle.fill")
-                                .font(.system(size: 20))
-                                .foregroundStyle(Color.brindooTextSecondary)
                         }
-                        .buttonStyle(.plain)
-                    } else {
-                        Image(systemName: "plus.circle")
-                            .font(.system(size: 20))
-                            .foregroundStyle(Color.brindooCoral)
+
+                        Spacer(minLength: 0)
                     }
+                    .contentShape(Rectangle())
                 }
-                .padding(BrindooSpacing.sm)
-                .background(isSelected ? Color.brindooCoral.opacity(0.05) : Color.brindooSurface)
-                .clipShape(RoundedRectangle(cornerRadius: BrindooRadius.md))
+                .buttonStyle(.plain)
+                .accessibilityAddTraits(isSelected ? [.isSelected] : [])
+
+                if isSelected {
+                    Button {
+                        withAnimation {
+                            selectedIds.remove(category.id)
+                            descriptions[category.id] = nil
+                            if expandedId == category.id { expandedId = nil }
+                        }
+                    } label: {
+                        Image(systemName: "xmark.circle.fill")
+                            .font(.system(size: 20))
+                            .foregroundStyle(Color.brindooTextSecondary)
+                            .frame(width: 44, height: 44)
+                            .contentShape(Rectangle())
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityLabel("Togli \(category.name)")
+                } else {
+                    Image(systemName: "plus.circle")
+                        .font(.system(size: 20))
+                        .foregroundStyle(Color.brindooCoral)
+                        .frame(width: 44, height: 44)
+                        .accessibilityHidden(true)
+                }
             }
-            .buttonStyle(.plain)
+            .padding(BrindooSpacing.sm)
+            .background(isSelected ? Color.brindooCoral.opacity(0.05) : Color.brindooSurface)
+            .clipShape(RoundedRectangle(cornerRadius: BrindooRadius.md))
 
             if isSelected && isExpanded {
                 VStack(alignment: .leading, spacing: BrindooSpacing.xxs) {
@@ -341,7 +353,7 @@ struct ProvincePickerSection: View {
                             Text(province.rawValue)
                                 .font(BrindooFont.bodySmall.weight(.bold))
                             Text(province.displayName)
-                                .font(.system(size: 10))
+                                .font(BrindooFont.scaled(10, relativeTo: .caption2))
                         }
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, BrindooSpacing.xs)

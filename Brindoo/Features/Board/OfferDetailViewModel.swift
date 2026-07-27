@@ -54,6 +54,10 @@ final class OfferDetailViewModel {
     var currentStatus: ServiceOfferStatus
     private(set) var isFavorite: Bool = false
     private(set) var isUpdating: Bool = false
+    /// Vero mentre una mossa di trattativa è in volo. Serve a impedire il
+    /// doppio tocco: due "Accetta" partiti insieme creavano due proposte
+    /// per lo stesso accordo, e poi qualcuno doveva disfarle a mano.
+    private(set) var isActing: Bool = false
     var actionError: String?
 
     init(offer: ServiceOffer) {
@@ -145,6 +149,9 @@ final class OfferDetailViewModel {
     /// Accetta al prezzo dato (base o di un pacchetto). L'etichetta del
     /// pacchetto, se presente, finisce nel messaggio della proposta.
     func acceptAtPrice(_ price: Double, label: String?) async {
+        guard !isActing else { return }
+        isActing = true
+        defer { isActing = false }
         actionError = nil
         do {
             _ = try await OfferProposalService.shared.openProposal(
@@ -162,6 +169,9 @@ final class OfferDetailViewModel {
     /// Accetta la proposta. Restituisce la conversazione aperta e con chi
     /// parlare: la festa e la navigazione le gestisce la vista.
     func acceptProposal(_ proposal: OfferProposal) async -> (conversation: Conversation, partner: Profile?)? {
+        guard !isActing else { return nil }
+        isActing = true
+        defer { isActing = false }
         actionError = nil
         do {
             let conv = try await OfferProposalService.shared.accept(proposal: proposal)
@@ -179,6 +189,9 @@ final class OfferDetailViewModel {
     }
 
     func rejectProposal(_ proposal: OfferProposal) async {
+        guard !isActing else { return }
+        isActing = true
+        defer { isActing = false }
         actionError = nil
         do {
             try await OfferProposalService.shared.reject(proposal: proposal)
@@ -190,6 +203,9 @@ final class OfferDetailViewModel {
     }
 
     func withdrawProposal(_ proposal: OfferProposal) async {
+        guard !isActing else { return }
+        isActing = true
+        defer { isActing = false }
         actionError = nil
         do {
             try await OfferProposalService.shared.withdraw(proposal: proposal)
@@ -220,6 +236,9 @@ final class OfferDetailViewModel {
     }
 
     func markBooking(_ proposal: OfferProposal, _ status: BookingStatus) async -> Bool {
+        guard !isActing else { return false }
+        isActing = true
+        defer { isActing = false }
         actionError = nil
         do {
             try await OfferProposalService.shared.updateBookingStatus(proposalId: proposal.id, booking: status)

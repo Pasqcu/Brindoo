@@ -22,8 +22,7 @@ struct LoginView: View {
     /// accettata su questo dispositivo (es. dopo reinstallazione): mostriamo
     /// comunque la checkbox prima di consentire Apple Sign In o login.
     @AppStorage("brindoo.legal.acceptedTermsAt") private var acceptedTermsAt: String = ""
-    @State private var showTerms: Bool = false
-    @State private var showPrivacy: Bool = false
+    @State private var legalDocument: LegalDocument?
 
     private var hasAcceptedTerms: Bool {
         !acceptedTermsAt.isEmpty
@@ -166,6 +165,7 @@ struct LoginView: View {
                         .font(.system(size: 16, weight: .semibold))
                         .foregroundStyle(Color.brindooTextPrimary)
                 }
+                .accessibilityLabel("Indietro")
             }
         }
         .navigationDestination(isPresented: $navigateToSignUp) {
@@ -174,69 +174,57 @@ struct LoginView: View {
         .sheet(isPresented: $showForgotPassword) {
             ForgotPasswordView()
         }
-        .sheet(isPresented: $showTerms) {
-            NavigationStack {
-                TermsOfServiceView()
-                    .toolbar {
-                        ToolbarItem(placement: .topBarTrailing) {
-                            Button("Chiudi") { showTerms = false }
-                        }
-                    }
-            }
-        }
-        .sheet(isPresented: $showPrivacy) {
-            NavigationStack {
-                PrivacyPolicyView()
-                    .toolbar {
-                        ToolbarItem(placement: .topBarTrailing) {
-                            Button("Chiudi") { showPrivacy = false }
-                        }
-                    }
-            }
-        }
+        .sheet(item: $legalDocument) { LegalDocumentSheet(document: $0) }
     }
 
     @ViewBuilder
     private var consentCheckbox: some View {
-        Button {
-            withAnimation(.easeInOut(duration: 0.15)) {
-                acceptedTermsAt = hasAcceptedTerms
-                    ? ""
-                    : ISO8601DateFormatter().string(from: Date())
-            }
-        } label: {
-            HStack(alignment: .top, spacing: BrindooSpacing.sm) {
-                Image(systemName: hasAcceptedTerms ? "checkmark.square.fill" : "square")
-                    .font(.system(size: 20))
-                    .foregroundStyle(
-                        hasAcceptedTerms ? Color.brindooCoral : Color.brindooBorder
-                    )
+        // I link ai documenti stanno fuori dal pulsante della spunta: dentro il suo
+        // label il tocco verrebbe intercettato e non si aprirebbero mai.
+        VStack(alignment: .leading, spacing: BrindooSpacing.xs) {
+            Button {
+                withAnimation(.easeInOut(duration: 0.15)) {
+                    acceptedTermsAt = hasAcceptedTerms
+                        ? ""
+                        : ISO8601DateFormatter().string(from: Date())
+                }
+            } label: {
+                HStack(alignment: .top, spacing: BrindooSpacing.sm) {
+                    Image(systemName: hasAcceptedTerms ? "checkmark.square.fill" : "square")
+                        .font(.system(size: 20))
+                        .foregroundStyle(
+                            hasAcceptedTerms ? Color.brindooCoral : Color.brindooBorder
+                        )
 
-                VStack(alignment: .leading, spacing: 4) {
                     Text("Confermo di avere almeno 18 anni e di accettare i Termini e la Privacy Policy di Brindoo.")
                         .font(BrindooFont.caption)
                         .foregroundStyle(Color.brindooTextPrimary)
                         .multilineTextAlignment(.leading)
                         .fixedSize(horizontal: false, vertical: true)
 
-                    HStack(spacing: BrindooSpacing.xs) {
-                        Button("Termini") { showTerms = true }
-                            .font(BrindooFont.caption.weight(.semibold))
-                            .foregroundStyle(Color.brindooCoral)
-                        Text("•").foregroundStyle(Color.brindooTextSecondary)
-                        Button("Privacy") { showPrivacy = true }
-                            .font(BrindooFont.caption.weight(.semibold))
-                            .foregroundStyle(Color.brindooCoral)
-                    }
+                    Spacer(minLength: 0)
                 }
-                Spacer(minLength: 0)
+                .contentShape(Rectangle())
             }
-            .padding(BrindooSpacing.sm)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .background(Color.brindooSurface)
-            .clipShape(RoundedRectangle(cornerRadius: BrindooRadius.md))
+            .buttonStyle(.plain)
+            .accessibilityAddTraits(hasAcceptedTerms ? [.isSelected] : [])
+
+            HStack(spacing: BrindooSpacing.xs) {
+                Button("Termini") { legalDocument = .terms }
+                    .font(BrindooFont.caption.weight(.semibold))
+                    .foregroundStyle(Color.brindooCoral)
+                Text("•").foregroundStyle(Color.brindooTextSecondary)
+                Button("Privacy") { legalDocument = .privacy }
+                    .font(BrindooFont.caption.weight(.semibold))
+                    .foregroundStyle(Color.brindooCoral)
+            }
+            .buttonStyle(.plain)
+            .padding(.leading, 20 + BrindooSpacing.sm)
         }
-        .buttonStyle(.plain)
+        .padding(BrindooSpacing.sm)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(Color.brindooSurface)
+        .clipShape(RoundedRectangle(cornerRadius: BrindooRadius.md))
     }
     
     private func performLogin() async {
