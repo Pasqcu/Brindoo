@@ -106,9 +106,16 @@ final class BrindooImageLoader: @unchecked Sendable {
 
     nonisolated private static let maxDiskAge: TimeInterval = 7 * 24 * 60 * 60
 
+    /// Densità dello schermo, letta una volta sola qui. `UIScreen` si può
+    /// leggere solo dal main actor, e il ridimensionamento invece gira apposta
+    /// fuori: se ne prende il valore adesso e se lo porta dietro.
+    private let screenScale: CGFloat
+
     private init() {
         memory.totalCostLimit = 60 * 1024 * 1024 // ~60 MB di anteprime
-        let base = FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask)[0]
+        screenScale = UIScreen.main.scale
+        let base = FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask).first
+            ?? FileManager.default.temporaryDirectory
         folder = base.appendingPathComponent("BrindooImages", isDirectory: true)
         try? FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
         purgeOldFilesInBackground()
@@ -165,9 +172,9 @@ final class BrindooImageLoader: @unchecked Sendable {
 
     private func fetch(url: URL, key k: String, maxPixelSize: CGFloat) async -> UIImage? {
         let fileURL = folder.appendingPathComponent(k)
+        let pixels = maxPixelSize * screenScale
 
-        if let data = try? Data(contentsOf: fileURL),
-           let image = Self.downsample(data: data, maxPixelSize: maxPixelSize) {
+        if let image = await Self.readFromDisk(fileURL, maxPixelSize: pixels) {
             store(image, for: k)
             touch(fileURL)
             return image
@@ -175,11 +182,38 @@ final class BrindooImageLoader: @unchecked Sendable {
 
         guard let (data, response) = try? await URLSession.shared.data(from: url),
               (response as? HTTPURLResponse).map({ (200..<300).contains($0.statusCode) }) ?? true,
-              let image = Self.downsample(data: data, maxPixelSize: maxPixelSize)
+              let image = await Self.decodeAndSave(data, to: fileURL, maxPixelSize: pixels)
         else { return nil }
 
-        try? data.write(to: fileURL, options: .atomic)
         store(image, for: k)
+        return image
+    }
+
+    // Le tre funzioni qui sotto sono `nonisolated` di proposito: leggere un
+    // file e decodificare un JPEG grande costano decine di millisecondi, e
+    // finora li spendevano sul main actor — cioè fermavano lo scorrimento
+    // della bacheca proprio mentre arrivavano le foto. Chiamate con `await`
+    // da qui, girano sull'esecutore di sfondo.
+
+    /// Legge la copia su disco, se c'è, e la ridisegna alla misura utile.
+    nonisolated private static func readFromDisk(
+        _ fileURL: URL,
+        maxPixelSize: CGFloat
+    ) async -> UIImage? {
+        guard let data = try? Data(contentsOf: fileURL) else { return nil }
+        return downsample(data: data, maxPixelSize: maxPixelSize)
+    }
+
+    /// Ridisegna quello che è arrivato dalla rete e ne tiene copia su disco.
+    /// Se la foto non è leggibile non si salva niente: non ha senso rileggere
+    /// domani un file che oggi non si è capito.
+    nonisolated private static func decodeAndSave(
+        _ data: Data,
+        to fileURL: URL,
+        maxPixelSize: CGFloat
+    ) async -> UIImage? {
+        guard let image = downsample(data: data, maxPixelSize: maxPixelSize) else { return nil }
+        try? data.write(to: fileURL, options: .atomic)
         return image
     }
 
@@ -195,14 +229,16 @@ final class BrindooImageLoader: @unchecked Sendable {
     }
 
     /// Ridisegna la foto alla misura utile: meno memoria, scorrimento fluido.
-    private static func downsample(data: Data, maxPixelSize: CGFloat) -> UIImage? {
+    /// `maxPixelSize` è già in pixel veri (misura del riquadro per la densità
+    /// dello schermo), perché qui `UIScreen` non si può leggere.
+    nonisolated private static func downsample(data: Data, maxPixelSize: CGFloat) -> UIImage? {
         let sourceOptions = [kCGImageSourceShouldCache: false] as CFDictionary
         guard let source = CGImageSourceCreateWithData(data as CFData, sourceOptions) else { return nil }
         let options = [
             kCGImageSourceCreateThumbnailFromImageAlways: true,
             kCGImageSourceCreateThumbnailWithTransform: true,
             kCGImageSourceShouldCacheImmediately: true,
-            kCGImageSourceThumbnailMaxPixelSize: maxPixelSize * UIScreen.main.scale
+            kCGImageSourceThumbnailMaxPixelSize: maxPixelSize
         ] as CFDictionary
         guard let cgImage = CGImageSourceCreateThumbnailAtIndex(source, 0, options) else { return nil }
         return UIImage(cgImage: cgImage)

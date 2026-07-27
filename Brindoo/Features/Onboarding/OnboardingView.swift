@@ -165,7 +165,7 @@ struct OnboardingView: View {
             }
             .onChange(of: acceptedTermsAndAge) { _, newValue in
                 acceptedTermsAt = newValue
-                    ? ISO8601DateFormatter().string(from: Date())
+                    ? BrindooFormat.isoNow
                     : ""
             }
         }

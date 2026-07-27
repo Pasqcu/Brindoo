@@ -165,8 +165,7 @@ struct SettingsPromoCard: View {
                 .foregroundStyle(Color.brindooTextSecondary)
         }
         .padding(BrindooSpacing.sm)
-        .background(Color.brindooSurface)
-        .clipShape(RoundedRectangle(cornerRadius: BrindooRadius.md))
+        .brindooSurfaceBackground()
     }
 }
 
@@ -237,8 +236,7 @@ struct SettingsVacationCard: View {
                 }
             }
             .padding(BrindooSpacing.md)
-            .background(Color.brindooSurface)
-            .clipShape(RoundedRectangle(cornerRadius: BrindooRadius.md))
+            .brindooSurfaceBackground()
 
             // DatePicker per la data di ritorno (visibile solo se attiva)
             if isPro && vacationOn {
@@ -259,8 +257,7 @@ struct SettingsVacationCard: View {
                     }
                 }
                 .padding(BrindooSpacing.md)
-                .background(Color.brindooSurface)
-                .clipShape(RoundedRectangle(cornerRadius: BrindooRadius.md))
+                .brindooSurfaceBackground()
             }
         }
     }

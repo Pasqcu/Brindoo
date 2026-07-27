@@ -57,14 +57,7 @@ struct ChatReplyBanner: View {
                     .lineLimit(1)
             }
             Spacer()
-            Button { onClose() } label: {
-                Image(systemName: "xmark.circle.fill")
-                    .foregroundStyle(Color.brindooTextSecondary)
-                    .frame(width: 44, height: 44)
-                    .contentShape(Rectangle())
-            }
-            .buttonStyle(.plain)
-            .accessibilityLabel("Chiudi")
+            BrindooCloseButton(style: .inline) { onClose() }
         }
         .padding(.horizontal, BrindooSpacing.md)
         .padding(.vertical, BrindooSpacing.xs)

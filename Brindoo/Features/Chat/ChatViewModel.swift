@@ -44,7 +44,7 @@ final class ChatViewModel {
 
     // MARK: - Sottoscrizioni
 
-    private var realtimeChannel: RealtimeChannelV2?
+    private var realtimeSubscription: RealtimeSubscription?
     private var typingHideTask: Task<Void, Never>?
 
     init(
@@ -217,14 +217,20 @@ final class ChatViewModel {
             try await data.sendImage(conversation.id, image, isBomb)
         } catch {
             BrindooLog.error("chat sendImage: \(error)")
-            sendErrorMessage = "Invio foto fallito: \(error.localizedDescription)"
+            sendErrorMessage = BrindooErrorText.message(
+                for: error,
+                fallback: "Invio della foto non riuscito. \(BrindooText.retryHint)"
+            )
         }
     }
 
     func reportImageLoadFailure(_ error: Error?) {
         if let error {
             BrindooLog.error("chat loadPickedImage: \(error)")
-            sendErrorMessage = "Errore nel caricamento della foto: \(error.localizedDescription)"
+            sendErrorMessage = BrindooErrorText.message(
+                for: error,
+                fallback: BrindooText.loadError("la foto selezionata. Riprova.")
+            )
         } else {
             sendErrorMessage = BrindooText.loadError("la foto selezionata. Riprova.")
         }
@@ -280,7 +286,7 @@ final class ChatViewModel {
     // MARK: - Tempo reale
 
     func subscribeRealtime() {
-        realtimeChannel = MessageService.shared.subscribeToMessages(
+        realtimeSubscription = MessageService.shared.subscribeToMessages(
             conversationId: conversation.id,
             onInsert: { [weak self] newMessage in
                 Task { @MainActor in self?.receive(newMessage) }
@@ -302,13 +308,13 @@ final class ChatViewModel {
     }
 
     func unsubscribe() {
-        let channel = realtimeChannel
+        let subscription = realtimeSubscription
         let conversationId = conversation.id
-        realtimeChannel = nil
+        realtimeSubscription = nil
         typingHideTask?.cancel()
         typingHideTask = nil
         Task {
-            if let channel { await channel.unsubscribe() }
+            await subscription?.cancel()
             await TypingService.shared.unsubscribe(conversationId: conversationId)
         }
     }
@@ -335,7 +341,7 @@ final class ChatViewModel {
         otherIsTyping = true
         typingHideTask?.cancel()
         typingHideTask = Task { [weak self] in
-            try? await Task.sleep(nanoseconds: 3_000_000_000)
+            try? await Task.sleep(for: .seconds(3))
             guard !Task.isCancelled else { return }
             self?.otherIsTyping = false
         }

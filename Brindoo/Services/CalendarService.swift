@@ -27,8 +27,7 @@ enum CalendarService {
     /// con promemoria il giorno prima alle 9. `dayString` in "yyyy-MM-dd".
     static func addAllDayEvent(title: String, dayString: String, notes: String? = nil) async throws {
         guard let eventDay = BrindooFormat.day(from: dayString) else {
-            throw NSError(domain: "CalendarService", code: 400,
-                          userInfo: [NSLocalizedDescriptionKey: "Data non valida"])
+            throw BrindooServiceError.invalidInput("Data non valida")
         }
 
         let store = EKEventStore()

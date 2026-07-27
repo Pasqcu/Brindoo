@@ -166,8 +166,7 @@ struct UpgradeToProfessionalView: View {
             Spacer()
         }
         .padding(BrindooSpacing.sm)
-        .background(Color.brindooSurface)
-        .clipShape(RoundedRectangle(cornerRadius: BrindooRadius.md))
+        .brindooSurfaceBackground()
     }
 
     @ViewBuilder

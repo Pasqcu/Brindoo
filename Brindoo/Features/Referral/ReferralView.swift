@@ -28,7 +28,11 @@ final class ReferralViewModel: BrindooViewModel {
             stats = (try? await statsTask) ?? .zero
             errorMessage = nil
         } catch {
-            errorMessage = error.localizedDescription
+            guard !BrindooErrorText.isCancellation(error) else { return }
+            errorMessage = BrindooErrorText.message(
+                for: error,
+                fallback: BrindooText.loadError("il tuo codice invito")
+            )
         }
     }
 
@@ -41,11 +45,12 @@ final class ReferralViewModel: BrindooViewModel {
             redeemCode = ""
             BrindooHaptics.notify(.success)
             await load()
-        } catch let err as ReferralError {
-            redeemMessage = (.error, err.localizedDescription)
-            BrindooHaptics.notify(.error)
         } catch {
-            redeemMessage = (.error, error.localizedDescription)
+            redeemMessage = (.error, BrindooErrorText.message(
+                for: error,
+                fallback: "Non è stato possibile riscattare il codice. Riprova."
+            ))
+            BrindooHaptics.notify(.error)
         }
     }
 }

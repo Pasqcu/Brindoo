@@ -41,11 +41,6 @@ struct OrganizerDetailView: View {
     @State private var isPreparingShare: Bool = false
     @State private var shareItems: SharePayload?
 
-    private struct SharePayload: Identifiable {
-        let id = UUID()
-        let items: [Any]
-    }
-
     private var isViewingOwn: Bool {
         session.userID == organizer.id
     }
@@ -298,7 +293,6 @@ struct OrganizerDetailView: View {
         isPreparingShare = true
         defer { isPreparingShare = false }
 
-        let url = URL(string: "https://brindoo.app/p/\(organizer.id.uuidString)")!
         let avatar = await ShareCardRenderer.loadImage(from: organizer.avatarUrl)
         let card = ProfileShareCard(
             name: organizer.displayName,
@@ -309,11 +303,10 @@ struct OrganizerDetailView: View {
             avatar: avatar
         )
 
-        if let image = ShareCardRenderer.render(card) {
-            shareItems = SharePayload(items: [image, url])
-        } else {
-            shareItems = SharePayload(items: [url])
-        }
+        shareItems = SharePayload(
+            card: ShareCardRenderer.render(card),
+            link: BrindooLink.url(.profile, organizer.id)
+        )
     }
 
     // MARK: - Hero

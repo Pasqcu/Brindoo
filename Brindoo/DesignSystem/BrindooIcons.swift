@@ -10,7 +10,6 @@ import SwiftUI
 
 nonisolated enum BrindooIcon {
     // Navigation
-    static let home = "house.fill"
     static let explore = "sparkles"
     static let board = "tray.full.fill"
     static let chat = "message.fill"
@@ -23,6 +22,8 @@ nonisolated enum BrindooIcon {
     static let delete = "trash"
     static let send = "paperplane.fill"
     static let close = "xmark"
+    /// "X" dentro un cerchio pieno: la chiusura sopra foto e barre.
+    static let closeCircle = "xmark.circle.fill"
     static let back = "chevron.left"
     static let forward = "chevron.right"
     static let more = "ellipsis"
@@ -57,7 +58,6 @@ nonisolated enum BrindooIcon {
     static let money = "eurosign.circle.fill"
     static let tag = "tag.fill"
     static let bell = "bell.fill"
-    static let bellSlash = "bell.slash.fill"
     static let lock = "lock.fill"
     static let shield = "shield.lefthalf.filled"
     static let chart = "chart.bar.xaxis"
@@ -79,7 +79,5 @@ nonisolated enum BrindooIcon {
     static let empty = "tray"
     static let offline = "wifi.slash"
     static let signal = "wifi"
-    static let cloud = "icloud"
-    static let cloudOffline = "icloud.slash"
 }
 

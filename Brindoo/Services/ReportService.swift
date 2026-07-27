@@ -129,8 +129,7 @@ final class ReportService {
             // Se l'utente ha già segnalato lo stesso target, l'INSERT viola
             // l'UNIQUE constraint. Lo trattiamo come success "soft": l'utente
             // ha già segnalato → conferma silenziosa.
-            let message = error.localizedDescription.lowercased()
-            if message.contains("duplicate") || message.contains("unique") {
+            if BrindooErrorText.isDuplicate(error) {
                 BrindooLog.info("Segnalazione già esistente, ignoro")
                 return
             }

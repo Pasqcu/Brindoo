@@ -59,8 +59,7 @@ struct OfferPackagesEditor: View {
                         .font(BrindooFont.bodySmall)
                 }
                 .padding(BrindooSpacing.sm)
-                .background(Color.brindooSurface)
-                .clipShape(RoundedRectangle(cornerRadius: BrindooRadius.sm))
+                .brindooSurfaceBackground(radius: BrindooRadius.sm)
                 .overlay(
                     RoundedRectangle(cornerRadius: BrindooRadius.sm)
                         .strokeBorder(Color.brindooBorder, lineWidth: 1)

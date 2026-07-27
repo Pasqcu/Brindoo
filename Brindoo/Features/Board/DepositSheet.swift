@@ -140,8 +140,7 @@ struct DepositSheet: View {
         }
         .padding(BrindooSpacing.md)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Color.brindooSurface)
-        .clipShape(RoundedRectangle(cornerRadius: BrindooRadius.md))
+        .brindooSurfaceBackground()
         .accessibilityElement(children: .combine)
     }
 
@@ -280,8 +279,7 @@ struct DepositSheet: View {
             }
             .padding(BrindooSpacing.sm)
             .frame(maxWidth: .infinity, alignment: .leading)
-            .background(Color.brindooSurface)
-            .clipShape(RoundedRectangle(cornerRadius: BrindooRadius.sm))
+            .brindooSurfaceBackground(radius: BrindooRadius.sm)
 
             Text("Conferma solo se i soldi sono davvero passati di mano.")
                 .font(BrindooFont.caption)

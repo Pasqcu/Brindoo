@@ -41,14 +41,8 @@ struct AvatarFullScreenView: View {
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
 
-            Button { onClose() } label: {
-                Image(systemName: "xmark.circle.fill")
-                    .font(.system(size: 32))
-                    .symbolRenderingMode(.palette)
-                    .foregroundStyle(.white, .black.opacity(0.5))
-            }
-            .padding()
-            .accessibilityLabel("Chiudi")
+            BrindooCloseButton { onClose() }
+                .padding()
         }
     }
 

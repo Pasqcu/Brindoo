@@ -146,73 +146,65 @@ final class OfferDetailViewModel {
 
     // MARK: - Trattativa
 
-    /// Accetta al prezzo dato (base o di un pacchetto). L'etichetta del
-    /// pacchetto, se presente, finisce nel messaggio della proposta.
-    func acceptAtPrice(_ price: Double, label: String?) async {
-        guard !isActing else { return }
+    /// Svolge un'azione sulla trattativa con le regole valide per tutte:
+    /// una sola alla volta (due tocchi rapidi non mandano due proposte),
+    /// ricarica dei dati se è andata bene, un messaggio leggibile se no.
+    ///
+    /// Restituisce nil quando l'azione non è partita o è fallita.
+    @discardableResult
+    private func perform<T>(
+        onFailure failureMessage: String,
+        _ work: () async throws -> T
+    ) async -> T? {
+        guard !isActing else { return nil }
         isActing = true
         defer { isActing = false }
         actionError = nil
         do {
+            let result = try await work()
+            await loadData()
+            return result
+        } catch {
+            actionError = failureMessage
+            BrindooLog.error("\(error)")
+            return nil
+        }
+    }
+
+    /// Accetta al prezzo dato (base o di un pacchetto). L'etichetta del
+    /// pacchetto, se presente, finisce nel messaggio della proposta.
+    func acceptAtPrice(_ price: Double, label: String?) async {
+        await perform(onFailure: "Impossibile inviare la proposta.") {
             _ = try await OfferProposalService.shared.openProposal(
                 offer: offer,
                 price: price,
                 message: label
             )
-            await loadData()
-        } catch {
-            actionError = "Impossibile inviare la proposta."
-            BrindooLog.error("\(error)")
         }
     }
 
     /// Accetta la proposta. Restituisce la conversazione aperta e con chi
     /// parlare: la festa e la navigazione le gestisce la vista.
     func acceptProposal(_ proposal: OfferProposal) async -> (conversation: Conversation, partner: Profile?)? {
-        guard !isActing else { return nil }
-        isActing = true
-        defer { isActing = false }
-        actionError = nil
-        do {
-            let conv = try await OfferProposalService.shared.accept(proposal: proposal)
-            await loadData()
-            guard let conv else { return nil }
-            let partner = userID == proposal.clientId
-                ? organizerProfile
-                : clientProfilesMap[proposal.clientId]
-            return (conv, partner)
-        } catch {
-            actionError = "Impossibile accettare."
-            BrindooLog.error("\(error)")
-            return nil
+        let opened = await perform(onFailure: "Impossibile accettare.") {
+            try await OfferProposalService.shared.accept(proposal: proposal)
         }
+        guard let conv = opened.flatMap({ $0 }) else { return nil }
+        let partner = userID == proposal.clientId
+            ? organizerProfile
+            : clientProfilesMap[proposal.clientId]
+        return (conv, partner)
     }
 
     func rejectProposal(_ proposal: OfferProposal) async {
-        guard !isActing else { return }
-        isActing = true
-        defer { isActing = false }
-        actionError = nil
-        do {
+        await perform(onFailure: "Impossibile rifiutare.") {
             try await OfferProposalService.shared.reject(proposal: proposal)
-            await loadData()
-        } catch {
-            actionError = "Impossibile rifiutare."
-            BrindooLog.error("\(error)")
         }
     }
 
     func withdrawProposal(_ proposal: OfferProposal) async {
-        guard !isActing else { return }
-        isActing = true
-        defer { isActing = false }
-        actionError = nil
-        do {
+        await perform(onFailure: "Impossibile ritirare.") {
             try await OfferProposalService.shared.withdraw(proposal: proposal)
-            await loadData()
-        } catch {
-            actionError = "Impossibile ritirare."
-            BrindooLog.error("\(error)")
         }
     }
 

@@ -87,23 +87,26 @@ struct FavoriteOffersView: View {
         }
     }
 
+    /// Due richieste in tutto: i professionisti mancanti e le categorie delle
+    /// offerte mancanti.
+    ///
+    /// Prima ne partiva una per offerta, e due offerte dello stesso
+    /// professionista ne chiedevano il profilo due volte: il controllo
+    /// "ce l'ho già" guardava una mappa che nessuna delle due aveva ancora
+    /// riempito.
     private func loadRelated(for offers: [ServiceOffer]) async {
-        await withTaskGroup(of: Void.self) { group in
-            for offer in offers {
-                if organizers[offer.organizerId] == nil {
-                    group.addTask {
-                        if let p = try? await ProfileService.shared.fetchProfile(userID: offer.organizerId) {
-                            await MainActor.run { organizers[offer.organizerId] = p }
-                        }
-                    }
-                }
-                if categories[offer.id] == nil {
-                    group.addTask {
-                        let cats = (try? await ServiceOfferService.shared.fetchOfferCategories(offerId: offer.id)) ?? []
-                        await MainActor.run { categories[offer.id] = cats }
-                    }
-                }
-            }
+        let missingOrganizers = Set(offers.map { $0.organizerId }).subtracting(organizers.keys)
+        let missingCategories = offers.map { $0.id }.filter { categories[$0] == nil }
+
+        async let profiles = ProfileService.shared.fetchProfiles(ids: Array(missingOrganizers))
+        async let categoryMap = ServiceOfferService.shared.fetchOfferCategoriesMap(offerIds: missingCategories)
+
+        for profile in (try? await profiles) ?? [] {
+            organizers[profile.id] = profile
+        }
+        let loaded = (try? await categoryMap) ?? [:]
+        for offerId in missingCategories {
+            categories[offerId] = loaded[offerId] ?? []
         }
     }
 }

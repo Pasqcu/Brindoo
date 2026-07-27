@@ -119,14 +119,8 @@ struct SignUpView: View {
             }
             .padding(.vertical, BrindooSpacing.xs)
 
-            BrindooTextField(
-                title: "Email",
-                placeholder: "tuo@email.it",
+            BrindooEmailField(
                 text: $email,
-                icon: "envelope",
-                keyboardType: .emailAddress,
-                textContentType: .emailAddress,
-                autocapitalization: .never,
                 errorMessage: emailError,
                 isDisabled: isLoading
             )
@@ -205,7 +199,7 @@ struct SignUpView: View {
                 withAnimation(BrindooAnimation.quickEase) {
                     acceptedTermsAt = acceptedTermsAndAge
                         ? ""
-                        : ISO8601DateFormatter().string(from: Date())
+                        : BrindooFormat.isoNow
                 }
             } label: {
                 HStack(alignment: .top, spacing: BrindooSpacing.sm) {
@@ -251,8 +245,7 @@ struct SignUpView: View {
         }
         .padding(BrindooSpacing.sm)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Color.brindooSurface)
-        .clipShape(RoundedRectangle(cornerRadius: BrindooRadius.md))
+        .brindooSurfaceBackground()
         .disabled(isLoading)
     }
     
@@ -275,8 +268,7 @@ struct SignUpView: View {
             }
         }
         .padding(BrindooSpacing.sm)
-        .background(Color.brindooSurface)
-        .clipShape(RoundedRectangle(cornerRadius: BrindooRadius.sm))
+        .brindooSurfaceBackground(radius: BrindooRadius.sm)
     }
     
     private var strengthColor: Color {

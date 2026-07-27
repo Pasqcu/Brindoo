@@ -66,8 +66,7 @@ struct DeleteAccountView: View {
                 }
                 .padding(BrindooSpacing.md)
                 .frame(maxWidth: .infinity, alignment: .leading)
-                .background(Color.brindooSurface)
-                .clipShape(RoundedRectangle(cornerRadius: BrindooRadius.md))
+                .brindooSurfaceBackground()
                 
                 // Conferma testuale
                 VStack(alignment: .leading, spacing: BrindooSpacing.sm) {
@@ -170,7 +169,7 @@ struct DeleteAccountView: View {
             try await AccountService.shared.deleteMyAccount()
             // Il SessionStore rileverà il signOut e tornerà a OnboardingView automaticamente
         } catch {
-            errorMessage = "Impossibile eliminare l'account. Riprova più tardi o contatta il supporto."
+            errorMessage = BrindooText.deleteError("l'account") + ". Riprova più tardi o contatta il supporto."
             BrindooLog.error("\(error)")
         }
     }

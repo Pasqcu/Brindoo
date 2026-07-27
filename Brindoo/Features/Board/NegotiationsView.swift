@@ -194,8 +194,7 @@ struct NegotiationsView: View {
                 .foregroundStyle(Color.brindooCoral)
         }
         .padding(BrindooSpacing.md)
-        .background(Color.brindooSurface)
-        .clipShape(RoundedRectangle(cornerRadius: BrindooRadius.md))
+        .brindooSurfaceBackground()
         .contentShape(Rectangle())
         .onTapGesture { Task { await loadData() } }
     }
@@ -384,8 +383,7 @@ struct NegotiationsView: View {
             }
         }
         .padding(BrindooSpacing.md)
-        .background(Color.brindooSurface)
-        .clipShape(RoundedRectangle(cornerRadius: BrindooRadius.md))
+        .brindooSurfaceBackground()
     }
 
     // MARK: - Loading
@@ -402,7 +400,7 @@ struct NegotiationsView: View {
             if state.value == nil {
                 state = .error(BrindooText.loadError("le trattative"))
             } else {
-                toastCenter.show(BrindooToast("Impossibile aggiornare le trattative", message: BrindooText.retryHint, style: .error))
+                toastCenter.show(BrindooToast(BrindooText.updateError("le trattative"), message: BrindooText.retryHint, style: .error))
             }
         }
     }

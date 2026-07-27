@@ -92,8 +92,7 @@ struct WriteReviewView: View {
                     }
                     .padding(BrindooSpacing.lg)
                     .frame(maxWidth: .infinity)
-                    .background(Color.brindooSurface)
-                    .clipShape(RoundedRectangle(cornerRadius: BrindooRadius.md))
+                    .brindooSurfaceBackground()
                     
                     // Commento
                     VStack(alignment: .leading, spacing: BrindooSpacing.xs) {
@@ -293,12 +292,12 @@ struct WriteReviewView: View {
             onSuccess()
             dismiss()
         } catch {
-            let msg = error.localizedDescription.lowercased()
-            if msg.contains("duplicate") || msg.contains("unique") {
-                generalError = "Hai già recensito questo organizzatore"
-            } else {
-                generalError = "Impossibile salvare la recensione. Riprova."
-            }
+            generalError = BrindooErrorText.isDuplicate(error)
+                ? "Hai già recensito questo organizzatore"
+                : BrindooErrorText.message(
+                    for: error,
+                    fallback: BrindooText.saveError("la recensione")
+                )
             BrindooLog.error("\(error)")
         }
     }
@@ -314,7 +313,7 @@ struct WriteReviewView: View {
             onSuccess()
             dismiss()
         } catch {
-            generalError = "Impossibile eliminare la recensione"
+            generalError = BrindooText.deleteError("la recensione")
             BrindooLog.error("\(error)")
         }
     }

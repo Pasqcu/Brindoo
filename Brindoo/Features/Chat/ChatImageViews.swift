@@ -38,13 +38,8 @@ struct FullScreenImageView: View {
                 ProgressView().tint(.white)
             }
 
-            Button { onClose() } label: {
-                Image(systemName: "xmark.circle.fill")
-                    .font(.system(size: 32))
-                    .foregroundStyle(.white)
-            }
-            .padding()
-            .accessibilityLabel("Chiudi")
+            BrindooCloseButton { onClose() }
+                .padding()
         }
     }
 }
@@ -179,12 +174,7 @@ struct BombImageViewer: View {
                             .foregroundStyle(.white)
                     }
                     Spacer()
-                    Button { onClose() } label: {
-                        Image(systemName: "xmark.circle.fill")
-                            .font(.system(size: 28))
-                            .foregroundStyle(.white)
-                    }
-                    .accessibilityLabel("Chiudi")
+                    BrindooCloseButton { onClose() }
                 }
                 .padding()
 

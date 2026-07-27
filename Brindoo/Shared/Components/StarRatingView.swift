@@ -49,7 +49,7 @@ struct StarRatingView: View {
                     bouncingIndex = index
                     onChange?(index)
                     Task {
-                        try? await Task.sleep(nanoseconds: 280_000_000)
+                        try? await Task.sleep(for: .milliseconds(280))
                         bouncingIndex = nil
                     }
                 } label: {
@@ -67,7 +67,7 @@ struct StarRatingView: View {
     
     @ViewBuilder
     private func starImage(filled: Bool, half: Bool) -> some View {
-        Image(systemName: half ? "star.leadinghalf.filled" : (filled ? "star.fill" : "star"))
+        Image(systemName: half ? BrindooIcon.starHalf : (filled ? BrindooIcon.starFilled : BrindooIcon.star))
             .font(.system(size: size, weight: .medium))
             .foregroundStyle(filled || half ? color : Color.brindooBorder)
     }
@@ -83,20 +83,20 @@ struct CompactRatingView: View {
     var body: some View {
         HStack(spacing: 4) {
             Image(systemName: BrindooIcon.starFilled)
-                .font(.system(size: size - 2))
+                .font(BrindooFont.scaled(size - 2, relativeTo: .footnote))
                 .foregroundStyle(rating.reviewCount > 0 ? Color.brindooCoral : Color.brindooBorder)
-            
+
             if rating.reviewCount > 0 {
                 Text(rating.displayRating)
-                    .font(.system(size: size, weight: .semibold))
+                    .font(BrindooFont.scaled(size, weight: .semibold, relativeTo: .footnote))
                     .foregroundStyle(Color.brindooTextPrimary)
-                
+
                 Text("(\(rating.reviewCount))")
-                    .font(.system(size: size - 1))
+                    .font(BrindooFont.scaled(size - 1, relativeTo: .footnote))
                     .foregroundStyle(Color.brindooTextSecondary)
             } else {
                 Text("Nuovo")
-                    .font(.system(size: size - 1))
+                    .font(BrindooFont.scaled(size - 1, relativeTo: .footnote))
                     .foregroundStyle(Color.brindooTextSecondary)
             }
         }

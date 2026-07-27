@@ -53,11 +53,7 @@ final class ProfileService {
     @discardableResult
     func createProfileIfNeeded(role: UserRole = .client) async throws -> Profile {
         guard let userID = SupabaseManager.shared.currentUserID else {
-            throw NSError(
-                domain: "ProfileService",
-                code: 401,
-                userInfo: [NSLocalizedDescriptionKey: BrindooText.loginRequired]
-            )
+            throw BrindooServiceError.notLoggedIn
         }
 
         if let existing = try await fetchProfile(userID: userID) {
@@ -89,8 +85,7 @@ final class ProfileService {
     @discardableResult
     func updateCurrentProfile(_ update: ProfileUpdate) async throws -> Profile {
         guard let userID = SupabaseManager.shared.currentUserID else {
-            throw NSError(domain: "ProfileService", code: 401,
-                          userInfo: [NSLocalizedDescriptionKey: BrindooText.loginRequired])
+            throw BrindooServiceError.notLoggedIn
         }
 
         struct Payload: Encodable {
@@ -126,7 +121,7 @@ final class ProfileService {
     /// Aggiornamento ruolo
     func setRole(_ role: UserRole) async throws -> Profile {
         guard let userID = SupabaseManager.shared.currentUserID else {
-            throw NSError(domain: "Profile", code: 401)
+            throw BrindooServiceError.notLoggedIn
         }
         struct Payload: Encodable { let role: String }
         return try await client
@@ -150,7 +145,7 @@ final class ProfileService {
         avatarUrl: String?
     ) async throws -> Profile {
         guard let userID = SupabaseManager.shared.currentUserID else {
-            throw NSError(domain: "Profile", code: 401)
+            throw BrindooServiceError.notLoggedIn
         }
 
         struct Payload: Encodable {
@@ -185,7 +180,7 @@ final class ProfileService {
     @discardableResult
     func updateCoverageAreas(_ slugs: [String]) async throws -> Profile {
         guard let userID = SupabaseManager.shared.currentUserID else {
-            throw NSError(domain: "Profile", code: 401)
+            throw BrindooServiceError.notLoggedIn
         }
         struct Payload: Encodable { let coverage_areas: [String] }
         return try await client
@@ -201,7 +196,7 @@ final class ProfileService {
     /// Aggiornamento domande frequenti del professionista (max 5).
     func updateFAQs(_ faqs: [ProfileFAQ]) async throws -> Profile {
         guard let userID = SupabaseManager.shared.currentUserID else {
-            throw NSError(domain: "Profile", code: 401)
+            throw BrindooServiceError.notLoggedIn
         }
         struct Payload: Encodable { let faqs: [ProfileFAQ] }
         return try await client
@@ -217,7 +212,7 @@ final class ProfileService {
     /// Registra sul server l'accettazione dei Termini (data + versione corrente).
     func recordTermsAcceptance() async throws -> Profile {
         guard let userID = SupabaseManager.shared.currentUserID else {
-            throw NSError(domain: "Profile", code: 401)
+            throw BrindooServiceError.notLoggedIn
         }
         struct Payload: Encodable {
             let terms_accepted_at: String
@@ -226,7 +221,7 @@ final class ProfileService {
         return try await client
             .from("profiles")
             .update(Payload(
-                terms_accepted_at: ISO8601DateFormatter().string(from: Date()),
+                terms_accepted_at: BrindooFormat.isoNow,
                 terms_version: LegalVersion.current
             ))
             .eq("id", value: userID)
@@ -239,12 +234,12 @@ final class ProfileService {
     /// Registra la dichiarazione di responsabilità del professionista.
     func recordProfessionalDeclaration() async throws -> Profile {
         guard let userID = SupabaseManager.shared.currentUserID else {
-            throw NSError(domain: "Profile", code: 401)
+            throw BrindooServiceError.notLoggedIn
         }
         struct Payload: Encodable { let professional_declaration_at: String }
         return try await client
             .from("profiles")
-            .update(Payload(professional_declaration_at: ISO8601DateFormatter().string(from: Date())))
+            .update(Payload(professional_declaration_at: BrindooFormat.isoNow))
             .eq("id", value: userID)
             .select()
             .single()
@@ -282,7 +277,7 @@ final class ProfileService {
                 latest = profile
                 if condition(profile) { return profile }
             }
-            try? await Task.sleep(nanoseconds: UInt64(pollEvery * 1_000_000_000))
+            try? await Task.sleep(for: .seconds(pollEvery))
         }
         return latest
     }
@@ -318,7 +313,7 @@ final class ProfileService {
             let is_pro: Bool
             let pro_expires_at: String?
         }
-        let expStr = expiresAt.map { ISO8601DateFormatter().string(from: $0) }
+        let expStr = expiresAt.map { BrindooFormat.iso($0) }
         try await client
             .from("profiles")
             .update(Payload(is_pro: isPro, pro_expires_at: expStr))
@@ -332,7 +327,7 @@ final class ProfileService {
         struct Payload: Encodable { let boost_expires_at: String }
         try await client
             .from("profiles")
-            .update(Payload(boost_expires_at: ISO8601DateFormatter().string(from: expiresAt)))
+            .update(Payload(boost_expires_at: BrindooFormat.iso(expiresAt)))
             .eq("id", value: userID)
             .execute()
     }

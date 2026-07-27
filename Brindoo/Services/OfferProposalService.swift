@@ -97,7 +97,7 @@ final class OfferProposalService {
         eventDate: String? = nil
     ) async throws -> OfferProposal {
         guard let userId = SupabaseManager.shared.currentUserID else {
-            throw NSError(domain: "OfferProposal", code: 401)
+            throw BrindooServiceError.notLoggedIn
         }
 
         // Prima verifica che non ce ne sia già una attiva.
@@ -422,7 +422,7 @@ final class OfferProposalService {
                 deposit_method: method.rawValue,
                 deposit_note: note?.isEmpty == true ? nil : note,
                 deposit_declared_by: me,
-                deposit_declared_at: ISO8601DateFormatter().string(from: Date()),
+                deposit_declared_at: BrindooFormat.isoNow,
                 // Una nuova dichiarazione azzera l'eventuale conferma vecchia.
                 deposit_confirmed_by: nil,
                 deposit_confirmed_at: nil
@@ -442,7 +442,7 @@ final class OfferProposalService {
             .from("offer_proposals")
             .update(U(
                 deposit_confirmed_by: me,
-                deposit_confirmed_at: ISO8601DateFormatter().string(from: Date())
+                deposit_confirmed_at: BrindooFormat.isoNow
             ))
             .eq("id", value: proposalId)
             .execute()

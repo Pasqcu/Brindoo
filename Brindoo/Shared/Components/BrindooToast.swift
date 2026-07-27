@@ -35,7 +35,7 @@ final class BrindooToastCenter: ObservableObject {
         }
         BrindooHaptics.notify(toast.style == .error ? .error : (toast.style == .success ? .success : .warning))
         dismissTask = Task { [weak self] in
-            try? await Task.sleep(nanoseconds: UInt64(toast.duration * 1_000_000_000))
+            try? await Task.sleep(for: .seconds(toast.duration))
             if Task.isCancelled { return }
             await MainActor.run {
                 withAnimation(BrindooAnimation.smooth) {

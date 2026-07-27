@@ -103,8 +103,7 @@ struct AppGuideView: View {
                 }
                 .padding(BrindooSpacing.sm)
                 .frame(maxWidth: .infinity, alignment: .leading)
-                .background(Color.brindooSurface)
-                .clipShape(RoundedRectangle(cornerRadius: BrindooRadius.md))
+                .brindooSurfaceBackground()
             }
         }
     }

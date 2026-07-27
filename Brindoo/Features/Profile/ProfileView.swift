@@ -292,8 +292,7 @@ struct ProfileView: View {
                 .foregroundStyle(Color.brindooTextSecondary)
         }
         .padding(BrindooSpacing.md)
-        .background(Color.brindooSurface)
-        .clipShape(RoundedRectangle(cornerRadius: BrindooRadius.md))
+        .brindooSurfaceBackground()
     }
 
     @ViewBuilder
@@ -362,12 +361,7 @@ struct ProfileView: View {
             NegotiationsView()
         } label: {
             HStack(spacing: BrindooSpacing.sm) {
-                Image(systemName: "arrow.left.arrow.right")
-                    .font(.system(size: 16, weight: .semibold))
-                    .foregroundStyle(.white)
-                    .frame(width: 36, height: 36)
-                    .background(Color.brindooCoral)
-                    .clipShape(Circle())
+                BrindooIconBadge("arrow.left.arrow.right")
                 VStack(alignment: .leading, spacing: 2) {
                     Text("Trattative attive")
                         .font(BrindooFont.bodyMedium.weight(.semibold))
@@ -382,8 +376,7 @@ struct ProfileView: View {
                     .foregroundStyle(Color.brindooTextSecondary)
             }
             .padding(BrindooSpacing.md)
-            .background(Color.brindooSurface)
-            .clipShape(RoundedRectangle(cornerRadius: BrindooRadius.md))
+            .brindooSurfaceBackground()
         }
         .buttonStyle(.plain)
     }
@@ -400,8 +393,7 @@ struct ProfileView: View {
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(BrindooSpacing.md)
-        .background(Color.brindooSurface)
-        .clipShape(RoundedRectangle(cornerRadius: BrindooRadius.md))
+        .brindooSurfaceBackground()
     }
 
     @ViewBuilder
@@ -413,12 +405,7 @@ struct ProfileView: View {
             VStack(spacing: BrindooSpacing.xs) {
                 ForEach(vm.organizerCategories) { detail in
                     HStack(alignment: .top, spacing: BrindooSpacing.sm) {
-                        Image(systemName: detail.category.icon)
-                            .font(.system(size: 18))
-                            .foregroundStyle(.white)
-                            .frame(width: 36, height: 36)
-                            .background(Color.brindooCoral)
-                            .clipShape(Circle())
+                        BrindooIconBadge(detail.category.icon)
 
                         VStack(alignment: .leading, spacing: 2) {
                             Text(detail.category.name)
@@ -433,8 +420,7 @@ struct ProfileView: View {
                         Spacer()
                     }
                     .padding(BrindooSpacing.sm)
-                    .background(Color.brindooSurface)
-                    .clipShape(RoundedRectangle(cornerRadius: BrindooRadius.sm))
+                    .brindooSurfaceBackground(radius: BrindooRadius.sm)
                 }
             }
         }
@@ -459,8 +445,7 @@ struct ProfileView: View {
                 Spacer()
             }
             .padding(BrindooSpacing.md)
-            .background(Color.brindooSurface)
-            .clipShape(RoundedRectangle(cornerRadius: BrindooRadius.md))
+            .brindooSurfaceBackground()
         }
     }
 
@@ -486,8 +471,7 @@ struct ProfileView: View {
             }
             .frame(maxWidth: .infinity, alignment: .leading)
             .padding(BrindooSpacing.md)
-            .background(Color.brindooSurface)
-            .clipShape(RoundedRectangle(cornerRadius: BrindooRadius.md))
+            .brindooSurfaceBackground()
         }
         .buttonStyle(.plain)
     }

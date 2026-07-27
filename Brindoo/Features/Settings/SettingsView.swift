@@ -199,8 +199,7 @@ struct SettingsView: View {
                             }
                             .buttonStyle(.plain)
                         }
-                        .background(Color.brindooSurface)
-                        .clipShape(RoundedRectangle(cornerRadius: BrindooRadius.md))
+                        .brindooSurfaceBackground()
                     }
 
                     // MARK: - Modalità vacanza (organizzatori, Pro-only)
@@ -244,8 +243,7 @@ struct SettingsView: View {
                             }
                             .buttonStyle(.plain)
                         }
-                        .background(Color.brindooSurface)
-                        .clipShape(RoundedRectangle(cornerRadius: BrindooRadius.md))
+                        .brindooSurfaceBackground()
                     }
 
                     // MARK: - Assistenza
@@ -299,8 +297,7 @@ struct SettingsView: View {
                             }
                             .buttonStyle(.plain)
                         }
-                        .background(Color.brindooSurface)
-                        .clipShape(RoundedRectangle(cornerRadius: BrindooRadius.md))
+                        .brindooSurfaceBackground()
                     }
 
                     // MARK: - Info & Supporto
@@ -326,8 +323,7 @@ struct SettingsView: View {
 
                             SettingsRow(icon: "info.circle", iconColor: .brindooTextSecondary, title: "Versione", subtitle: appVersion)
                         }
-                        .background(Color.brindooSurface)
-                        .clipShape(RoundedRectangle(cornerRadius: BrindooRadius.md))
+                        .brindooSurfaceBackground()
                     }
 
                     // MARK: - Account
@@ -367,8 +363,7 @@ struct SettingsView: View {
                             }
                             .buttonStyle(.plain)
                         }
-                        .background(Color.brindooSurface)
-                        .clipShape(RoundedRectangle(cornerRadius: BrindooRadius.md))
+                        .brindooSurfaceBackground()
                     }
                 }
                 .padding(BrindooSpacing.md)

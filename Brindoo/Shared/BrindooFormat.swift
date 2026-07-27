@@ -151,6 +151,66 @@ enum BrindooFormat {
         italianDateFormatter.string(from: date)
     }
 
+    /// "yyyy" della data (anno di iscrizione, intestazioni).
+    static func year(from date: Date) -> String {
+        yearFormatter.string(from: date)
+    }
+
+    private static let yearFormatter: DateFormatter = {
+        let f = DateFormatter()
+        f.locale = Locale(identifier: "it_IT")
+        f.dateFormat = "yyyy"
+        f.timeZone = dayTimeZone
+        return f
+    }()
+
+    // MARK: - Orari e timestamp
+
+    private static let timeFormatter: DateFormatter = {
+        let f = DateFormatter()
+        f.locale = Locale(identifier: "it_IT")
+        f.dateFormat = "HH:mm"
+        return f
+    }()
+
+    private static let shortDayFormatter: DateFormatter = {
+        let f = DateFormatter()
+        f.locale = Locale(identifier: "it_IT")
+        f.dateFormat = "dd/MM"
+        return f
+    }()
+
+    /// "21:35" — orario di un messaggio.
+    static func time(_ date: Date) -> String {
+        timeFormatter.string(from: date)
+    }
+
+    /// Etichetta della lista chat: l'orario se è di oggi, "Ieri" il giorno
+    /// prima, altrimenti "dd/MM".
+    static func chatListTimestamp(_ date: Date, now: Date = Date()) -> String {
+        let cal = dayCalendar
+        if cal.isDate(date, inSameDayAs: now) { return time(date) }
+        if let yesterday = cal.date(byAdding: .day, value: -1, to: cal.startOfDay(for: now)),
+           cal.isDate(date, inSameDayAs: yesterday) {
+            return "Ieri"
+        }
+        return shortDayFormatter.string(from: date)
+    }
+
+    // MARK: - Timestamp ISO 8601 (formato usato dal database)
+
+    private static let isoFormatter = ISO8601DateFormatter()
+
+    /// Data nel formato che il database si aspetta per le colonne `timestamptz`.
+    /// Prima ogni chiamata si costruiva il proprio formatter: una ventina di
+    /// allocazioni inutili su percorsi caldi come l'invio di un messaggio.
+    static func iso(_ date: Date) -> String {
+        isoFormatter.string(from: date)
+    }
+
+    /// Adesso, in ISO 8601.
+    static var isoNow: String { isoFormatter.string(from: Date()) }
+
     // MARK: - Tempo relativo
 
     private static let relativeAbbrev: RelativeDateTimeFormatter = {

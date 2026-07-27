@@ -120,7 +120,7 @@ private struct CoachMarkModifier: ViewModifier {
         }
         .task {
             // Aspetta che la view sia disegnata prima di mostrare
-            try? await Task.sleep(nanoseconds: 600_000_000)
+            try? await Task.sleep(for: .milliseconds(600))
             if !CoachMarkTracker.shared.hasSeen(id) {
                 withAnimation { isVisible = true }
             }

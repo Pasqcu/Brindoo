@@ -342,7 +342,7 @@ struct PortfolioGalleryView: View {
             try await PortfolioService.shared.deletePhoto(item)
             items.removeAll { $0.id == item.id }
         } catch {
-            errorMessage = "Impossibile eliminare la foto"
+            errorMessage = BrindooText.deleteError("la foto")
             BrindooLog.error("\(error)")
         }
     }

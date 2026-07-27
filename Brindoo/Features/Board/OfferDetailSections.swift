@@ -125,23 +125,13 @@ struct BookingActionButtons: View {
                 HStack(spacing: BrindooSpacing.sm) {
                     Button { onMark(.completed) } label: {
                         Label("Segna svolto", systemImage: "checkmark.seal")
-                            .font(BrindooFont.bodySmall.weight(.semibold))
-                            .frame(maxWidth: .infinity)
-                            .padding(.vertical, 10)
-                            .foregroundStyle(Color.brindooSuccess)
-                            .background(Color.brindooSuccess.opacity(0.1))
-                            .clipShape(RoundedRectangle(cornerRadius: BrindooRadius.sm))
+                            .brindooCompactAction(tint: .brindooSuccess)
                     }
                     .buttonStyle(.plain)
 
                     Button { onMark(.cancelled) } label: {
                         Label("Annulla", systemImage: "calendar.badge.minus")
-                            .font(BrindooFont.bodySmall.weight(.semibold))
-                            .frame(maxWidth: .infinity)
-                            .padding(.vertical, 10)
-                            .foregroundStyle(Color.brindooError)
-                            .background(Color.brindooError.opacity(0.1))
-                            .clipShape(RoundedRectangle(cornerRadius: BrindooRadius.sm))
+                            .brindooCompactAction(tint: .brindooError)
                     }
                     .buttonStyle(.plain)
                 }
@@ -150,28 +140,14 @@ struct BookingActionButtons: View {
                     Button { onMoveDate() } label: {
                         Label(proposal.eventDate == nil ? "Fissa una data" : "Sposta data",
                               systemImage: "calendar.badge.clock")
-                            .font(BrindooFont.bodySmall.weight(.semibold))
-                            .frame(maxWidth: .infinity)
-                            .padding(.vertical, 10)
-                            .foregroundStyle(Color.brindooCoral)
-                            .background(Color.brindooCoral.opacity(0.1))
-                            .clipShape(RoundedRectangle(cornerRadius: BrindooRadius.sm))
+                            .brindooCompactAction(tint: .brindooCoral)
                     }
                     .buttonStyle(.plain)
 
                     if let onAddToCalendar {
                         Button { onAddToCalendar() } label: {
                             Label("Nel calendario", systemImage: "calendar.badge.plus")
-                                .font(BrindooFont.bodySmall.weight(.semibold))
-                                .frame(maxWidth: .infinity)
-                                .padding(.vertical, 10)
-                                .foregroundStyle(Color.brindooTextPrimary)
-                                .background(Color.brindooSurface)
-                                .overlay(
-                                    RoundedRectangle(cornerRadius: BrindooRadius.sm)
-                                        .strokeBorder(Color.brindooBorder, lineWidth: 1)
-                                )
-                                .clipShape(RoundedRectangle(cornerRadius: BrindooRadius.sm))
+                                .brindooCompactAction(tint: .brindooTextPrimary, bordered: true)
                         }
                         .buttonStyle(.plain)
                     }
@@ -276,8 +252,7 @@ struct ReceivedProposalsSection: View {
                     .foregroundStyle(Color.brindooTextSecondary)
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .padding(BrindooSpacing.md)
-                    .background(Color.brindooSurface)
-                    .clipShape(RoundedRectangle(cornerRadius: BrindooRadius.md))
+                    .brindooSurfaceBackground()
             } else {
                 ForEach(proposals) { proposal in
                     card(proposal)
@@ -329,8 +304,7 @@ struct ReceivedProposalsSection: View {
             actions(proposal, client: client)
         }
         .padding(BrindooSpacing.md)
-        .background(Color.brindooSurface)
-        .clipShape(RoundedRectangle(cornerRadius: BrindooRadius.md))
+        .brindooSurfaceBackground()
     }
 
     @ViewBuilder
@@ -367,23 +341,13 @@ struct ReceivedProposalsSection: View {
                 HStack(spacing: BrindooSpacing.sm) {
                     Button { onReject(proposal) } label: {
                         Label("Rifiuta", systemImage: BrindooIcon.close)
-                            .font(BrindooFont.bodySmall.weight(.semibold))
-                            .frame(maxWidth: .infinity)
-                            .padding(.vertical, 10)
-                            .foregroundStyle(Color.brindooError)
-                            .background(Color.brindooError.opacity(0.1))
-                            .clipShape(RoundedRectangle(cornerRadius: BrindooRadius.sm))
+                            .brindooCompactAction(tint: .brindooError)
                     }
                     .buttonStyle(.plain)
 
                     Button { onAccept(proposal) } label: {
                         Label("Accetta", systemImage: "checkmark")
-                            .font(BrindooFont.bodySmall.weight(.semibold))
-                            .frame(maxWidth: .infinity)
-                            .padding(.vertical, 10)
-                            .foregroundStyle(.white)
-                            .background(Color.brindooSuccess)
-                            .clipShape(RoundedRectangle(cornerRadius: BrindooRadius.sm))
+                            .brindooCompactAction(tint: .brindooSuccess, filled: true)
                     }
                     .buttonStyle(.plain)
                 }

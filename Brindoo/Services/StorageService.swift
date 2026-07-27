@@ -2,8 +2,14 @@
 //  StorageService.swift
 //  Brindoo
 //
-//  Service per gestire upload e cancellazione di immagini su Supabase Storage.
-//  Gestisce: avatar utente e foto del portfolio organizzatori.
+//  Upload e cancellazione di immagini su Supabase Storage: avatar, portfolio,
+//  copertine delle offerte e foto delle recensioni.
+//
+//  I quattro tipi di caricamento facevano gli stessi cinque passi (controllo
+//  sessione, compressione, invio, URL pubblico, registro) ricopiati ogni
+//  volta, con differenze non volute: uno non registrava niente, un altro
+//  restituiva un errore diverso a parità di causa. Ora il percorso è uno solo
+//  e ogni metodo dice soltanto dove va il file.
 //
 
 import Foundation
@@ -12,16 +18,24 @@ import Supabase
 
 @MainActor
 final class StorageService {
-    
+
     static let shared = StorageService()
     private init() {}
-    
+
     private var storage: SupabaseStorageClient {
         SupabaseManager.shared.storage
     }
-    
+
+    /// I due contenitori usati su Supabase Storage.
+    private enum Bucket {
+        static let avatars = "avatars"
+        /// Le policy consentono qualunque percorso che inizi con l'id utente,
+        /// quindi qui stanno anche copertine delle offerte e foto recensione.
+        static let portfolio = "portfolio"
+    }
+
     // MARK: - Compressione immagini
-    
+
     /// Comprime un'immagine UIImage in JPEG di qualità decente per upload.
     /// Ridimensiona a max 1600px lato lungo per limitare i kB.
     private func compressImage(_ image: UIImage, quality: CGFloat = 0.7) -> Data? {
@@ -29,194 +43,150 @@ final class StorageService {
         let resized = resizeImage(image, maxDimension: maxDimension)
         return resized.jpegData(compressionQuality: quality)
     }
-    
+
     private func resizeImage(_ image: UIImage, maxDimension: CGFloat) -> UIImage {
         let size = image.size
         let largest = max(size.width, size.height)
         guard largest > maxDimension else { return image }
-        
+
         let ratio = maxDimension / largest
         let newSize = CGSize(width: size.width * ratio, height: size.height * ratio)
-        
+
         let renderer = UIGraphicsImageRenderer(size: newSize)
         return renderer.image { _ in
             image.draw(in: CGRect(origin: .zero, size: newSize))
         }
     }
-    
-    // MARK: - Avatar utente
-    
-    /// Carica l'avatar dell'utente corrente. Restituisce l'URL pubblico.
-    /// Path nel bucket: avatars/{user_id}/avatar.jpg
-    func uploadAvatar(_ image: UIImage) async throws -> String {
+
+    // MARK: - Caricamento
+
+    /// Percorso dentro il contenitore, sempre sotto la cartella dell'utente:
+    /// è la condizione che le policy del server controllano.
+    private func userPath(_ filename: String) throws -> (userId: UUID, path: String) {
         guard let userId = SupabaseManager.shared.currentUserID else {
-            throw NSError(domain: "StorageService", code: 401,
-                          userInfo: [NSLocalizedDescriptionKey: BrindooText.loginRequired])
+            throw BrindooServiceError.notLoggedIn
         }
-        
-        guard let imageData = compressImage(image) else {
-            throw NSError(domain: "StorageService", code: 400,
-                          userInfo: [NSLocalizedDescriptionKey: BrindooText.invalidImage])
+        return (userId, "\(userId.uuidString)/\(filename)")
+    }
+
+    /// Comprime, carica e restituisce l'indirizzo pubblico del file.
+    /// `upsert` sovrascrive un file con lo stesso nome (serve solo all'avatar,
+    /// che ha un nome fisso).
+    private func upload(
+        _ image: UIImage,
+        to bucket: String,
+        filename: String,
+        quality: CGFloat,
+        upsert: Bool,
+        describedAs description: String
+    ) async throws -> (url: String, path: String) {
+        let path = try userPath(filename).path
+
+        guard let data = compressImage(image, quality: quality) else {
+            throw BrindooServiceError.invalidImage
         }
-        
-        let path = "\(userId.uuidString)/avatar.jpg"
-        
+
         do {
-            // Upload con upsert: sovrascrive il file esistente
             try await storage
-                .from("avatars")
+                .from(bucket)
                 .upload(
                     path,
-                    data: imageData,
+                    data: data,
                     options: FileOptions(
                         cacheControl: "3600",
                         contentType: "image/jpeg",
-                        upsert: true
+                        upsert: upsert
                     )
                 )
-            
-            // Costruisci l'URL pubblico (con cache busting per forzare refresh)
-            let publicUrl = try storage.from("avatars").getPublicURL(path: path)
-            let urlWithCacheBust = "\(publicUrl.absoluteString)?t=\(Int(Date().timeIntervalSince1970))"
-            
-            BrindooLog.info("Avatar caricato: \(urlWithCacheBust)")
-            return urlWithCacheBust
+            let publicUrl = try storage.from(bucket).getPublicURL(path: path)
+            BrindooLog.info("\(description) caricata")
+            return (publicUrl.absoluteString, path)
         } catch {
-            BrindooLog.error("Errore upload avatar: \(error)")
+            BrindooLog.error("Errore upload \(description): \(error)")
             throw error
         }
     }
-    
+
+    // MARK: - Avatar utente
+
+    /// Carica l'avatar dell'utente corrente. Restituisce l'URL pubblico.
+    /// Path nel bucket: avatars/{user_id}/avatar.jpg
+    func uploadAvatar(_ image: UIImage) async throws -> String {
+        let result = try await upload(
+            image,
+            to: Bucket.avatars,
+            filename: "avatar.jpg",
+            quality: 0.7,
+            upsert: true,
+            describedAs: "Avatar"
+        )
+        // Il nome del file non cambia mai: senza questa coda le cache
+        // continuerebbero a mostrare la foto vecchia.
+        return "\(result.url)?t=\(Int(Date().timeIntervalSince1970))"
+    }
+
     /// Cancella l'avatar dell'utente corrente
     func deleteAvatar() async throws {
         guard let userId = SupabaseManager.shared.currentUserID else { return }
-        
-        let path = "\(userId.uuidString)/avatar.jpg"
-        
+
         do {
-            _ = try await storage.from("avatars").remove(paths: [path])
+            _ = try await storage
+                .from(Bucket.avatars)
+                .remove(paths: ["\(userId.uuidString)/avatar.jpg"])
             BrindooLog.info("Avatar cancellato")
         } catch {
             BrindooLog.error("Errore cancellazione avatar: \(error)")
             // Non rilancio l'errore: se il file non esiste è ok lo stesso
         }
     }
-    
+
     // MARK: - Portfolio
-    
+
     /// Carica una foto nel portfolio dell'organizzatore corrente.
     /// Restituisce: (publicUrl, storagePath) per salvarli nella tabella portfolio_items
     func uploadPortfolioImage(_ image: UIImage) async throws -> (url: String, path: String) {
-        guard let userId = SupabaseManager.shared.currentUserID else {
-            throw NSError(domain: "StorageService", code: 401,
-                          userInfo: [NSLocalizedDescriptionKey: BrindooText.loginRequired])
-        }
-        
-        guard let imageData = compressImage(image, quality: 0.8) else {
-            throw NSError(domain: "StorageService", code: 400,
-                          userInfo: [NSLocalizedDescriptionKey: BrindooText.invalidImage])
-        }
-        
-        let filename = "\(UUID().uuidString).jpg"
-        let path = "\(userId.uuidString)/\(filename)"
-        
-        do {
-            try await storage
-                .from("portfolio")
-                .upload(
-                    path,
-                    data: imageData,
-                    options: FileOptions(
-                        cacheControl: "3600",
-                        contentType: "image/jpeg",
-                        upsert: false
-                    )
-                )
-            
-            let publicUrl = try storage.from("portfolio").getPublicURL(path: path)
-            
-            BrindooLog.info("Foto portfolio caricata")
-            return (url: publicUrl.absoluteString, path: path)
-        } catch {
-            BrindooLog.error("Errore upload portfolio: \(error)")
-            throw error
-        }
+        try await upload(
+            image,
+            to: Bucket.portfolio,
+            filename: "\(UUID().uuidString).jpg",
+            quality: 0.8,
+            upsert: false,
+            describedAs: "Foto portfolio"
+        )
     }
-    
+
     // MARK: - Foto di copertina offerta
 
-    /// Carica la foto di copertina di un'offerta. Riusa il bucket `portfolio`
-    /// (le policy consentono path che iniziano con l'id utente). Restituisce l'URL pubblico.
+    /// Carica la foto di copertina di un'offerta. Restituisce l'URL pubblico.
     func uploadOfferImage(_ image: UIImage) async throws -> String {
-        guard let userId = SupabaseManager.shared.currentUserID else {
-            throw NSError(domain: "StorageService", code: 401,
-                          userInfo: [NSLocalizedDescriptionKey: BrindooText.loginRequired])
-        }
-
-        guard let imageData = compressImage(image, quality: 0.8) else {
-            throw NSError(domain: "StorageService", code: 400,
-                          userInfo: [NSLocalizedDescriptionKey: BrindooText.invalidImage])
-        }
-
-        let path = "\(userId.uuidString)/offer_\(UUID().uuidString).jpg"
-
-        do {
-            try await storage
-                .from("portfolio")
-                .upload(
-                    path,
-                    data: imageData,
-                    options: FileOptions(
-                        cacheControl: "3600",
-                        contentType: "image/jpeg",
-                        upsert: false
-                    )
-                )
-            let publicUrl = try storage.from("portfolio").getPublicURL(path: path)
-            BrindooLog.info("Foto offerta caricata")
-            return publicUrl.absoluteString
-        } catch {
-            BrindooLog.error("Errore upload foto offerta: \(error)")
-            throw error
-        }
+        try await upload(
+            image,
+            to: Bucket.portfolio,
+            filename: "offer_\(UUID().uuidString).jpg",
+            quality: 0.8,
+            upsert: false,
+            describedAs: "Foto offerta"
+        ).url
     }
 
     // MARK: - Foto recensione
 
-    /// Carica la foto allegata a una recensione (lato cliente). Riusa il
-    /// bucket `portfolio` (upload consentito a ogni utente autenticato).
+    /// Carica la foto allegata a una recensione (lato cliente).
     func uploadReviewImage(_ image: UIImage) async throws -> String {
-        guard let userId = SupabaseManager.shared.currentUserID else {
-            throw NSError(domain: "StorageService", code: 401,
-                          userInfo: [NSLocalizedDescriptionKey: BrindooText.loginRequired])
-        }
-
-        guard let imageData = compressImage(image, quality: 0.8) else {
-            throw NSError(domain: "StorageService", code: 400,
-                          userInfo: [NSLocalizedDescriptionKey: BrindooText.invalidImage])
-        }
-
-        let path = "\(userId.uuidString)/review_\(UUID().uuidString).jpg"
-
-        try await storage
-            .from("portfolio")
-            .upload(
-                path,
-                data: imageData,
-                options: FileOptions(
-                    cacheControl: "3600",
-                    contentType: "image/jpeg",
-                    upsert: false
-                )
-            )
-        let publicUrl = try storage.from("portfolio").getPublicURL(path: path)
-        return publicUrl.absoluteString
+        try await upload(
+            image,
+            to: Bucket.portfolio,
+            filename: "review_\(UUID().uuidString).jpg",
+            quality: 0.8,
+            upsert: false,
+            describedAs: "Foto recensione"
+        ).url
     }
 
     /// Cancella una foto specifica dal portfolio
     func deletePortfolioImage(storagePath: String) async throws {
         do {
-            _ = try await storage.from("portfolio").remove(paths: [storagePath])
+            _ = try await storage.from(Bucket.portfolio).remove(paths: [storagePath])
             BrindooLog.info("Foto portfolio cancellata: \(storagePath)")
         } catch {
             BrindooLog.error("Errore cancellazione foto portfolio: \(error)")

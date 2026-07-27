@@ -172,12 +172,7 @@ struct ClientNegotiationSection: View {
 
             // Mostra "ultima controproposta" — chi ha proposto cosa.
             HStack(spacing: BrindooSpacing.sm) {
-                Image(systemName: proposal.lastProposer == .organizer ? "person.badge.shield.checkmark" : "person.fill")
-                    .font(.system(size: 18))
-                    .foregroundStyle(.white)
-                    .frame(width: 36, height: 36)
-                    .background(Color.brindooCoral)
-                    .clipShape(Circle())
+                BrindooIconBadge(proposal.lastProposer == .organizer ? "person.badge.shield.checkmark" : "person.fill")
                 VStack(alignment: .leading, spacing: 2) {
                     Text(proposal.lastProposer == .organizer ? "Controproposta organizzatore" : "La tua proposta")
                         .font(BrindooFont.bodySmall.weight(.semibold))
@@ -210,8 +205,7 @@ struct ClientNegotiationSection: View {
             proposalActions(proposal)
         }
         .padding(BrindooSpacing.md)
-        .background(Color.brindooSurface)
-        .clipShape(RoundedRectangle(cornerRadius: BrindooRadius.md))
+        .brindooSurfaceBackground()
     }
 
     @ViewBuilder
@@ -265,23 +259,13 @@ struct ClientNegotiationSection: View {
                     HStack(spacing: BrindooSpacing.sm) {
                         Button { onReject(proposal) } label: {
                             Label("Rifiuta", systemImage: BrindooIcon.close)
-                                .font(BrindooFont.bodySmall.weight(.semibold))
-                                .frame(maxWidth: .infinity)
-                                .padding(.vertical, 10)
-                                .foregroundStyle(Color.brindooError)
-                                .background(Color.brindooError.opacity(0.1))
-                                .clipShape(RoundedRectangle(cornerRadius: BrindooRadius.sm))
+                                .brindooCompactAction(tint: .brindooError)
                         }
                         .buttonStyle(.plain)
 
                         Button { onAccept(proposal) } label: {
                             Label("Accetta", systemImage: "checkmark")
-                                .font(BrindooFont.bodySmall.weight(.semibold))
-                                .frame(maxWidth: .infinity)
-                                .padding(.vertical, 10)
-                                .foregroundStyle(.white)
-                                .background(Color.brindooSuccess)
-                                .clipShape(RoundedRectangle(cornerRadius: BrindooRadius.sm))
+                                .brindooCompactAction(tint: .brindooSuccess, filled: true)
                         }
                         .buttonStyle(.plain)
                     }

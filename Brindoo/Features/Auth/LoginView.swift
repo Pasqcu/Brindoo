@@ -74,14 +74,8 @@ struct LoginView: View {
                 .padding(.vertical, BrindooSpacing.sm)
                 
                 VStack(spacing: BrindooSpacing.md) {
-                    BrindooTextField(
-                        title: "Email",
-                        placeholder: "tuo@email.it",
+                    BrindooEmailField(
                         text: $email,
-                        icon: "envelope",
-                        keyboardType: .emailAddress,
-                        textContentType: .emailAddress,
-                        autocapitalization: .never,
                         errorMessage: emailError,
                         isDisabled: isLoading
                     )
@@ -177,7 +171,7 @@ struct LoginView: View {
                 withAnimation(BrindooAnimation.quickEase) {
                     acceptedTermsAt = hasAcceptedTerms
                         ? ""
-                        : ISO8601DateFormatter().string(from: Date())
+                        : BrindooFormat.isoNow
                 }
             } label: {
                 HStack(alignment: .top, spacing: BrindooSpacing.sm) {
@@ -214,8 +208,7 @@ struct LoginView: View {
         }
         .padding(BrindooSpacing.sm)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Color.brindooSurface)
-        .clipShape(RoundedRectangle(cornerRadius: BrindooRadius.md))
+        .brindooSurfaceBackground()
     }
     
     private func performLogin() async {
@@ -285,14 +278,8 @@ struct ForgotPasswordView: View {
                                 .foregroundStyle(Color.brindooTextSecondary)
                         }
                         
-                        BrindooTextField(
-                            title: "Email",
-                            placeholder: "tuo@email.it",
+                        BrindooEmailField(
                             text: $email,
-                            icon: "envelope",
-                            keyboardType: .emailAddress,
-                            textContentType: .emailAddress,
-                            autocapitalization: .never,
                             errorMessage: emailError,
                             isDisabled: isLoading
                         )

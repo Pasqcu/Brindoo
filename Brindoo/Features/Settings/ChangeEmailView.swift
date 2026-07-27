@@ -66,17 +66,12 @@ struct ChangeEmailView: View {
             }
             .padding(BrindooSpacing.md)
             .frame(maxWidth: .infinity, alignment: .leading)
-            .background(Color.brindooSurface)
-            .clipShape(RoundedRectangle(cornerRadius: BrindooRadius.md))
+            .brindooSurfaceBackground()
 
-            BrindooTextField(
+            BrindooEmailField(
                 title: "Nuova email",
                 placeholder: "nuova@email.it",
                 text: $newEmail,
-                icon: "envelope",
-                keyboardType: .emailAddress,
-                textContentType: .emailAddress,
-                autocapitalization: .never,
                 errorMessage: emailError,
                 isDisabled: isLoading
             )

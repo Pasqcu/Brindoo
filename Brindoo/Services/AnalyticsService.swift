@@ -78,7 +78,7 @@ final class AnalyticsService {
         }
 
         let since = Date().addingTimeInterval(-30 * 24 * 60 * 60)
-        let sinceISO = ISO8601DateFormatter().string(from: since)
+        let sinceISO = BrindooFormat.iso(since)
 
         // 1) profile views
         struct PVRow: Decodable { let id: UUID }

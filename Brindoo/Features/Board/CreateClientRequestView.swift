@@ -62,15 +62,7 @@ struct CreateClientRequestView: View {
                                         Button {
                                             selectedCategoryId = isSelected ? nil : cat.id
                                         } label: {
-                                            HStack(spacing: 4) {
-                                                Image(systemName: cat.icon).font(.system(size: 12))
-                                                Text(cat.name).font(BrindooFont.bodySmall.weight(.medium))
-                                            }
-                                            .padding(.horizontal, BrindooSpacing.sm)
-                                            .padding(.vertical, BrindooSpacing.xs)
-                                            .foregroundStyle(isSelected ? .white : Color.brindooCoral)
-                                            .background(isSelected ? Color.brindooCoral : Color.brindooCoral.opacity(0.1))
-                                            .clipShape(Capsule())
+                                            BrindooCategoryPill(category: cat, isSelected: isSelected)
                                         }
                                         .disabled(isSaving)
                                     }
@@ -111,8 +103,7 @@ struct CreateClientRequestView: View {
                         }
                     }
                     .padding(BrindooSpacing.md)
-                    .background(Color.brindooSurface)
-                    .clipShape(RoundedRectangle(cornerRadius: BrindooRadius.md))
+                    .brindooSurfaceBackground()
 
                     // Urgenza (facoltativa)
                     VStack(alignment: .leading, spacing: BrindooSpacing.xs) {
@@ -133,8 +124,7 @@ struct CreateClientRequestView: View {
                             .foregroundStyle(Color.brindooTextSecondary)
                     }
                     .padding(BrindooSpacing.md)
-                    .background(Color.brindooSurface)
-                    .clipShape(RoundedRectangle(cornerRadius: BrindooRadius.md))
+                    .brindooSurfaceBackground()
 
                     BrindooTextField(
                         title: "Budget indicativo in € (opzionale)",

@@ -83,7 +83,7 @@ struct RootView: View {
             // Mostra il soft-ask con UI in stile Brindoo prima del prompt iOS.
             // Apple raccomanda di NON mostrare subito il dialog di sistema:
             // un utente informato dà permesso molto più spesso.
-            try? await Task.sleep(nanoseconds: 600_000_000)
+            try? await Task.sleep(for: .milliseconds(600))
             await MainActor.run { showNotificationPrePrompt = true }
 
         case .authorized, .provisional:
@@ -144,8 +144,7 @@ private struct NotificationPrePromptView: View {
             }
             .padding(BrindooSpacing.md)
             .frame(maxWidth: .infinity, alignment: .leading)
-            .background(Color.brindooSurface)
-            .clipShape(RoundedRectangle(cornerRadius: BrindooRadius.md))
+            .brindooSurfaceBackground()
             .padding(.horizontal, BrindooSpacing.lg)
 
             Spacer()

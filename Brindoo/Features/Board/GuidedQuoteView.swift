@@ -83,15 +83,7 @@ struct GuidedQuoteView: View {
                         Button {
                             selectedCategoryId = isSelected ? nil : cat.id
                         } label: {
-                            HStack(spacing: 4) {
-                                Image(systemName: cat.icon).font(.system(size: 12))
-                                Text(cat.name).font(BrindooFont.bodySmall.weight(.medium))
-                            }
-                            .padding(.horizontal, BrindooSpacing.sm)
-                            .padding(.vertical, BrindooSpacing.xs)
-                            .foregroundStyle(isSelected ? .white : Color.brindooCoral)
-                            .background(isSelected ? Color.brindooCoral : Color.brindooCoral.opacity(0.1))
-                            .clipShape(Capsule())
+                            BrindooCategoryPill(category: cat, isSelected: isSelected)
                         }
                         .disabled(isSearching)
                     }
@@ -129,8 +121,7 @@ struct GuidedQuoteView: View {
             }
         }
         .padding(BrindooSpacing.md)
-        .background(Color.brindooSurface)
-        .clipShape(RoundedRectangle(cornerRadius: BrindooRadius.md))
+        .brindooSurfaceBackground()
     }
 
     @ViewBuilder
@@ -239,8 +230,7 @@ struct GuidedQuoteView: View {
                     .foregroundStyle(Color.brindooTextSecondary)
             }
             .padding(BrindooSpacing.md)
-            .background(Color.brindooSurface)
-            .clipShape(RoundedRectangle(cornerRadius: BrindooRadius.md))
+            .brindooSurfaceBackground()
         }
         .buttonStyle(.plain)
     }

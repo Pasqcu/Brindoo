@@ -149,8 +149,7 @@ private struct ComunePicker: View {
             }
             .padding(BrindooSpacing.md)
             .frame(maxWidth: .infinity, alignment: .leading)
-            .background(Color.brindooSurface)
-            .clipShape(RoundedRectangle(cornerRadius: BrindooRadius.sm))
+            .brindooSurfaceBackground(radius: BrindooRadius.sm)
         }
         .buttonStyle(.plain)
     }

@@ -44,11 +44,6 @@ struct OfferDetailView: View {
     @State private var moveDateTarget: OfferProposal?
     @State private var showConfetti: Bool = false
 
-    private struct SharePayload: Identifiable {
-        let id = UUID()
-        let items: [Any]
-    }
-
     /// Callback chiamato quando l'offerta viene modificata o cancellata.
     var onChange: (() -> Void)?
 
@@ -300,7 +295,6 @@ struct OfferDetailView: View {
         isPreparingShare = true
         defer { isPreparingShare = false }
 
-        let url = URL(string: "https://brindoo.app/o/\(offer.id.uuidString)")!
         let cover = await ShareCardRenderer.loadImage(from: offer.imageUrl)
         let card = OfferShareCard(
             title: offer.title,
@@ -309,11 +303,10 @@ struct OfferDetailView: View {
             cover: cover
         )
 
-        if let image = ShareCardRenderer.render(card) {
-            shareItems = SharePayload(items: [image, url])
-        } else {
-            shareItems = SharePayload(items: [url])
-        }
+        shareItems = SharePayload(
+            card: ShareCardRenderer.render(card),
+            link: BrindooLink.url(.offer, offer.id)
+        )
     }
 
     // MARK: - Azioni che restano alla vista
@@ -362,7 +355,7 @@ struct OfferDetailView: View {
         if await vm.togglePause() {
             onChange?()
         } else {
-            toastCenter.show(BrindooToast("Impossibile aggiornare l'offerta", message: BrindooText.retryHint, style: .error))
+            toastCenter.show(BrindooToast(BrindooText.updateError("l'offerta"), message: BrindooText.retryHint, style: .error))
         }
     }
 
@@ -381,7 +374,7 @@ struct OfferDetailView: View {
             onChange?()
             dismiss()
         } else {
-            toastCenter.show(BrindooToast("Impossibile eliminare l'offerta", message: BrindooText.retryHint, style: .error))
+            toastCenter.show(BrindooToast(BrindooText.deleteError("l'offerta"), message: BrindooText.retryHint, style: .error))
         }
     }
 

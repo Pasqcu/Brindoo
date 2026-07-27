@@ -82,8 +82,7 @@ struct LegalConsentGate: View {
                         bullet("I tuoi dati sono trattati come descritto nella Privacy Policy; puoi scaricarli o eliminare l'account dalle Impostazioni.")
                     }
                     .padding(BrindooSpacing.md)
-                    .background(Color.brindooSurface)
-                    .clipShape(RoundedRectangle(cornerRadius: BrindooRadius.md))
+                    .brindooSurfaceBackground()
 
                     HStack(spacing: BrindooSpacing.xs) {
                         Button("Leggi i Termini") { legalDocument = .terms }
@@ -100,9 +99,7 @@ struct LegalConsentGate: View {
                     .tint(Color.brindooCoral)
 
                     if let errorMessage {
-                        Text(errorMessage)
-                            .font(BrindooFont.bodySmall)
-                            .foregroundStyle(Color.brindooError)
+                        BrindooInlineError(errorMessage)
                     }
 
                     BrindooButton("Accetta e continua", style: .primary, size: .large, isLoading: isSaving, isDisabled: !accepted) {
@@ -189,8 +186,7 @@ struct ProfessionalDeclarationGate: View {
                         }
                     }
                     .padding(BrindooSpacing.md)
-                    .background(Color.brindooSurface)
-                    .clipShape(RoundedRectangle(cornerRadius: BrindooRadius.md))
+                    .brindooSurfaceBackground()
 
                     Toggle(isOn: $accepted) {
                         Text("Confermo tutti i punti della dichiarazione.")
@@ -199,9 +195,7 @@ struct ProfessionalDeclarationGate: View {
                     .tint(Color.brindooCoral)
 
                     if let errorMessage {
-                        Text(errorMessage)
-                            .font(BrindooFont.bodySmall)
-                            .foregroundStyle(Color.brindooError)
+                        BrindooInlineError(errorMessage)
                     }
 
                     BrindooButton("Confermo", style: .primary, size: .large, isLoading: isSaving, isDisabled: !accepted) {

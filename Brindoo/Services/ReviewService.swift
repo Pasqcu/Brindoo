@@ -144,18 +144,15 @@ final class ReviewService {
         photoUrl: String? = nil
     ) async throws -> Review {
         guard let userId = SupabaseManager.shared.currentUserID else {
-            throw NSError(domain: "ReviewService", code: 401,
-                          userInfo: [NSLocalizedDescriptionKey: BrindooText.loginRequired])
+            throw BrindooServiceError.notLoggedIn
         }
 
         guard userId != organizerId else {
-            throw NSError(domain: "ReviewService", code: 400,
-                          userInfo: [NSLocalizedDescriptionKey: "Non puoi recensire te stesso"])
+            throw BrindooServiceError.invalidInput("Non puoi recensire te stesso")
         }
 
         guard (1...5).contains(rating) else {
-            throw NSError(domain: "ReviewService", code: 400,
-                          userInfo: [NSLocalizedDescriptionKey: "Voto non valido"])
+            throw BrindooServiceError.invalidInput("Voto non valido")
         }
 
         let trimmedComment = comment?.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -201,8 +198,7 @@ final class ReviewService {
         photoUrl: String? = nil
     ) async throws -> Review {
         guard (1...5).contains(rating) else {
-            throw NSError(domain: "ReviewService", code: 400,
-                          userInfo: [NSLocalizedDescriptionKey: "Voto non valido"])
+            throw BrindooServiceError.invalidInput("Voto non valido")
         }
 
         let trimmedComment = comment?.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -253,7 +249,7 @@ final class ReviewService {
         struct U: Encodable { let reply: String?; let reply_at: String? }
         let payload = U(
             reply: trimmed.isEmpty ? nil : trimmed,
-            reply_at: trimmed.isEmpty ? nil : ISO8601DateFormatter().string(from: Date())
+            reply_at: trimmed.isEmpty ? nil : BrindooFormat.isoNow
         )
         return try await client
             .from("reviews")

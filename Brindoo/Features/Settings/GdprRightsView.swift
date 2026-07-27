@@ -65,8 +65,7 @@ struct GdprRightsView: View {
                     }
                     .padding(BrindooSpacing.sm)
                     .frame(maxWidth: .infinity, alignment: .leading)
-                    .background(Color.brindooSurface)
-                    .clipShape(RoundedRectangle(cornerRadius: BrindooRadius.md))
+                    .brindooSurfaceBackground()
                 }
 
                 BrindooButton("Scarica i miei dati", style: .primary, size: .large, icon: "square.and.arrow.down", isLoading: isExporting) {

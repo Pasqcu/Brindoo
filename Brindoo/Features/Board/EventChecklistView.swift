@@ -114,8 +114,7 @@ struct EventChecklistView: View {
         }
         .padding(BrindooSpacing.md)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Color.brindooSurface)
-        .clipShape(RoundedRectangle(cornerRadius: BrindooRadius.md))
+        .brindooSurfaceBackground()
     }
 
     @ViewBuilder
@@ -154,8 +153,7 @@ struct EventChecklistView: View {
                 Spacer()
             }
             .padding(BrindooSpacing.md)
-            .background(Color.brindooSurface)
-            .clipShape(RoundedRectangle(cornerRadius: BrindooRadius.md))
+            .brindooSurfaceBackground()
         }
         .buttonStyle(.plain)
     }

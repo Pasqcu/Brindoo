@@ -58,12 +58,7 @@ struct OfferCard: View {
 
                     Text(offer.priceDisplay)
                         .font(BrindooFont.bodyMedium.weight(.bold))
-                        .foregroundStyle(.white)
-                        .padding(.horizontal, BrindooSpacing.sm)
-                        .padding(.vertical, 4)
-                        .background(.ultraThinMaterial)
-                        .clipShape(Capsule())
-                        .padding(BrindooSpacing.xs)
+                        .brindooOverlayPill()
                 }
                 .frame(height: 180)
                 .clipShape(RoundedRectangle(cornerRadius: BrindooRadius.sm))
@@ -156,8 +151,7 @@ struct OfferCard: View {
             }
         }
         .padding(BrindooSpacing.md)
-        .background(Color.brindooSurface)
-        .clipShape(RoundedRectangle(cornerRadius: BrindooRadius.md))
+        .brindooSurfaceBackground()
         .overlay(
             RoundedRectangle(cornerRadius: BrindooRadius.md)
                 .strokeBorder(
@@ -202,24 +196,8 @@ struct OfferCard: View {
         .clipShape(RoundedRectangle(cornerRadius: BrindooRadius.sm))
     }
 
-    @ViewBuilder
     private var statusBadge: some View {
-        let (color, text): (Color, String) = {
-            switch offer.status {
-            case .active: return (.brindooSuccess, "Attiva")
-            case .paused: return (.brindooTextSecondary, "In pausa")
-            }
-        }()
-        HStack(spacing: 4) {
-            Circle().fill(color).frame(width: 6, height: 6)
-            Text(text)
-                .font(.system(size: 11, weight: .semibold))
-                .foregroundStyle(color)
-        }
-        .padding(.horizontal, 8)
-        .padding(.vertical, 4)
-        .background(color.opacity(0.1))
-        .clipShape(Capsule())
+        BrindooDotBadge(offer.status.displayName, color: offer.status.tint)
     }
 
     private func timeAgo(_ date: Date) -> String {

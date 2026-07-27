@@ -19,6 +19,11 @@ final class ConversationService {
     
     private(set) var conversations: [Conversation] = []
     private var realtimeChannel: RealtimeChannelV2?
+
+    /// I due cicli che leggono le novità dal canale. Vanno tenuti per poterli
+    /// fermare: senza, ogni riapertura della lista chat ne lasciava in giro
+    /// altri due, fermi in attesa su un canale ormai chiuso.
+    @ObservationIgnored private var streamTasks: [Task<Void, Never>] = []
     
     @discardableResult
     func fetchMyConversations() async throws -> [Conversation] {
@@ -78,23 +83,18 @@ final class ConversationService {
         let conversationsStream = channel.postgresChange(AnyAction.self, table: "conversations")
         let messagesStream = channel.postgresChange(InsertAction.self, table: "messages")
 
-        Task {
-            for await _ in conversationsStream {
-                onChange()
-            }
-        }
-
-        Task {
-            for await _ in messagesStream {
-                onChange()
-            }
-        }
+        streamTasks = [
+            Task { for await _ in conversationsStream { onChange() } },
+            Task { for await _ in messagesStream { onChange() } }
+        ]
 
         try? await channel.subscribeWithError()
         self.realtimeChannel = channel
     }
-    
+
     func stopListening() async {
+        streamTasks.forEach { $0.cancel() }
+        streamTasks.removeAll()
         if let channel = realtimeChannel {
             await channel.unsubscribe()
             realtimeChannel = nil
@@ -103,7 +103,7 @@ final class ConversationService {
     
     func findOrCreateConversationAsClient(organizerId: UUID) async throws -> Conversation {
         guard let clientId = SupabaseManager.shared.currentUserID else {
-            throw NSError(domain: "Conv", code: 401)
+            throw BrindooServiceError.notLoggedIn
         }
         
         let existing: [Conversation] = try await client
@@ -143,7 +143,7 @@ final class ConversationService {
 
     func findOrCreateConversationAsOrganizer(clientId: UUID) async throws -> Conversation {
         guard let organizerId = SupabaseManager.shared.currentUserID else {
-            throw NSError(domain: "Conv", code: 401)
+            throw BrindooServiceError.notLoggedIn
         }
 
         let existing: [Conversation] = try await client
@@ -184,7 +184,7 @@ final class ConversationService {
     func softDelete(conversation: Conversation) async throws {
         guard let userId = SupabaseManager.shared.currentUserID else { return }
 
-        let now = ISO8601DateFormatter().string(from: Date())
+        let now = BrindooFormat.isoNow
 
         if conversation.clientId == userId {
             struct U: Encodable { let deleted_by_client_at: String }
@@ -208,7 +208,7 @@ final class ConversationService {
     /// Fissa in alto la conversazione per l'utente corrente.
     func setPinned(conversation: Conversation, pinned: Bool) async throws {
         guard let userId = SupabaseManager.shared.currentUserID else { return }
-        let nowString: String? = pinned ? ISO8601DateFormatter().string(from: Date()) : nil
+        let nowString: String? = pinned ? BrindooFormat.isoNow : nil
 
         let column: String
         if conversation.clientId == userId {
@@ -231,7 +231,7 @@ final class ConversationService {
     /// Marca manualmente la conversazione come "da leggere" per l'utente corrente.
     func setMarkedUnread(conversation: Conversation, unread: Bool) async throws {
         guard let userId = SupabaseManager.shared.currentUserID else { return }
-        let nowString: String? = unread ? ISO8601DateFormatter().string(from: Date()) : nil
+        let nowString: String? = unread ? BrindooFormat.isoNow : nil
 
         let column: String
         if conversation.clientId == userId {

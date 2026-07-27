@@ -70,8 +70,7 @@ struct BoostView: View {
                     }
                     .padding(BrindooSpacing.lg)
                     .frame(maxWidth: .infinity, alignment: .leading)
-                    .background(Color.brindooSurface)
-                    .clipShape(RoundedRectangle(cornerRadius: BrindooRadius.lg))
+                    .brindooSurfaceBackground(radius: BrindooRadius.lg)
                     
                     // Stato boost attivo
                     if isCurrentlyBoosted {
@@ -113,13 +112,7 @@ struct BoostView: View {
                     }
                     
                     if let errorMessage {
-                        Text(errorMessage)
-                            .font(BrindooFont.bodySmall)
-                            .foregroundStyle(Color.brindooError)
-                            .padding()
-                            .frame(maxWidth: .infinity)
-                            .background(Color.brindooError.opacity(0.1))
-                            .clipShape(RoundedRectangle(cornerRadius: BrindooRadius.sm))
+                        BrindooInlineError(errorMessage)
                     }
                     
                     // Footer info

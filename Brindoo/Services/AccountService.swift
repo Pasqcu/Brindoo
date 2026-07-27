@@ -24,8 +24,7 @@ final class AccountService {
     /// recensioni, portfolio (DB + Storage), e l'utente in auth.users.
     func deleteMyAccount() async throws {
         guard let userId = SupabaseManager.shared.currentUserID else {
-            throw NSError(domain: "AccountService", code: 401,
-                          userInfo: [NSLocalizedDescriptionKey: BrindooText.loginRequired])
+            throw BrindooServiceError.notLoggedIn
         }
         
         // 1. Cancella file Storage (best effort, prima del DB)

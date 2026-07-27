@@ -56,7 +56,7 @@ struct BrindooBadge: View {
         HStack(spacing: 4) {
             if let icon {
                 Image(systemName: icon)
-                    .font(.system(size: 11, weight: .bold))
+                    .font(BrindooFont.scaled(11, weight: .bold, relativeTo: .caption1))
             }
             Text(text)
                 .font(BrindooFont.scaled(12, weight: .semibold, rounded: true, relativeTo: .caption1))
@@ -69,8 +69,67 @@ struct BrindooBadge: View {
     }
 }
 
+/// Pastiglia con pallino colorato: dice lo stato di un'offerta o di una
+/// richiesta ("Attiva", "In pausa", "Aperta") senza rubare attenzione.
+///
+/// Era ricopiata identica in tre schermate — bacheca richieste, card offerta
+/// e testata del dettaglio — con gli stessi numeri battuti a mano ogni volta.
+struct BrindooDotBadge: View {
+    let text: String
+    let color: Color
+
+    init(_ text: String, color: Color) {
+        self.text = text
+        self.color = color
+    }
+
+    var body: some View {
+        HStack(spacing: BrindooSpacing.xxs) {
+            Circle()
+                .fill(color)
+                .frame(width: 6, height: 6)
+            Text(text)
+                .font(BrindooFont.scaled(11, weight: .semibold, relativeTo: .caption1))
+                .foregroundStyle(color)
+        }
+        .padding(.horizontal, BrindooSpacing.xs)
+        .padding(.vertical, BrindooSpacing.xxs)
+        .background(color.opacity(0.1))
+        .clipShape(Capsule())
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("Stato: \(text)")
+    }
+}
+
+// MARK: - Colore degli stati
+//
+// I modelli restano su Foundation: il colore con cui si mostra uno stato è
+// una scelta di interfaccia e vive qui, accanto alla pastiglia che lo usa.
+
+extension ServiceOfferStatus {
+    /// Verde se l'offerta è visibile in bacheca, grigio se è in pausa.
+    var tint: Color {
+        switch self {
+        case .active: return .brindooSuccess
+        case .paused: return .brindooTextSecondary
+        }
+    }
+}
+
+extension ClientRequestStatus {
+    /// Verde finché la richiesta accetta risposte.
+    var tint: Color {
+        switch self {
+        case .open:   return .brindooSuccess
+        case .closed: return .brindooTextSecondary
+        }
+    }
+}
+
 #Preview {
     VStack(spacing: 8) {
+        BrindooDotBadge("Attiva", color: .brindooSuccess)
+        BrindooDotBadge("In pausa", color: .brindooTextSecondary)
         BrindooBadge("In attesa", style: .warning, icon: "clock.fill")
         BrindooBadge("Accettato", style: .success, icon: "checkmark")
         BrindooBadge("Rifiutato", style: .error, icon: "xmark")

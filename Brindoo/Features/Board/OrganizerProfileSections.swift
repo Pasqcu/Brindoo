@@ -40,7 +40,7 @@ struct OrganizerTitleSection: View {
             if organizer.identityVerified {
                 HStack(spacing: 4) {
                     Image(systemName: "person.badge.shield.checkmark.fill").font(.system(size: 11))
-                    Text("Identità verificata")
+                    Text(BrindooText.verifiedIdentity)
                         .font(BrindooFont.caption.weight(.semibold))
                 }
                 .foregroundStyle(.white)
@@ -72,10 +72,7 @@ struct OrganizerTitleSection: View {
     }
 
     private var memberSinceYear: String {
-        let f = DateFormatter()
-        f.locale = Locale(identifier: "it_IT")
-        f.dateFormat = "yyyy"
-        return f.string(from: organizer.createdAt)
+        BrindooFormat.year(from: organizer.createdAt)
     }
 }
 
@@ -128,8 +125,7 @@ struct OrganizerBioSection: View {
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(BrindooSpacing.md)
-        .background(Color.brindooSurface)
-        .clipShape(RoundedRectangle(cornerRadius: BrindooRadius.md))
+        .brindooSurfaceBackground()
         .overlay(
             RoundedRectangle(cornerRadius: BrindooRadius.md)
                 .strokeBorder(Color.brindooCoral.opacity(0.25), lineWidth: 1.5)
@@ -172,8 +168,7 @@ struct OrganizerFAQsSection: View {
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(BrindooSpacing.md)
-        .background(Color.brindooSurface)
-        .clipShape(RoundedRectangle(cornerRadius: BrindooRadius.md))
+        .brindooSurfaceBackground()
     }
 }
 
@@ -190,12 +185,7 @@ struct OrganizerCategoriesSection: View {
             VStack(spacing: BrindooSpacing.xs) {
                 ForEach(categories) { detail in
                     HStack(alignment: .top, spacing: BrindooSpacing.sm) {
-                        Image(systemName: detail.category.icon)
-                            .font(.system(size: 18))
-                            .foregroundStyle(.white)
-                            .frame(width: 36, height: 36)
-                            .background(Color.brindooCoral)
-                            .clipShape(Circle())
+                        BrindooIconBadge(detail.category.icon)
 
                         VStack(alignment: .leading, spacing: 2) {
                             Text(detail.category.name)
@@ -210,8 +200,7 @@ struct OrganizerCategoriesSection: View {
                         Spacer()
                     }
                     .padding(BrindooSpacing.sm)
-                    .background(Color.brindooSurface)
-                    .clipShape(RoundedRectangle(cornerRadius: BrindooRadius.sm))
+                    .brindooSurfaceBackground(radius: BrindooRadius.sm)
                 }
             }
         }
@@ -244,8 +233,7 @@ struct OrganizerCoverageSection: View {
             }
             .padding(BrindooSpacing.md)
             .frame(maxWidth: .infinity)
-            .background(Color.brindooSurface)
-            .clipShape(RoundedRectangle(cornerRadius: BrindooRadius.md))
+            .brindooSurfaceBackground()
         }
     }
 }
@@ -284,8 +272,7 @@ struct OrganizerReviewsSummarySection: View {
                 Spacer()
             }
             .padding(BrindooSpacing.md)
-            .background(Color.brindooSurface)
-            .clipShape(RoundedRectangle(cornerRadius: BrindooRadius.md))
+            .brindooSurfaceBackground()
         }
     }
 }

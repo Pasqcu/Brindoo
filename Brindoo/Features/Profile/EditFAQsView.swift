@@ -55,9 +55,7 @@ struct EditFAQsView: View {
                     }
 
                     if let errorMessage {
-                        Text(errorMessage)
-                            .font(BrindooFont.bodySmall)
-                            .foregroundStyle(Color.brindooError)
+                        BrindooInlineError(errorMessage)
                     }
                 }
                 .padding(BrindooSpacing.md)
@@ -115,8 +113,7 @@ struct EditFAQsView: View {
         .fixedSize(horizontal: false, vertical: true)
         .padding(BrindooSpacing.md)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Color.brindooSurface)
-        .clipShape(RoundedRectangle(cornerRadius: BrindooRadius.md))
+        .brindooSurfaceBackground()
     }
 
     private var editorSheet: some View {
@@ -125,15 +122,13 @@ struct EditFAQsView: View {
                 TextField("Domanda (es. Porti tu l'attrezzatura?)", text: $draftQuestion, axis: .vertical)
                     .font(BrindooFont.bodyMedium)
                     .padding(BrindooSpacing.sm)
-                    .background(Color.brindooSurface)
-                    .clipShape(RoundedRectangle(cornerRadius: BrindooRadius.sm))
+                    .brindooSurfaceBackground(radius: BrindooRadius.sm)
 
                 TextField("Risposta", text: $draftAnswer, axis: .vertical)
                     .font(BrindooFont.bodyMedium)
                     .lineLimit(3...8)
                     .padding(BrindooSpacing.sm)
-                    .background(Color.brindooSurface)
-                    .clipShape(RoundedRectangle(cornerRadius: BrindooRadius.sm))
+                    .brindooSurfaceBackground(radius: BrindooRadius.sm)
 
                 Spacer()
             }

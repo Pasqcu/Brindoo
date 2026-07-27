@@ -15,7 +15,10 @@
 
 import Foundation
 
-enum BrindooText {
+// Nonisolated come i token di design: sono stringhe costanti, e servono
+// anche fuori dal main actor — per esempio nella descrizione di un errore,
+// che il sistema può chiedere da qualunque thread.
+nonisolated enum BrindooText {
 
     // MARK: - Nomi
 
@@ -64,7 +67,6 @@ enum BrindooText {
     static let negotiations = "Trattative"
     static let featured = "In evidenza"
     static let receivedProposals = "Proposte ricevute"
-    static let becomeProfessional = "Diventa Professionista"
     static let verifiedIdentity = "Identità verificata"
     static let invalidImage = "Immagine non valida"
     static let close = "Chiudi"

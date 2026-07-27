@@ -15,7 +15,10 @@ actor LocalCacheStore {
     // farebbe uscire dal suo confine. Si prende all'uso, che e' gratis.
     private lazy var root: URL = {
         let fm = FileManager.default
-        let base = fm.urls(for: .cachesDirectory, in: .userDomainMask).first!
+        // La cartella caches c'e' sempre su iOS, ma un `!` qui farebbe morire
+        // l'app per una cache: la cartella temporanea e' un ripiego onesto.
+        let base = fm.urls(for: .cachesDirectory, in: .userDomainMask).first
+            ?? fm.temporaryDirectory
         let url = base.appendingPathComponent("BrindooCache", isDirectory: true)
         if !fm.fileExists(atPath: url.path) {
             try? fm.createDirectory(at: url, withIntermediateDirectories: true)

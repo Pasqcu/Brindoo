@@ -237,7 +237,6 @@ struct BoardFiltersBar: View {
         }
         .padding(.horizontal, BrindooSpacing.md)
         .frame(height: 44)
-        .background(Color.brindooSurface)
-        .clipShape(RoundedRectangle(cornerRadius: BrindooRadius.md))
+        .brindooSurfaceBackground()
     }
 }

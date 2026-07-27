@@ -73,7 +73,7 @@ final class CategoryService {
     /// manualmente. Non c'è feedback al cliente oltre al successo dell'insert.
     func proposeCategorySuggestion(name: String, description: String?) async throws {
         guard let userId = SupabaseManager.shared.currentUserID else {
-            throw NSError(domain: "Category", code: 401)
+            throw BrindooServiceError.notLoggedIn
         }
         struct Payload: Encodable {
             let user_id: UUID

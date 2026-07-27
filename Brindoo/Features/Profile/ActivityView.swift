@@ -132,12 +132,7 @@ struct ActivityView: View {
             OfferDetailView(offer: offer)
         } label: {
             HStack(spacing: BrindooSpacing.sm) {
-                Image(systemName: BrindooIcon.tag)
-                    .font(.system(size: 15, weight: .semibold))
-                    .foregroundStyle(.white)
-                    .frame(width: 36, height: 36)
-                    .background(Color.brindooCoral)
-                    .clipShape(Circle())
+                BrindooIconBadge(BrindooIcon.tag)
                 VStack(alignment: .leading, spacing: 2) {
                     HStack(spacing: 4) {
                         Text(offer.title)
@@ -157,8 +152,7 @@ struct ActivityView: View {
                     .foregroundStyle(Color.brindooTextSecondary)
             }
             .padding(BrindooSpacing.md)
-            .background(Color.brindooSurface)
-            .clipShape(RoundedRectangle(cornerRadius: BrindooRadius.md))
+            .brindooSurfaceBackground()
         }
         .buttonStyle(.plain)
     }
@@ -189,12 +183,7 @@ struct ActivityView: View {
     @ViewBuilder
     private func row(icon: String, title: String, subtitle: String, action: (() -> Void)?) -> some View {
         let content = HStack(spacing: BrindooSpacing.sm) {
-            Image(systemName: icon)
-                .font(.system(size: 15, weight: .semibold))
-                .foregroundStyle(.white)
-                .frame(width: 36, height: 36)
-                .background(Color.brindooCoral)
-                .clipShape(Circle())
+            BrindooIconBadge(icon)
             VStack(alignment: .leading, spacing: 2) {
                 Text(title).font(BrindooFont.bodyMedium.weight(.semibold)).lineLimit(1)
                 Text(subtitle).font(BrindooFont.caption).foregroundStyle(Color.brindooTextSecondary).lineLimit(2)
@@ -206,8 +195,7 @@ struct ActivityView: View {
             }
         }
         .padding(BrindooSpacing.md)
-        .background(Color.brindooSurface)
-        .clipShape(RoundedRectangle(cornerRadius: BrindooRadius.md))
+        .brindooSurfaceBackground()
 
         if let action {
             Button(action: action) { content }.buttonStyle(.plain)

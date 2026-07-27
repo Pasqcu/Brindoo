@@ -436,7 +436,7 @@ struct EditProfileView: View {
             }
 
             withAnimation { showSuccessToast = true }
-            try? await Task.sleep(nanoseconds: 1_200_000_000)
+            try? await Task.sleep(for: .milliseconds(1200))
 
             if isPostUpgrade {
                 onPostUpgradeExit?(false)

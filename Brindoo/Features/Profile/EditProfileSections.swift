@@ -298,8 +298,7 @@ struct CoverageAreasField: View {
                         .foregroundStyle(Color.brindooTextSecondary)
                 }
                 .padding(BrindooSpacing.sm)
-                .background(Color.brindooSurface)
-                .clipShape(RoundedRectangle(cornerRadius: BrindooRadius.md))
+                .brindooSurfaceBackground()
                 .overlay(
                     RoundedRectangle(cornerRadius: BrindooRadius.md)
                         .strokeBorder(Color.brindooBorder, lineWidth: 1)

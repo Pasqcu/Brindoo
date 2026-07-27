@@ -54,7 +54,7 @@ struct OfferHeaderSection: View {
                 Text(offer.title)
                     .font(BrindooFont.titleLarge)
                 Spacer()
-                OfferStatusBadge(status: currentStatus)
+                BrindooDotBadge(currentStatus.displayName, color: currentStatus.tint)
             }
 
             if let profile = organizerProfile {
@@ -107,31 +107,6 @@ struct OfferHeaderSection: View {
     }
 }
 
-// MARK: - Badge stato offerta
-
-struct OfferStatusBadge: View {
-    let status: ServiceOfferStatus
-
-    var body: some View {
-        let (color, text): (Color, String) = {
-            switch status {
-            case .active: return (.brindooSuccess, "Attiva")
-            case .paused: return (.brindooTextSecondary, "In pausa")
-            }
-        }()
-        HStack(spacing: 4) {
-            Circle().fill(color).frame(width: 6, height: 6)
-            Text(text)
-                .font(.system(size: 11, weight: .semibold))
-                .foregroundStyle(color)
-        }
-        .padding(.horizontal, 8)
-        .padding(.vertical, 4)
-        .background(color.opacity(0.1))
-        .clipShape(Capsule())
-    }
-}
-
 // MARK: - Categorie
 
 struct OfferCategoriesSection: View {
@@ -168,8 +143,7 @@ struct OfferInfoSection: View {
             infoRow(icon: "eurosign.circle", title: "Prezzo richiesto", value: offer.priceDisplay)
         }
         .padding(BrindooSpacing.md)
-        .background(Color.brindooSurface)
-        .clipShape(RoundedRectangle(cornerRadius: BrindooRadius.md))
+        .brindooSurfaceBackground()
     }
 
     @ViewBuilder

@@ -65,8 +65,7 @@ struct ClientFeedbackPrompt: View {
             }
         }
         .padding(BrindooSpacing.md)
-        .background(Color.brindooSurface)
-        .clipShape(RoundedRectangle(cornerRadius: BrindooRadius.md))
+        .brindooSurfaceBackground()
         .brindooElevation(.card)
     }
 }

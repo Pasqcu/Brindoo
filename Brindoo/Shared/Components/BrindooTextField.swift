@@ -122,6 +122,48 @@ struct BrindooTextField: View {
     }
 }
 
+/// Campo email già impostato: tastiera giusta, suggerimento del portachiavi,
+/// niente maiuscola automatica.
+///
+/// Le stesse otto righe stavano in quattro schermate (accesso, iscrizione,
+/// recupero password, cambio email): bastava dimenticarne una perché il campo
+/// partisse con la maiuscola o senza il riempimento automatico.
+struct BrindooEmailField: View {
+    let title: String
+    let placeholder: String
+    @Binding var text: String
+    let errorMessage: String?
+    let isDisabled: Bool
+
+    init(
+        title: String = "Email",
+        placeholder: String = "tuo@email.it",
+        text: Binding<String>,
+        errorMessage: String? = nil,
+        isDisabled: Bool = false
+    ) {
+        self.title = title
+        self.placeholder = placeholder
+        self._text = text
+        self.errorMessage = errorMessage
+        self.isDisabled = isDisabled
+    }
+
+    var body: some View {
+        BrindooTextField(
+            title: title,
+            placeholder: placeholder,
+            text: $text,
+            icon: "envelope",
+            keyboardType: .emailAddress,
+            textContentType: .emailAddress,
+            autocapitalization: .never,
+            errorMessage: errorMessage,
+            isDisabled: isDisabled
+        )
+    }
+}
+
 struct BrindooPhoneTextField: View {
     let title: String?
     @Binding var text: String

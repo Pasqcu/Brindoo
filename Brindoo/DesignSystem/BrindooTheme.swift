@@ -2,11 +2,13 @@
 //  BrindooTheme.swift
 //  Brindoo
 //
-//  Sistema di design centrale: colori, spaziature, font, raggi.
+//  Sistema di design centrale: colori, spaziature, font, raggi, ombre.
 //
-//  ℹ️ I colori del brand (BrindooCoral, BrindooCoralLight, BrindooCoralDark)
-//  sono generati automaticamente da Xcode dagli Asset Catalog.
-//  Quindi puoi usare direttamente: Color.brindooCoral, Color.brindooCoralLight, ecc.
+//  ℹ️ I colori del marchio (BrindooCoral, BrindooCoralLight, BrindooCoralDark)
+//  vivono negli Asset ma sono dichiarati a mano qui sotto: la generazione
+//  automatica dei simboli da parte di Xcode è disattivata (vedi il commento
+//  sull'estensione di Color). Aggiungendo un colore agli Asset va dichiarato
+//  qui, altrimenti non esiste per il codice.
 //
 
 import SwiftUI
@@ -113,6 +115,15 @@ nonisolated enum BrindooSpacing {
     static let xl: CGFloat = 24
     static let xxl: CGFloat = 32
     static let xxxl: CGFloat = 48
+}
+
+// MARK: - Misure di interazione
+
+nonisolated enum BrindooLayout {
+    /// Lato minimo di un'area toccabile secondo le linee guida Apple.
+    /// Sotto questa misura il dito sbaglia bersaglio, e chi ha meno precisione
+    /// nel movimento non ci arriva proprio.
+    static let minimumTapTarget: CGFloat = 44
 }
 
 // MARK: - Raggi
@@ -228,9 +239,58 @@ extension View {
         self.shadow(color: level.color, radius: level.radius, x: 0, y: level.y)
     }
     
-    /// Padding orizzontale standard schermata
-    func brindooScreenPadding() -> some View {
-        self.padding(.horizontal, BrindooSpacing.md)
+    /// Fondo di una card: colore di superficie e angoli arrotondati.
+    ///
+    /// Le due righe erano ripetute a mano in una settantina di punti. Bastava
+    /// che una sola usasse un raggio diverso perché nella stessa schermata
+    /// convivessero due arrotondamenti — ed è quello che succedeva.
+    /// La forma della card ora si decide qui.
+    ///
+    /// Per un blocco intero con ombra o bordo c'è `BrindooCard`: questo
+    /// modificatore è il mattone sotto, per quando serve solo il fondo.
+    func brindooSurfaceBackground(radius: CGFloat = BrindooRadius.md) -> some View {
+        self
+            .background(Color.brindooSurface)
+            .clipShape(RoundedRectangle(cornerRadius: radius))
+    }
+
+    /// Pastiglia appoggiata sopra una foto (il prezzo su una card, il segno
+    /// "In evidenza"): fondo sfocato perché resti leggibile su qualunque
+    /// immagine, chiara o scura che sia.
+    func brindooOverlayPill() -> some View {
+        self
+            .foregroundStyle(.white)
+            .padding(.horizontal, BrindooSpacing.sm)
+            .padding(.vertical, BrindooSpacing.xxs)
+            .background(.ultraThinMaterial)
+            .clipShape(Capsule())
+            .padding(BrindooSpacing.xs)
+    }
+
+    /// Bottone compatto in linea: le coppie "Rifiuta / Accetta" e i comandi
+    /// sotto una trattativa. `filled` è la scelta principale (fondo pieno),
+    /// `bordered` quella neutra, altrimenti resta un fondo tenue nel colore.
+    ///
+    /// Va sull'etichetta dentro un `Button`, che poi usa `.buttonStyle(.plain)`.
+    /// Prima queste sei righe erano ricopiate in tre file: le altezze
+    /// finivano per non coincidere e nessuna arrivava ai 44 pt di area
+    /// toccabile.
+    func brindooCompactAction(
+        tint: Color,
+        filled: Bool = false,
+        bordered: Bool = false
+    ) -> some View {
+        self
+            .font(BrindooFont.bodySmall.weight(.semibold))
+            .padding(.vertical, BrindooSpacing.xs)
+            .frame(maxWidth: .infinity, minHeight: BrindooLayout.minimumTapTarget)
+            .foregroundStyle(filled ? Color.white : tint)
+            .background(filled ? tint : (bordered ? Color.brindooSurface : tint.opacity(0.1)))
+            .overlay(
+                RoundedRectangle(cornerRadius: BrindooRadius.sm)
+                    .strokeBorder(bordered ? Color.brindooBorder : .clear, lineWidth: 1)
+            )
+            .clipShape(RoundedRectangle(cornerRadius: BrindooRadius.sm))
     }
 
     /// Limita la larghezza dei contenuti su schermi grandi, restando centrati.

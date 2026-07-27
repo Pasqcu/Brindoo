@@ -18,7 +18,7 @@ enum Seasonality {
     static let peakMonths: Set<Int> = [5, 6, 7, 9, 12]
 
     static func isPeak(_ date: Date) -> Bool {
-        peakMonths.contains(Calendar.current.component(.month, from: date))
+        peakMonths.contains(BrindooFormat.dayCalendar.component(.month, from: date))
     }
 
     /// Sotto questo margine il consiglio di muoversi in anticipo non serve
@@ -26,7 +26,7 @@ enum Seasonality {
     static let shortNoticeDays = 30
 
     static func isShortNotice(_ date: Date, from now: Date = Date()) -> Bool {
-        let cal = Calendar.current
+        let cal = BrindooFormat.dayCalendar
         let days = cal.dateComponents([.day], from: cal.startOfDay(for: now), to: cal.startOfDay(for: date)).day ?? 0
         return days <= shortNoticeDays
     }

@@ -27,7 +27,7 @@ final class MessageService {
             .eq("conversation_id", value: conversationId)
         
         if let visibleAfter {
-            let iso = ISO8601DateFormatter().string(from: visibleAfter)
+            let iso = BrindooFormat.iso(visibleAfter)
             query = query.gt("created_at", value: iso)
         }
         
@@ -48,7 +48,7 @@ final class MessageService {
         repliedToId: UUID? = nil
     ) async throws -> Message {
         guard let senderId = SupabaseManager.shared.currentUserID else {
-            throw NSError(domain: "Msg", code: 401)
+            throw BrindooServiceError.notLoggedIn
         }
         
         struct Payload: Encodable {
@@ -89,7 +89,7 @@ final class MessageService {
         content: String
     ) async throws -> Message {
         guard let senderId = SupabaseManager.shared.currentUserID else {
-            throw NSError(domain: "Msg", code: 401)
+            throw BrindooServiceError.notLoggedIn
         }
 
         struct Payload: Encodable {
@@ -127,7 +127,7 @@ final class MessageService {
         isBomb: Bool = false
     ) async throws -> Message {
         guard let senderId = SupabaseManager.shared.currentUserID else {
-            throw NSError(domain: "Msg", code: 401)
+            throw BrindooServiceError.notLoggedIn
         }
         
         // Upload immagine su storage temporaneo
@@ -168,7 +168,7 @@ final class MessageService {
     
     private func uploadChatImage(image: UIImage, senderId: UUID) async throws -> String {
         guard let data = image.jpegData(compressionQuality: 0.7) else {
-            throw NSError(domain: "Storage", code: 500)
+            throw BrindooServiceError.invalidImage
         }
         
         let fileName = "\(senderId.uuidString.lowercased())/\(UUID().uuidString.lowercased()).jpg"
@@ -198,7 +198,7 @@ final class MessageService {
         
         let payload = Payload(
             content: newContent,
-            edited_at: ISO8601DateFormatter().string(from: Date())
+            edited_at: BrindooFormat.isoNow
         )
         
         try await client
@@ -233,7 +233,7 @@ final class MessageService {
         try await client
             .from("messages")
             .update(Payload(
-                bomb_viewed_at: ISO8601DateFormatter().string(from: Date()),
+                bomb_viewed_at: BrindooFormat.isoNow,
                 image_url: nil
             ))
             .eq("id", value: message.id)
@@ -252,7 +252,7 @@ final class MessageService {
         try await client
             .from("messages")
             .update(Payload(
-                deleted_at: ISO8601DateFormatter().string(from: Date()),
+                deleted_at: BrindooFormat.isoNow,
                 content: "",
                 image_url: nil
             ))
@@ -298,7 +298,7 @@ final class MessageService {
         
         let trimmed = String(preview.prefix(100))
         let payload = Payload(
-            last_message_at: ISO8601DateFormatter().string(from: Date()),
+            last_message_at: BrindooFormat.isoNow,
             last_message_preview: trimmed
         )
         
@@ -315,7 +315,7 @@ final class MessageService {
         conversationId: UUID,
         onInsert: @escaping (Message) -> Void,
         onUpdate: @escaping (Message) -> Void
-    ) -> RealtimeChannelV2 {
+    ) -> RealtimeSubscription {
         let channel = client.realtimeV2.channel("conv-\(conversationId.uuidString)")
 
         // IMPORTANTE: registrare i callback PRIMA di subscribe(), altrimenti
@@ -331,34 +331,58 @@ final class MessageService {
             filter: .eq("conversation_id", value: conversationId.uuidString)
         )
 
-        Task {
-            for await action in insertStream {
-                if let message = try? action.decodeRecord(as: Message.self, decoder: JSONDecoder.brindooDecoder) {
-                    onInsert(message)
+        let tasks = [
+            Task {
+                for await action in insertStream {
+                    if let message = try? action.decodeRecord(as: Message.self, decoder: JSONDecoder.brindooDecoder) {
+                        onInsert(message)
+                    }
                 }
-            }
-        }
-
-        Task {
-            for await action in updateStream {
-                if let message = try? action.decodeRecord(as: Message.self, decoder: JSONDecoder.brindooDecoder) {
-                    onUpdate(message)
+            },
+            Task {
+                for await action in updateStream {
+                    if let message = try? action.decodeRecord(as: Message.self, decoder: JSONDecoder.brindooDecoder) {
+                        onUpdate(message)
+                    }
                 }
+            },
+            Task {
+                _ = try? await channel.subscribeWithError()
             }
-        }
+        ]
 
-        Task {
-            try? await channel.subscribeWithError()
-        }
+        return RealtimeSubscription(channel: channel, tasks: tasks)
+    }
+}
 
-        return channel
+/// Iscrizione al tempo reale di una conversazione: il canale e i cicli che lo
+/// leggono, così che chiudere la chat li chiuda davvero tutti.
+///
+/// Prima si restituiva il solo canale e i cicli restavano appesi: aprendo e
+/// chiudendo dieci chat rimanevano venti `Task` fermi in memoria per tutta la
+/// sessione, ognuno con dentro le sue chiusure.
+@MainActor
+struct RealtimeSubscription {
+    private let channel: RealtimeChannelV2
+    private let tasks: [Task<Void, Never>]
+
+    init(channel: RealtimeChannelV2, tasks: [Task<Void, Never>]) {
+        self.channel = channel
+        self.tasks = tasks
+    }
+
+    func cancel() async {
+        tasks.forEach { $0.cancel() }
+        await channel.unsubscribe()
     }
 }
 
 extension JSONDecoder {
-    static var brindooDecoder: JSONDecoder {
+    /// Decoder condiviso per i messaggi in arrivo dal tempo reale. Era una
+    /// proprietà calcolata: ne nasceva uno nuovo a ogni messaggio decodificato.
+    static let brindooDecoder: JSONDecoder = {
         let d = JSONDecoder()
         d.dateDecodingStrategy = .iso8601
         return d
-    }
+    }()
 }

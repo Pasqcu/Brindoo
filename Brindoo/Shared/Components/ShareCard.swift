@@ -229,6 +229,22 @@ enum ShareCardRenderer {
 
 // MARK: - Foglio di condivisione (immagine + link insieme)
 
+/// Cosa mandare al foglio di condivisione. Identificabile perché il foglio si
+/// apre con `.sheet(item:)`: ogni condivisione è una presentazione nuova.
+struct SharePayload: Identifiable {
+    let id = UUID()
+    let items: [Any]
+
+    /// Cartolina e link, saltando quello che non si è riusciti a preparare.
+    /// Se la cartolina non viene, si condivide comunque il link.
+    init(card: UIImage?, link: URL?) {
+        var items: [Any] = []
+        if let card { items.append(card) }
+        if let link { items.append(link) }
+        self.items = items
+    }
+}
+
 /// Wrapper di UIActivityViewController: permette di condividere in un colpo
 /// solo cartolina e link (ShareLink accetta un solo tipo di contenuto).
 struct ActivityShareSheet: UIViewControllerRepresentable {

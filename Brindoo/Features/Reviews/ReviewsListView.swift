@@ -203,8 +203,7 @@ struct ReviewsListView: View {
         }
         .padding(BrindooSpacing.md)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Color.brindooSurface)
-        .clipShape(RoundedRectangle(cornerRadius: BrindooRadius.md))
+        .brindooSurfaceBackground()
     }
     
     // MARK: - Empty
@@ -400,24 +399,12 @@ struct ReviewsListView: View {
     }
     
     private func loadClients(for reviews: [Review]) async {
-        let clientIds = Set(reviews.map { $0.clientId })
-        
-        await withTaskGroup(of: (UUID, Profile?).self) { group in
-            for clientId in clientIds {
-                if clientsMap[clientId] != nil { continue }
-                group.addTask {
-                    do {
-                        let p = try await ProfileService.shared.fetchProfile(userID: clientId)
-                        return (clientId, p)
-                    } catch {
-                        return (clientId, nil)
-                    }
-                }
-            }
-            for await (id, profile) in group {
-                if let profile { clientsMap[id] = profile }
-            }
-        }
+        let missing = Set(reviews.map { $0.clientId }).subtracting(clientsMap.keys)
+        guard !missing.isEmpty else { return }
+
+        // Una richiesta sola per tutti gli autori delle recensioni mostrate.
+        let profiles = (try? await ProfileService.shared.fetchProfiles(ids: Array(missing))) ?? []
+        for profile in profiles { clientsMap[profile.id] = profile }
     }
 }
 

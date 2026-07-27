@@ -43,8 +43,7 @@ struct ChatComposerView: View {
                 .font(BrindooFont.bodyMedium)
                 .padding(.horizontal, BrindooSpacing.md)
                 .padding(.vertical, BrindooSpacing.sm)
-                .background(Color.brindooSurface)
-                .clipShape(RoundedRectangle(cornerRadius: BrindooRadius.lg))
+                .brindooSurfaceBackground(radius: BrindooRadius.lg)
                 .disabled(isSending)
 
             Button {

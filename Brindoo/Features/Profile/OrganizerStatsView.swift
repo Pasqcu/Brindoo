@@ -93,8 +93,7 @@ struct OrganizerStatsView: View {
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(BrindooSpacing.md)
-        .background(Color.brindooSurface)
-        .clipShape(RoundedRectangle(cornerRadius: BrindooRadius.md))
+        .brindooSurfaceBackground()
     }
 
     @ViewBuilder

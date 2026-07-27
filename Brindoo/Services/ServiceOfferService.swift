@@ -170,7 +170,7 @@ final class ServiceOfferService {
         limit: Int = 10
     ) async throws -> [ServiceOffer] {
         guard !organizerIds.isEmpty else { return [] }
-        let iso = ISO8601DateFormatter().string(from: since)
+        let iso = BrindooFormat.iso(since)
         return try await client
             .from("service_offers")
             .select()
@@ -267,7 +267,7 @@ final class ServiceOfferService {
         imageUrl: String? = nil
     ) async throws -> ServiceOffer {
         guard let userId = SupabaseManager.shared.currentUserID else {
-            throw NSError(domain: "ServiceOffer", code: 401)
+            throw BrindooServiceError.notLoggedIn
         }
 
         // Limite free: 1 offerta attiva. Se l'organizzatore non è Pro e ne ha già

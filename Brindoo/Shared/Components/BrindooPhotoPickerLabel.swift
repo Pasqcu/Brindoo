@@ -51,8 +51,7 @@ struct BrindooPhotoPickerLabel: View {
         }
         .frame(maxWidth: .infinity)
         .frame(height: height)
-        .background(Color.brindooSurface)
-        .clipShape(RoundedRectangle(cornerRadius: BrindooRadius.md))
+        .brindooSurfaceBackground()
         .overlay(
             RoundedRectangle(cornerRadius: BrindooRadius.md)
                 .strokeBorder(Color.brindooBorder, lineWidth: 1)

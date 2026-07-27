@@ -49,8 +49,7 @@ struct AvailabilityView: View {
                             .tint(Color.brindooCoral)
                             .frame(maxWidth: .infinity)
                             .padding(BrindooSpacing.sm)
-                            .background(Color.brindooSurface)
-                            .clipShape(RoundedRectangle(cornerRadius: BrindooRadius.md))
+                            .brindooSurfaceBackground()
 
                         Text("\(selected.count) giorni segnati come non disponibili")
                             .font(BrindooFont.caption)
@@ -112,8 +111,7 @@ struct AvailabilityView: View {
         }
         .padding(BrindooSpacing.md)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Color.brindooSurface)
-        .clipShape(RoundedRectangle(cornerRadius: BrindooRadius.md))
+        .brindooSurfaceBackground()
     }
 
     private func load() async {

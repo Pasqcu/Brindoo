@@ -61,7 +61,7 @@ struct VerifiedCheckIcon: View {
         Image(systemName: "person.badge.shield.checkmark.fill")
             .font(.system(size: size, weight: .semibold))
             .foregroundStyle(.blue)
-            .accessibilityLabel("Identità verificata")
+            .accessibilityLabel(BrindooText.verifiedIdentity)
     }
 }
 

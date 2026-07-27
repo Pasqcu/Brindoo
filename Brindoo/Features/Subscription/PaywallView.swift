@@ -85,8 +85,7 @@ struct PaywallView: View {
                         )
                     }
                     .padding(BrindooSpacing.lg)
-                    .background(Color.brindooSurface)
-                    .clipShape(RoundedRectangle(cornerRadius: BrindooRadius.lg))
+                    .brindooSurfaceBackground(radius: BrindooRadius.lg)
                     
                     // Status corrente
                     if isCurrentlyPro {
@@ -110,13 +109,7 @@ struct PaywallView: View {
                     footerSection
                     
                     if let errorMessage {
-                        Text(errorMessage)
-                            .font(BrindooFont.bodySmall)
-                            .foregroundStyle(Color.brindooError)
-                            .padding()
-                            .frame(maxWidth: .infinity)
-                            .background(Color.brindooError.opacity(0.1))
-                            .clipShape(RoundedRectangle(cornerRadius: BrindooRadius.sm))
+                        BrindooInlineError(errorMessage)
                     }
                 }
                 .padding(.horizontal, BrindooSpacing.lg)

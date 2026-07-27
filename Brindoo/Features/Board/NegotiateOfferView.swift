@@ -86,8 +86,7 @@ struct NegotiateOfferView: View {
                     }
                     .padding(BrindooSpacing.md)
                     .frame(maxWidth: .infinity, alignment: .leading)
-                    .background(Color.brindooSurface)
-                    .clipShape(RoundedRectangle(cornerRadius: BrindooRadius.md))
+                    .brindooSurfaceBackground()
 
                     BrindooTextField(
                         title: "Il tuo prezzo (€)",
@@ -158,8 +157,7 @@ struct NegotiateOfferView: View {
                         }
                         .padding(BrindooSpacing.md)
                         .frame(maxWidth: .infinity, alignment: .leading)
-                        .background(Color.brindooSurface)
-                        .clipShape(RoundedRectangle(cornerRadius: BrindooRadius.md))
+                        .brindooSurfaceBackground()
                     }
 
                     if let generalError {

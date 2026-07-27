@@ -49,8 +49,7 @@ struct HelpView: View {
                     }
                     .tint(Color.brindooCoral)
                     .padding(BrindooSpacing.md)
-                    .background(Color.brindooSurface)
-                    .clipShape(RoundedRectangle(cornerRadius: BrindooRadius.md))
+                    .brindooSurfaceBackground()
                 }
 
                 if let url = URL(string: "mailto:supporto@brindoo.app?subject=Assistenza%20Brindoo") {

@@ -73,12 +73,7 @@ struct OrganizerWithOffersCard: View {
                     if let price = minPriceDisplay {
                         Text("da \(price)")
                             .font(BrindooFont.bodyMedium.weight(.bold))
-                            .foregroundStyle(.white)
-                            .padding(.horizontal, BrindooSpacing.sm)
-                            .padding(.vertical, 4)
-                            .background(.ultraThinMaterial)
-                            .clipShape(Capsule())
-                            .padding(BrindooSpacing.xs)
+                            .brindooOverlayPill()
                     }
                 }
                 .frame(height: 150)
@@ -182,8 +177,7 @@ struct OrganizerWithOffersCard: View {
             }
         }
         .padding(BrindooSpacing.md)
-        .background(Color.brindooSurface)
-        .clipShape(RoundedRectangle(cornerRadius: BrindooRadius.lg))
+        .brindooSurfaceBackground(radius: BrindooRadius.lg)
         .overlay(
             RoundedRectangle(cornerRadius: BrindooRadius.lg)
                 .strokeBorder(organizer.isBoosted ? accent.opacity(0.5) : Color.brindooBorder,
@@ -252,14 +246,9 @@ struct FeaturedOrganizerCard: View {
 
                 HStack(spacing: 3) {
                     Image(systemName: BrindooIcon.starFilled).font(.system(size: 9))
-                    Text("In evidenza").font(BrindooFont.scaled(10, weight: .bold, relativeTo: .caption2))
+                    Text(BrindooText.featured).font(BrindooFont.scaled(10, weight: .bold, relativeTo: .caption2))
                 }
-                .foregroundStyle(.white)
-                .padding(.horizontal, 8)
-                .padding(.vertical, 4)
-                .background(.ultraThinMaterial)
-                .clipShape(Capsule())
-                .padding(BrindooSpacing.xs)
+                .brindooOverlayPill()
             }
             .frame(width: 240, height: 130)
             .clipped()
@@ -292,8 +281,7 @@ struct FeaturedOrganizerCard: View {
             .padding(BrindooSpacing.sm)
         }
         .frame(width: 240)
-        .background(Color.brindooSurface)
-        .clipShape(RoundedRectangle(cornerRadius: BrindooRadius.lg))
+        .brindooSurfaceBackground(radius: BrindooRadius.lg)
         .overlay(
             RoundedRectangle(cornerRadius: BrindooRadius.lg)
                 .strokeBorder(Color.brindooCoral.opacity(0.35), lineWidth: 1)

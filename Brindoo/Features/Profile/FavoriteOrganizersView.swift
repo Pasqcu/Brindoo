@@ -18,7 +18,11 @@ final class FavoriteOrganizersViewModel: BrindooViewModel {
             let list = try await OrganizerFavoriteService.shared.fetchMyFavoriteOrganizers()
             state = list.isEmpty ? .empty : .loaded(list)
         } catch {
-            state = .error(error.localizedDescription)
+            guard !BrindooErrorText.isCancellation(error) else { return }
+            state = .error(BrindooErrorText.message(
+                for: error,
+                fallback: BrindooText.loadError("i preferiti")
+            ))
         }
     }
 

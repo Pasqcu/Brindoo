@@ -103,17 +103,7 @@ struct CreateOfferView: View {
                                     if isSelected { selectedCategoryIds.remove(cat.id) }
                                     else { selectedCategoryIds.insert(cat.id) }
                                 } label: {
-                                    HStack(spacing: 4) {
-                                        Image(systemName: cat.icon)
-                                            .font(.system(size: 12))
-                                        Text(cat.name)
-                                            .font(BrindooFont.bodySmall.weight(.medium))
-                                    }
-                                    .padding(.horizontal, BrindooSpacing.sm)
-                                    .padding(.vertical, BrindooSpacing.xs)
-                                    .foregroundStyle(isSelected ? .white : Color.brindooCoral)
-                                    .background(isSelected ? Color.brindooCoral : Color.brindooCoral.opacity(0.1))
-                                    .clipShape(Capsule())
+                                    BrindooCategoryPill(category: cat, isSelected: isSelected)
                                 }
                             }
                         }
@@ -289,8 +279,7 @@ struct CreateOfferView: View {
         }
         .padding(BrindooSpacing.md)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Color.brindooSurface)
-        .clipShape(RoundedRectangle(cornerRadius: BrindooRadius.md))
+        .brindooSurfaceBackground()
         .overlay(
             RoundedRectangle(cornerRadius: BrindooRadius.md)
                 .strokeBorder(Color.brindooBorder, lineWidth: 1)

@@ -29,10 +29,7 @@ struct MessageBubble: View {
     }
     
     private var timeLabel: String {
-        let fmt = DateFormatter()
-        fmt.locale = Locale(identifier: "it_IT")
-        fmt.dateFormat = "HH:mm"
-        return fmt.string(from: message.createdAt)
+        BrindooFormat.time(message.createdAt)
     }
     
     /// Mostra check di lettura solo se ENTRAMBI gli utenti hanno read receipts attivi

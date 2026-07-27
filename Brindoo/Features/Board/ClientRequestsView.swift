@@ -185,16 +185,9 @@ struct ClientRequestsView: View {
     private func loadClientProfiles() async {
         let missing = Set(requests.map { $0.clientId }).subtracting(clientProfiles.keys)
         guard !missing.isEmpty else { return }
-        await withTaskGroup(of: Profile?.self) { group in
-            for id in missing {
-                group.addTask {
-                    try? await ProfileService.shared.fetchProfile(userID: id)
-                }
-            }
-            for await profile in group {
-                if let profile { clientProfiles[profile.id] = profile }
-            }
-        }
+        // Una richiesta sola per tutti i clienti della bacheca.
+        let profiles = (try? await ProfileService.shared.fetchProfiles(ids: Array(missing))) ?? []
+        for profile in profiles { clientProfiles[profile.id] = profile }
     }
 
     // MARK: - Azioni
@@ -315,8 +308,7 @@ struct ClientRequestCard: View {
             }
         }
         .padding(BrindooSpacing.md)
-        .background(Color.brindooSurface)
-        .clipShape(RoundedRectangle(cornerRadius: BrindooRadius.md))
+        .brindooSurfaceBackground()
         .overlay(
             RoundedRectangle(cornerRadius: BrindooRadius.md)
                 .strokeBorder(Color.brindooBorder, lineWidth: 1)
@@ -335,21 +327,8 @@ struct ClientRequestCard: View {
         .clipShape(Capsule())
     }
 
-    @ViewBuilder
     private var statusPill: some View {
-        let isOpen = request.status == .open
-        HStack(spacing: 4) {
-            Circle()
-                .fill(isOpen ? Color.brindooSuccess : Color.brindooTextSecondary)
-                .frame(width: 6, height: 6)
-            Text(request.status.displayName)
-                .font(.system(size: 11, weight: .semibold))
-                .foregroundStyle(isOpen ? Color.brindooSuccess : Color.brindooTextSecondary)
-        }
-        .padding(.horizontal, 8)
-        .padding(.vertical, 4)
-        .background((isOpen ? Color.brindooSuccess : Color.brindooTextSecondary).opacity(0.1))
-        .clipShape(Capsule())
+        BrindooDotBadge(request.status.displayName, color: request.status.tint)
     }
 
     @ViewBuilder

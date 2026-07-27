@@ -69,18 +69,10 @@ struct BlockedUsersView: View {
         isLoading = true
         defer { isLoading = false }
         await BlockService.shared.loadBlocks()
-        await withTaskGroup(of: Profile?.self) { group in
-            for id in BlockService.shared.blockedIds {
-                group.addTask {
-                    try? await ProfileService.shared.fetchProfile(userID: id)
-                }
-            }
-            var loaded: [Profile] = []
-            for await p in group {
-                if let p { loaded.append(p) }
-            }
-            await MainActor.run { profiles = loaded }
-        }
+        // Una richiesta sola per tutti i bloccati.
+        profiles = (try? await ProfileService.shared.fetchProfiles(
+            ids: Array(BlockService.shared.blockedIds)
+        )) ?? []
     }
 
     private func unblock(_ userId: UUID) async {

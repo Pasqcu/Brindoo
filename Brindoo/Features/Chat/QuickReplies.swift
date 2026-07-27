@@ -116,8 +116,7 @@ struct QuickRepliesManageSheet: View {
                                 .accessibilityLabel("Elimina risposta rapida")
                             }
                             .padding(BrindooSpacing.sm)
-                            .background(Color.brindooSurface)
-                            .clipShape(RoundedRectangle(cornerRadius: BrindooRadius.sm))
+                            .brindooSurfaceBackground(radius: BrindooRadius.sm)
                         }
                     }
 
@@ -131,8 +130,7 @@ struct QuickRepliesManageSheet: View {
                                     .lineLimit(1...3)
                                     .font(BrindooFont.bodyMedium)
                                     .padding(BrindooSpacing.sm)
-                                    .background(Color.brindooSurface)
-                                    .clipShape(RoundedRectangle(cornerRadius: BrindooRadius.sm))
+                                    .brindooSurfaceBackground(radius: BrindooRadius.sm)
                                 Button {
                                     let trimmed = newPhrase.trimmingCharacters(in: .whitespacesAndNewlines)
                                     guard !trimmed.isEmpty else { return }

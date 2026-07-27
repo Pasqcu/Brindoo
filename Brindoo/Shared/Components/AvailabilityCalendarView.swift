@@ -93,8 +93,7 @@ struct AvailabilityCalendarView: View {
             .padding(.top, BrindooSpacing.xxs)
         }
         .padding(BrindooSpacing.md)
-        .background(Color.brindooSurface)
-        .clipShape(RoundedRectangle(cornerRadius: BrindooRadius.md))
+        .brindooSurfaceBackground()
         .accessibilityLabel("Calendario disponibilità del professionista")
     }
 

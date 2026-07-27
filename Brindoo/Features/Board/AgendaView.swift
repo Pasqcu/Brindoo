@@ -153,8 +153,7 @@ struct AgendaView: View {
                     .foregroundStyle(Color.brindooTextSecondary)
             }
             .padding(BrindooSpacing.md)
-            .background(Color.brindooSurface)
-            .clipShape(RoundedRectangle(cornerRadius: BrindooRadius.md))
+            .brindooSurfaceBackground()
             .overlay(
                 RoundedRectangle(cornerRadius: BrindooRadius.md)
                     .strokeBorder(Color.brindooCoral.opacity(0.3), lineWidth: 1)
@@ -348,8 +347,7 @@ struct AgendaView: View {
             }
         }
         .padding(BrindooSpacing.md)
-        .background(Color.brindooSurface)
-        .clipShape(RoundedRectangle(cornerRadius: BrindooRadius.md))
+        .brindooSurfaceBackground()
     }
 
     /// Mette l'evento nel calendario dell'iPhone, con avviso di esito.
@@ -395,7 +393,7 @@ struct AgendaView: View {
             if state.value == nil {
                 state = .error(BrindooText.loadError("l'agenda"))
             } else {
-                toastCenter.show(BrindooToast("Impossibile aggiornare l'agenda", message: BrindooText.retryHint, style: .error))
+                toastCenter.show(BrindooToast(BrindooText.updateError("l'agenda"), message: BrindooText.retryHint, style: .error))
             }
         }
     }

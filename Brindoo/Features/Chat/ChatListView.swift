@@ -256,17 +256,10 @@ struct ChatListView: View {
         let missing = otherIds.filter { otherProfiles[$0] == nil }
         guard !missing.isEmpty else { return }
 
-        await withTaskGroup(of: (UUID, Profile?).self) { group in
-            for id in missing {
-                group.addTask {
-                    let p = try? await ProfileService.shared.fetchProfile(userID: id)
-                    return (id, p)
-                }
-            }
-            for await (id, profile) in group {
-                if let profile { otherProfiles[id] = profile }
-            }
-        }
+        // Una richiesta sola invece di una per conversazione: con venti chat
+        // aperte erano venti viaggi al server per riempire la stessa lista.
+        let profiles = (try? await ProfileService.shared.fetchProfiles(ids: Array(missing))) ?? []
+        for profile in profiles { otherProfiles[profile.id] = profile }
     }
 
     private func deleteConversation(_ conversation: Conversation) async {
@@ -346,17 +339,7 @@ struct ChatListRow: View {
     }
 
     private var dateLabel: String {
-        let formatter = DateFormatter()
-        formatter.locale = Locale(identifier: "it_IT")
-
-        if Calendar.current.isDateInToday(conversation.lastMessageAt) {
-            formatter.dateFormat = "HH:mm"
-        } else if Calendar.current.isDateInYesterday(conversation.lastMessageAt) {
-            return "Ieri"
-        } else {
-            formatter.dateFormat = "dd/MM"
-        }
-        return formatter.string(from: conversation.lastMessageAt)
+        BrindooFormat.chatListTimestamp(conversation.lastMessageAt)
     }
 
     var body: some View {

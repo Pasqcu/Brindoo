@@ -57,8 +57,7 @@ final class PortfolioService {
     @discardableResult
     func addPhoto(_ image: UIImage, caption: String? = nil) async throws -> PortfolioItem {
         guard let userId = SupabaseManager.shared.currentUserID else {
-            throw NSError(domain: "PortfolioService", code: 401,
-                          userInfo: [NSLocalizedDescriptionKey: BrindooText.loginRequired])
+            throw BrindooServiceError.notLoggedIn
         }
 
         // Enforce cap in base allo stato Pro.

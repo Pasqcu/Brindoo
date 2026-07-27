@@ -35,7 +35,11 @@ final class OrganizerDashboardViewModel: BrindooViewModel {
             let stats = try await fetchStats()
             state = .loaded(stats)
         } catch {
-            state = .error(error.localizedDescription)
+            guard !BrindooErrorText.isCancellation(error) else { return }
+            state = .error(BrindooErrorText.message(
+                for: error,
+                fallback: BrindooText.loadError("i tuoi numeri")
+            ))
         }
     }
 
