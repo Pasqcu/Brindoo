@@ -1,60 +1,55 @@
 //
 //  ChatView.swift
 //
+//  Solo interfaccia: cosa si vede e cosa si tocca. Messaggi, invio, blocco
+//  e trattativa collegata stanno in ChatViewModel.
+//
 
 import SwiftUI
 import PhotosUI
-import Realtime
 
 struct ChatView: View {
-    
+
     @Environment(\.dismiss) private var dismiss
     @Environment(SessionStore.self) private var session
-    
+
     let conversation: Conversation
     let otherUser: Profile
-    
-    @State private var messages: [Message] = []
-    @State private var inputText: String = ""
-    @State private var isSending: Bool = false
-    @State private var isLoading: Bool = true
-    @State private var realtimeChannel: RealtimeChannelV2?
-    
-    @State private var replyingTo: Message?
-    @State private var editingMessage: Message?
-    
+
+    @State private var vm: ChatViewModel
+
+    // Stato puramente visivo: fogli, avvisi, anteprime.
     @State private var photoPickerItem: PhotosPickerItem?
     @State private var pendingImage: PendingImage?
-
     @State private var fullScreenImage: (url: String, message: Message)?
     @State private var bombViewerMessage: Message?
-
-    @State private var sendErrorMessage: String?
-
-    @State private var showBlockConfirm: Bool = false
-    @State private var showDeleteConvConfirm: Bool = false
-    @State private var isBlocked: Bool = false
-    @State private var navigateToProfile: Bool = false
-
+    @State private var showBlockConfirm = false
+    @State private var showDeleteConvConfirm = false
+    @State private var navigateToProfile = false
     @State private var messageToDelete: Message?
-
-    // Segnalazioni
-    @State private var showReportUser: Bool = false
+    @State private var showReportUser = false
     @State private var messageToReport: Message?
-
-    // Typing indicator
-    @State private var otherIsTyping: Bool = false
-    @State private var typingHideTask: Task<Void, Never>?
-
-    // Trattativa attiva con questo utente (collegamento Chat ↔ Trattative)
-    @State private var linkedProposal: OfferProposal?
 
     /// Coda dei messaggi in attesa di rete.
     @State private var outbox = OfflineOutboxService.shared
 
+    init(conversation: Conversation, otherUser: Profile) {
+        self.conversation = conversation
+        self.otherUser = otherUser
+        // L'utente corrente arriva dall'ambiente, che qui non è ancora
+        // leggibile: viene passato al modello appena la vista compare.
+        _vm = State(wrappedValue: ChatViewModel(
+            conversation: conversation,
+            otherUser: otherUser,
+            currentUserId: nil
+        ))
+    }
+
     var body: some View {
+        @Bindable var vm = vm
+
         VStack(spacing: 0) {
-            if let proposal = linkedProposal {
+            if let proposal = vm.linkedProposal {
                 ChatNegotiationBanner(proposal: proposal)
             }
 
@@ -62,8 +57,9 @@ struct ChatView: View {
 
             // Messaggi scritti senza linea: restano visibili qui finché
             // non partono da soli.
-            if !outbox.pendingMessages(for: conversation.id).isEmpty {
-                ChatPendingBanner(count: outbox.pendingMessages(for: conversation.id).count)
+            let pendingCount = outbox.pendingMessages(for: conversation.id).count
+            if pendingCount > 0 {
+                ChatPendingBanner(count: pendingCount)
             }
 
             let failedCount = outbox.failedMessages(for: conversation.id).count
@@ -75,28 +71,25 @@ struct ChatView: View {
                 )
             }
 
-            if isBlocked {
-                ChatBlockedBanner { Task { await unblock() } }
+            if vm.isBlocked {
+                ChatBlockedBanner { Task { await vm.unblock() } }
             } else {
                 // Una striscia sola per volta sopra la barra di scrittura:
                 // stanno tutte fra i messaggi e la tastiera, e sommate
                 // riducevano la conversazione a una fessura. Vince quella
                 // che riguarda il gesto in corso.
-                if editingMessage != nil {
-                    ChatEditBanner {
-                        editingMessage = nil
-                        inputText = ""
-                    }
-                } else if let replyingTo {
+                if vm.isEditing {
+                    ChatEditBanner { vm.cancelEditing() }
+                } else if let replyingTo = vm.replyingTo {
                     ChatReplyBanner(
                         message: replyingTo,
                         replyToName: replyingTo.senderId == session.userID ? "te stesso" : otherUser.displayName,
-                        onClose: { self.replyingTo = nil }
+                        onClose: { vm.cancelReply() }
                     )
-                } else if otherIsTyping {
+                } else if vm.otherIsTyping {
                     ChatTypingIndicator(
                         userName: otherUser.displayName,
-                        isAnimating: otherIsTyping
+                        isAnimating: vm.otherIsTyping
                     )
                 }
                 composer
@@ -113,37 +106,28 @@ struct ChatView: View {
 
             ToolbarItem(placement: .topBarTrailing) {
                 ChatOptionsMenu(
-                    isBlocked: isBlocked,
+                    isBlocked: vm.isBlocked,
                     onViewProfile: { navigateToProfile = true },
                     onDeleteConversation: { showDeleteConvConfirm = true },
                     onBlock: { showBlockConfirm = true },
-                    onUnblock: { Task { await unblock() } },
+                    onUnblock: { Task { await vm.unblock() } },
                     onReport: { showReportUser = true }
                 )
             }
         }
         .task {
-            await loadMessages()
-            subscribeRealtime()
-            await subscribeTyping()
-            await markRead()
-            checkBlocked()
-            await loadLinkedProposal()
+            vm.updateCurrentUser(session.userID)
+            await vm.load()
+            vm.subscribeRealtime()
+            await vm.subscribeTyping()
+            await vm.markRead()
+            vm.checkBlocked()
+            await vm.loadLinkedProposal()
         }
-        .onDisappear {
-            Task {
-                if let ch = realtimeChannel { await ch.unsubscribe() }
-                await TypingService.shared.unsubscribe(conversationId: conversation.id)
-            }
-            typingHideTask?.cancel()
-        }
+        .onDisappear { vm.unsubscribe() }
         .onChange(of: photoPickerItem) { _, item in
             guard let item else { return }
             Task { await loadPickedImage(item) }
-        }
-        .onChange(of: inputText) { _, newValue in
-            guard !newValue.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return }
-            Task { await TypingService.shared.sendTyping(conversationId: conversation.id) }
         }
         .fullScreenCover(item: Binding(
             get: { fullScreenImage.map { FullScreenWrapper(url: $0.url, message: $0.message) } },
@@ -156,7 +140,7 @@ struct ChatView: View {
         .fullScreenCover(item: $bombViewerMessage) { message in
             BombImageViewer(message: message) {
                 Task {
-                    try? await MessageService.shared.markBombViewed(message: message)
+                    await vm.markBombViewed(message)
                     bombViewerMessage = nil
                 }
             }
@@ -170,28 +154,28 @@ struct ChatView: View {
                 onSend: { asBomb in
                     let imageToSend = pending.image
                     pendingImage = nil
-                    Task { await sendImage(imageToSend, isBomb: asBomb) }
+                    Task { await vm.sendImage(imageToSend, isBomb: asBomb) }
                 }
             )
         }
         .alert("Errore invio foto", isPresented: Binding(
-            get: { sendErrorMessage != nil },
-            set: { if !$0 { sendErrorMessage = nil } }
+            get: { vm.sendErrorMessage != nil },
+            set: { if !$0 { vm.sendErrorMessage = nil } }
         )) {
-            Button("OK", role: .cancel) { sendErrorMessage = nil }
+            Button("OK", role: .cancel) { vm.sendErrorMessage = nil }
         } message: {
-            Text(sendErrorMessage ?? "")
+            Text(vm.sendErrorMessage ?? "")
         }
         .alert("Bloccare \(otherUser.displayName)?", isPresented: $showBlockConfirm) {
             Button("Annulla", role: .cancel) {}
             Button("Blocca", role: .destructive) {
-                Task { await blockUser() }
+                Task { if await vm.blockUser() { dismiss() } }
             }
         } message: {
             // Bloccare chi ha un evento in programma con te lascia un
             // impegno preso senza più un modo per parlarsi: va detto prima,
             // non scoperto la settimana della festa.
-            if let pending = pendingEventWarning {
+            if let pending = vm.pendingEventWarning {
                 Text("Attenzione: \(pending)\n\nBloccando non riuscirete più a scrivervi, ma l'accordo resta. Se non vuoi più farlo, annullalo prima dall'agenda.")
             } else {
                 Text("Non riceverete più messaggi e i vostri profili saranno nascosti reciprocamente.")
@@ -200,7 +184,7 @@ struct ChatView: View {
         .alert("Eliminare la conversazione?", isPresented: $showDeleteConvConfirm) {
             Button("Annulla", role: .cancel) {}
             Button("Elimina", role: .destructive) {
-                Task { await deleteConversation() }
+                Task { if await vm.deleteConversation() { dismiss() } }
             }
         } message: {
             Text("Solo per te. L'altro utente continuerà a vederla.")
@@ -209,7 +193,7 @@ struct ChatView: View {
             Button("Annulla", role: .cancel) { messageToDelete = nil }
             Button("Elimina", role: .destructive) {
                 if let msg = messageToDelete {
-                    Task { await deleteMessage(msg) }
+                    Task { await vm.deleteMessage(msg) }
                 }
                 messageToDelete = nil
             }
@@ -232,283 +216,68 @@ struct ChatView: View {
             )
         }
     }
-    
-    // MARK: - Messages scroll
 
-    @ViewBuilder
+    // MARK: - Elenco messaggi
+
     private var messagesScroll: some View {
         ChatMessagesList(
-            messages: messages,
+            messages: vm.messages,
             currentUserId: session.userID,
             otherUser: otherUser,
             myReadReceiptsEnabled: session.currentProfile?.readReceiptsEnabled ?? true,
             onTapImage: { url, message in fullScreenImage = (url, message) },
             onTapBomb: { message in bombViewerMessage = message },
-            onReply: { message in
-                replyingTo = message
-                editingMessage = nil
-            },
-            onEdit: { message in
-                guard message.senderId == session.userID, message.isEditable else { return }
-                editingMessage = message
-                inputText = message.content
-                replyingTo = nil
-            },
+            onReply: { message in vm.startReply(to: message) },
+            onEdit: { message in vm.startEditing(message) },
             onDelete: { message in messageToDelete = message },
             onReport: { message in messageToReport = message },
-            onRefresh: { await loadMessages() }
+            onRefresh: { await vm.load() }
         )
     }
 
-    // MARK: - Composer
-    
-    @ViewBuilder
+    // MARK: - Barra di scrittura
+
     private var composer: some View {
-        ChatComposerView(
-            inputText: $inputText,
+        @Bindable var vm = vm
+
+        return ChatComposerView(
+            inputText: $vm.inputText,
             photoPickerItem: $photoPickerItem,
-            isSending: isSending,
-            isEditing: editingMessage != nil,
-            isAttachDisabled: isSending || editingMessage != nil,
-            onSend: {
-                if editingMessage != nil {
-                    Task { await commitEdit() }
-                } else {
-                    Task { await sendText() }
-                }
-            },
+            isSending: vm.isSending,
+            isEditing: vm.isEditing,
+            isAttachDisabled: vm.isSending || vm.isEditing,
+            onSend: { Task { await vm.send() } },
             // Risposte rapide: solo per il professionista.
             onQuickReply: session.currentProfile?.role == .organizer
-                ? { phrase in
-                    inputText = inputText.isEmpty ? phrase : inputText + " " + phrase
-                }
+                ? { phrase in vm.appendQuickReply(phrase) }
                 : nil
         )
-        .onChange(of: inputText) { _, newValue in
-            Task { await ChatDraftStore.shared.setDraft(newValue, for: conversation.id) }
+        .onChange(of: vm.inputText) { _, newValue in
+            Task {
+                await vm.saveDraft(newValue)
+                // "Sta scrivendo" solo se c'è davvero qualcosa di scritto.
+                guard !newValue.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return }
+                await TypingService.shared.sendTyping(conversationId: conversation.id)
+            }
         }
         .task {
-            // Ripristina la bozza in cache (solo al primo ingresso, se input è vuoto)
-            if inputText.isEmpty {
-                let draft = await ChatDraftStore.shared.draft(for: conversation.id)
-                if !draft.isEmpty { inputText = draft }
-            }
-        }
-    }
-    
-    // MARK: - Actions
-    
-    private func loadMessages() async {
-        isLoading = true
-        defer { isLoading = false }
-        do {
-            guard let userId = session.userID else { return }
-            let visibleAfter = conversation.visibleAfterDate(for: userId)
-            messages = try await MessageService.shared.fetchMessages(
-                conversationId: conversation.id,
-                visibleAfter: visibleAfter
-            )
-        } catch {
-            BrindooLog.error("\(error)")
-        }
-    }
-    
-    private func subscribeRealtime() {
-        realtimeChannel = MessageService.shared.subscribeToMessages(
-            conversationId: conversation.id,
-            onInsert: { newMessage in
-                Task { @MainActor in
-                    if !messages.contains(where: { $0.id == newMessage.id }) {
-                        messages.append(newMessage)
-                        if newMessage.senderId != session.userID {
-                            await markRead()
-                            // Nuovo messaggio in arrivo dall'altra parte → l'indicatore va spento.
-                            otherIsTyping = false
-                            typingHideTask?.cancel()
-                        }
-                    }
-                }
-            },
-            onUpdate: { updated in
-                Task { @MainActor in
-                    if let idx = messages.firstIndex(where: { $0.id == updated.id }) {
-                        messages[idx] = updated
-                    }
-                }
-            }
-        )
-    }
-
-    private func subscribeTyping() async {
-        guard let userId = session.userID else { return }
-        _ = await TypingService.shared.subscribe(
-            conversationId: conversation.id,
-            currentUserId: userId
-        ) {
-            Task { @MainActor in
-                otherIsTyping = true
-                typingHideTask?.cancel()
-                typingHideTask = Task {
-                    try? await Task.sleep(nanoseconds: 3_000_000_000)
-                    if !Task.isCancelled {
-                        otherIsTyping = false
-                    }
-                }
-            }
+            await vm.restoreDraftIfNeeded()
         }
     }
 
-    private func markRead() async {
-        try? await MessageService.shared.markMessagesAsRead(conversationId: conversation.id)
-        // Quando l'utente apre la chat azzera anche il flag manuale "da leggere"
-        try? await ConversationService.shared.setMarkedUnread(conversation: conversation, unread: false)
-    }
-    
-    private func checkBlocked() {
-        isBlocked = BlockService.shared.isBlockingOrBlocked(otherUser.id)
-    }
+    // MARK: - Foto scelta dalla libreria
 
-    // MARK: - Collegamento alla trattativa
-
-    private var pendingEventWarning: String? { linkedProposal?.pendingAgreementWarning }
-
-    private func loadLinkedProposal() async {
-        let all = (try? await OfferProposalService.shared.fetchMyOngoingProposals()) ?? []
-        linkedProposal = all.first {
-            $0.clientId == otherUser.id || $0.organizerId == otherUser.id
-        }
-    }
-
-    private func sendText() async {
-        let text = inputText.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !text.isEmpty else { return }
-
-        isSending = true
-        defer { isSending = false }
-
-        let replyId = replyingTo?.id
-
-        // Senza linea, o se l'invio fallisce a metà, il messaggio non si perde:
-        // va in coda e parte da solo appena torna il segnale.
-        if NetworkMonitor.shared.isOnline {
-            do {
-                _ = try await MessageService.shared.sendMessage(
-                    conversationId: conversation.id,
-                    content: text,
-                    repliedToId: replyId
-                )
-            } catch {
-                BrindooLog.error("\(error)")
-                await enqueueForLater(text: text, repliedToId: replyId)
-            }
-        } else {
-            await enqueueForLater(text: text, repliedToId: replyId)
-            BrindooHaptics.notify(.warning)
-        }
-
-        await clearComposer()
-    }
-
-    /// Mette il messaggio nella coda offline.
-    private func enqueueForLater(text: String, repliedToId: UUID?) async {
-        await OfflineOutboxService.shared.enqueueMessage(
-            conversationId: conversation.id,
-            text: text,
-            repliedToId: repliedToId
-        )
-    }
-
-    /// Svuota il campo, chiude la risposta e cancella la bozza salvata.
-    private func clearComposer() async {
-        inputText = ""
-        replyingTo = nil
-        await ChatDraftStore.shared.clear(conversation.id)
-    }
-    
-    private func commitEdit() async {
-        guard let editing = editingMessage else { return }
-        let text = inputText.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !text.isEmpty else { return }
-        
-        isSending = true
-        defer { isSending = false }
-        
-        do {
-            try await MessageService.shared.editMessage(messageId: editing.id, newContent: text)
-            inputText = ""
-            editingMessage = nil
-            await ChatDraftStore.shared.clear(conversation.id)
-        } catch {
-            BrindooLog.error("\(error)")
-        }
-    }
-    
-    // La schermata è già sul main actor: i salti espliciti erano cerimonia
-    // che nascondeva quanto poco fa davvero questo metodo.
     private func loadPickedImage(_ item: PhotosPickerItem) async {
         defer { photoPickerItem = nil }
         do {
             guard let data = try await item.loadTransferable(type: Data.self),
                   let uiImage = UIImage(data: data) else {
-                sendErrorMessage = BrindooText.loadError("la foto selezionata. Riprova.")
+                vm.reportImageLoadFailure(nil)
                 return
             }
             pendingImage = PendingImage(image: uiImage)
         } catch {
-            BrindooLog.error("loadPickedImage: \(error)")
-            sendErrorMessage = "Errore nel caricamento della foto: \(error.localizedDescription)"
-        }
-    }
-
-    private func sendImage(_ image: UIImage, isBomb: Bool) async {
-        isSending = true
-        defer { isSending = false }
-
-        do {
-            _ = try await MessageService.shared.sendImage(
-                conversationId: conversation.id,
-                image: image,
-                isBomb: isBomb
-            )
-        } catch {
-            BrindooLog.error("sendImage: \(error)")
-            sendErrorMessage = "Invio foto fallito: \(error.localizedDescription)"
-        }
-    }
-    
-    private func deleteMessage(_ message: Message) async {
-        do {
-            try await MessageService.shared.deleteMessage(messageId: message.id)
-        } catch {
-            BrindooLog.error("\(error)")
-        }
-    }
-    
-    private func deleteConversation() async {
-        do {
-            try await ConversationService.shared.softDelete(conversation: conversation)
-            dismiss()
-        } catch {
-            BrindooLog.error("\(error)")
-        }
-    }
-    
-    private func blockUser() async {
-        do {
-            try await BlockService.shared.block(userId: otherUser.id)
-            try await ConversationService.shared.softDelete(conversation: conversation)
-            dismiss()
-        } catch {
-            BrindooLog.error("\(error)")
-        }
-    }
-    
-    private func unblock() async {
-        do {
-            try await BlockService.shared.unblock(userId: otherUser.id)
-            isBlocked = false
-        } catch {
-            BrindooLog.error("\(error)")
+            vm.reportImageLoadFailure(error)
         }
     }
 }
