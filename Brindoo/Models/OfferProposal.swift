@@ -151,6 +151,21 @@ struct OfferProposal: Identifiable, Codable, Hashable, Equatable {
         bookingStatus ?? (status == .accepted ? .confirmed : .confirmed)
     }
 
+    /// Descrizione dell'impegno ancora aperto con questa persona, se c'è.
+    /// Serve ad avvisare prima di gesti che tagliano i ponti (blocco,
+    /// cancellazione della chat): "prima di bloccare, sappi che...".
+    /// Vive qui e non nella schermata perché è una regola dell'accordo,
+    /// non un dettaglio della chat.
+    var pendingAgreementWarning: String? {
+        guard status == .accepted,
+              effectiveBooking == .confirmed,
+              !isEventPast else { return nil }
+        if let date = eventDateDisplay {
+            return "avete un evento concordato il \(date) per \(currentPriceDisplay)"
+        }
+        return "avete un accordo chiuso per \(currentPriceDisplay), con data ancora da fissare"
+    }
+
     /// True se l'evento ha una data già passata.
     var isEventPast: Bool {
         guard let eventDate, !eventDate.isEmpty else { return false }

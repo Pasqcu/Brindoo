@@ -243,16 +243,19 @@ struct EditProfileView: View {
     }
 
     private func loadAvatarFromPicker(_ item: PhotosPickerItem) async {
+        defer { avatarPickerItem = nil }
         do {
-            if let data = try await item.loadTransferable(type: Data.self),
-               let uiImage = UIImage(data: data) {
-                await MainActor.run {
-                    newAvatarImage = uiImage
-                    avatarPickerItem = nil
-                }
+            guard let data = try await item.loadTransferable(type: Data.self),
+                  let uiImage = UIImage(data: data) else {
+                generalError = BrindooText.loadError("la foto selezionata. Riprova.")
+                return
             }
+            newAvatarImage = uiImage
         } catch {
-            await MainActor.run { avatarPickerItem = nil }
+            // Prima falliva in silenzio: si sceglieva una foto e non
+            // succedeva niente, senza sapere perché.
+            BrindooLog.error("loadAvatarFromPicker: \(error)")
+            generalError = BrindooText.loadError("la foto selezionata. Riprova.")
         }
     }
 

@@ -65,23 +65,10 @@ struct PortfolioGalleryView: View {
         .toolbar {
             if isOwner {
                 ToolbarItem(placement: .topBarTrailing) {
-                    PhotosPicker(
+                    PortfolioAddPhotosButton(
                         selection: $pickerItems,
-                        maxSelectionCount: 10,
-                        matching: .images,
-                        preferredItemEncoding: .compatible,
-                        photoLibrary: .shared()
-                    ) {
-                        if isUploading {
-                            ProgressView()
-                                .tint(.brindooCoral)
-                        } else {
-                            Image(systemName: "plus.circle.fill")
-                                .font(.system(size: 22))
-                                .foregroundStyle(Color.brindooCoral)
-                        }
-                    }
-                    .disabled(isUploading)
+                        isUploading: isUploading
+                    )
                 }
             }
         }
@@ -366,4 +353,34 @@ struct PortfolioGalleryView: View {
 private struct IndexWrapper: Identifiable {
     let index: Int
     var id: Int { index }
+}
+
+// MARK: - Pulsante "aggiungi foto"
+
+/// Vive fuori dalla schermata perché la closure di PhotosPicker è Sendable:
+/// da lì lo stato della vista non si può leggere.
+private struct PortfolioAddPhotosButton: View {
+    @Binding var selection: [PhotosPickerItem]
+    let isUploading: Bool
+
+    var body: some View {
+        PhotosPicker(
+            selection: $selection,
+            maxSelectionCount: 10,
+            matching: .images,
+            preferredItemEncoding: .compatible,
+            photoLibrary: .shared()
+        ) {
+            if isUploading {
+                ProgressView()
+                    .tint(.brindooCoral)
+            } else {
+                Image(systemName: "plus.circle.fill")
+                    .font(.system(size: 22))
+                    .foregroundStyle(Color.brindooCoral)
+            }
+        }
+        .disabled(isUploading)
+        .accessibilityLabel(isUploading ? "Caricamento foto in corso" : "Aggiungi foto")
+    }
 }

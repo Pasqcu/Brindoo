@@ -370,18 +370,7 @@ struct ChatView: View {
 
     // MARK: - Collegamento alla trattativa
 
-    /// Descrizione dell'evento ancora da svolgere con questa persona,
-    /// se ce n'è uno: serve solo ad avvisare prima di bloccare.
-    private var pendingEventWarning: String? {
-        guard let p = linkedProposal,
-              p.status == .accepted,
-              p.effectiveBooking == .confirmed,
-              !p.isEventPast else { return nil }
-        if let date = p.eventDateDisplay {
-            return "avete un evento concordato il \(date) per \(p.currentPriceDisplay)"
-        }
-        return "avete un accordo chiuso per \(p.currentPriceDisplay), con data ancora da fissare"
-    }
+    private var pendingEventWarning: String? { linkedProposal?.pendingAgreementWarning }
 
     private func loadLinkedProposal() async {
         let all = (try? await OfferProposalService.shared.fetchMyOngoingProposals()) ?? []
@@ -393,46 +382,47 @@ struct ChatView: View {
     private func sendText() async {
         let text = inputText.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !text.isEmpty else { return }
-        
+
         isSending = true
         defer { isSending = false }
-        
-        // Senza linea non si perde nulla: il messaggio va in coda e parte
-        // da solo appena torna il segnale.
-        guard NetworkMonitor.shared.isOnline else {
-            await OfflineOutboxService.shared.enqueueMessage(
-                conversationId: conversation.id,
-                text: text,
-                repliedToId: replyingTo?.id
-            )
-            inputText = ""
-            replyingTo = nil
-            await ChatDraftStore.shared.clear(conversation.id)
+
+        let replyId = replyingTo?.id
+
+        // Senza linea, o se l'invio fallisce a metà, il messaggio non si perde:
+        // va in coda e parte da solo appena torna il segnale.
+        if NetworkMonitor.shared.isOnline {
+            do {
+                _ = try await MessageService.shared.sendMessage(
+                    conversationId: conversation.id,
+                    content: text,
+                    repliedToId: replyId
+                )
+            } catch {
+                BrindooLog.error("\(error)")
+                await enqueueForLater(text: text, repliedToId: replyId)
+            }
+        } else {
+            await enqueueForLater(text: text, repliedToId: replyId)
             BrindooHaptics.notify(.warning)
-            return
         }
 
-        do {
-            _ = try await MessageService.shared.sendMessage(
-                conversationId: conversation.id,
-                content: text,
-                repliedToId: replyingTo?.id
-            )
-            inputText = ""
-            replyingTo = nil
-            await ChatDraftStore.shared.clear(conversation.id)
-        } catch {
-            BrindooLog.error("\(error)")
-            // Errore di rete a metà invio: stessa sorte, in coda.
-            await OfflineOutboxService.shared.enqueueMessage(
-                conversationId: conversation.id,
-                text: text,
-                repliedToId: replyingTo?.id
-            )
-            inputText = ""
-            replyingTo = nil
-            await ChatDraftStore.shared.clear(conversation.id)
-        }
+        await clearComposer()
+    }
+
+    /// Mette il messaggio nella coda offline.
+    private func enqueueForLater(text: String, repliedToId: UUID?) async {
+        await OfflineOutboxService.shared.enqueueMessage(
+            conversationId: conversation.id,
+            text: text,
+            repliedToId: repliedToId
+        )
+    }
+
+    /// Svuota il campo, chiude la risposta e cancella la bozza salvata.
+    private func clearComposer() async {
+        inputText = ""
+        replyingTo = nil
+        await ChatDraftStore.shared.clear(conversation.id)
     }
     
     private func commitEdit() async {
@@ -453,26 +443,20 @@ struct ChatView: View {
         }
     }
     
+    // La schermata è già sul main actor: i salti espliciti erano cerimonia
+    // che nascondeva quanto poco fa davvero questo metodo.
     private func loadPickedImage(_ item: PhotosPickerItem) async {
+        defer { photoPickerItem = nil }
         do {
-            if let data = try await item.loadTransferable(type: Data.self),
-               let uiImage = UIImage(data: data) {
-                await MainActor.run {
-                    pendingImage = PendingImage(image: uiImage)
-                    photoPickerItem = nil
-                }
-            } else {
-                await MainActor.run {
-                    photoPickerItem = nil
-                    sendErrorMessage = BrindooText.loadError("la foto selezionata. Riprova.")
-                }
+            guard let data = try await item.loadTransferable(type: Data.self),
+                  let uiImage = UIImage(data: data) else {
+                sendErrorMessage = BrindooText.loadError("la foto selezionata. Riprova.")
+                return
             }
+            pendingImage = PendingImage(image: uiImage)
         } catch {
             BrindooLog.error("loadPickedImage: \(error)")
-            await MainActor.run {
-                photoPickerItem = nil
-                sendErrorMessage = "Errore nel caricamento della foto: \(error.localizedDescription)"
-            }
+            sendErrorMessage = "Errore nel caricamento della foto: \(error.localizedDescription)"
         }
     }
 

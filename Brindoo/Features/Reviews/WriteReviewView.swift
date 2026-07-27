@@ -196,45 +196,28 @@ struct WriteReviewView: View {
     
     // MARK: - Foto dell'evento
 
-    @ViewBuilder
     private var photoSection: some View {
-        VStack(alignment: .leading, spacing: BrindooSpacing.xs) {
+        // Valori letti qui, non dentro la closure del selettore: quella e'
+        // Sendable e non puo' toccare lo stato della schermata.
+        let currentImage = photoImage
+        let currentUrl = existingPhotoUrl
+
+        return VStack(alignment: .leading, spacing: BrindooSpacing.xs) {
             Text("Foto dell'evento (opzionale)")
                 .font(BrindooFont.bodySmall.weight(.medium))
                 .foregroundStyle(Color.brindooTextSecondary)
 
+            // L'etichetta del selettore vive in una vista a parte: la closure di
+            // PhotosPicker e' Sendable e leggere da li' lo stato della schermata
+            // e' una gara di dati in Swift 6.
             PhotosPicker(selection: $photoPickerItem, matching: .images) {
-                ZStack {
-                    if let photoImage {
-                        Image(uiImage: photoImage)
-                            .resizable()
-                            .scaledToFill()
-                    } else if let existingPhotoUrl, let url = URL(string: existingPhotoUrl) {
-                        BrindooCachedImage(url: url) { image in
-                            image.resizable().scaledToFill()
-                        } placeholder: {
-                            BrindooSkeleton(cornerRadius: BrindooRadius.md)
-                        }
-                    } else {
-                        VStack(spacing: BrindooSpacing.xs) {
-                            Image(systemName: "camera.badge.clock")
-                                .font(.system(size: 26))
-                                .foregroundStyle(Color.brindooCoral)
-                            Text("Una foto dell'evento rende la recensione più credibile")
-                                .font(BrindooFont.caption)
-                                .foregroundStyle(Color.brindooTextSecondary)
-                                .multilineTextAlignment(.center)
-                        }
-                        .padding(BrindooSpacing.md)
-                    }
-                }
-                .frame(maxWidth: .infinity)
-                .frame(height: 120)
-                .background(Color.brindooSurface)
-                .clipShape(RoundedRectangle(cornerRadius: BrindooRadius.md))
-                .overlay(
-                    RoundedRectangle(cornerRadius: BrindooRadius.md)
-                        .strokeBorder(Color.brindooBorder, lineWidth: 1)
+                BrindooPhotoPickerLabel(
+                    image: currentImage,
+                    existingUrl: currentUrl,
+                    height: 120,
+                    icon: "camera.badge.clock",
+                    hint: "Una foto dell'evento rende la recensione più credibile",
+                    iconSize: 26
                 )
             }
             .disabled(isLoading)

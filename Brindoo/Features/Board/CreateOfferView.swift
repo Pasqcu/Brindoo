@@ -212,9 +212,13 @@ struct CreateOfferView: View {
 
     // MARK: - Foto di copertina
 
-    @ViewBuilder
     private var coverImagePicker: some View {
-        VStack(alignment: .leading, spacing: BrindooSpacing.xs) {
+        // Valori letti qui: la closure di PhotosPicker e' Sendable e non puo'
+        // toccare lo stato della schermata.
+        let currentCover = coverImage
+        let currentTemplateUrl = templateImageUrl
+
+        return VStack(alignment: .leading, spacing: BrindooSpacing.xs) {
             Text("Foto di copertina (consigliata)")
                 .font(BrindooFont.bodySmall.weight(.medium))
                 .foregroundStyle(Color.brindooTextSecondary)
@@ -224,37 +228,12 @@ struct CreateOfferView: View {
                 .foregroundStyle(Color.brindooTextSecondary)
 
             PhotosPicker(selection: $coverPickerItem, matching: .images) {
-                ZStack {
-                    if let coverImage {
-                        Image(uiImage: coverImage)
-                            .resizable()
-                            .scaledToFill()
-                    } else if let templateImageUrl, let url = URL(string: templateImageUrl) {
-                        BrindooCachedImage(url: url) { image in
-                            image.resizable().scaledToFill()
-                        } placeholder: {
-                            BrindooSkeleton(cornerRadius: BrindooRadius.md)
-                        }
-                    } else {
-                        VStack(spacing: BrindooSpacing.xs) {
-                            Image(systemName: "photo.badge.plus")
-                                .font(.system(size: 32))
-                                .foregroundStyle(Color.brindooCoral)
-                            Text("Aggiungi una foto che mostri il tuo servizio")
-                                .font(BrindooFont.caption)
-                                .foregroundStyle(Color.brindooTextSecondary)
-                                .multilineTextAlignment(.center)
-                        }
-                        .padding(BrindooSpacing.md)
-                    }
-                }
-                .frame(maxWidth: .infinity)
-                .frame(height: 160)
-                .background(Color.brindooSurface)
-                .clipShape(RoundedRectangle(cornerRadius: BrindooRadius.md))
-                .overlay(
-                    RoundedRectangle(cornerRadius: BrindooRadius.md)
-                        .strokeBorder(Color.brindooBorder, lineWidth: 1)
+                BrindooPhotoPickerLabel(
+                    image: currentCover,
+                    existingUrl: currentTemplateUrl,
+                    height: 160,
+                    icon: "photo.badge.plus",
+                    hint: "Aggiungi una foto che mostri il tuo servizio"
                 )
             }
             .disabled(isLoading)
