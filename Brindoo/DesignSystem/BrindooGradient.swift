@@ -21,10 +21,7 @@ enum BrindooGradient {
     )
 
     static let pro = LinearGradient(
-        colors: [
-            Color(red: 0.95, green: 0.74, blue: 0.30),
-            Color(red: 0.93, green: 0.50, blue: 0.20)
-        ],
+        colors: [Color.brindooProGoldLight, Color.brindooProGoldDeep],
         startPoint: .topLeading,
         endPoint: .bottomTrailing
     )

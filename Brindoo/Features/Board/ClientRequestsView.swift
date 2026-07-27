@@ -326,7 +326,7 @@ struct ClientRequestCard: View {
     private var urgentPill: some View {
         HStack(spacing: 3) {
             Image(systemName: "flame.fill").font(.system(size: 9))
-            Text("Urgente").font(.system(size: 11, weight: .semibold))
+            Text("Urgente").font(BrindooFont.scaled(11, weight: .semibold, relativeTo: .caption1))
         }
         .padding(.horizontal, 8)
         .padding(.vertical, 4)

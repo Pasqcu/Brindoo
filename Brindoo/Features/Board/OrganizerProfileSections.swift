@@ -306,7 +306,7 @@ struct OrganizerPreviewBanner: View {
                 Image(systemName: "chevron.down")
                     .font(.system(size: 8, weight: .semibold))
                 Text("Scorri giù per chiudere")
-                    .font(.system(size: 9, weight: .medium))
+                    .font(BrindooFont.scaled(9, weight: .medium, relativeTo: .caption2))
             }
             .foregroundStyle(Color.brindooTextSecondary.opacity(0.7))
         }

@@ -144,6 +144,7 @@ struct BoostView: View {
                             .font(.system(size: 16, weight: .semibold))
                             .foregroundStyle(Color.brindooTextPrimary)
                     }
+                    .accessibilityLabel("Chiudi")
                 }
             }
             .task {
@@ -210,7 +211,7 @@ struct BoostView: View {
                         
                         if isRecommended {
                             Text("CONSIGLIATO")
-                                .font(.system(size: 9, weight: .bold))
+                                .font(BrindooFont.scaled(9, weight: .bold, relativeTo: .caption2))
                                 .foregroundStyle(.white)
                                 .padding(.horizontal, 6)
                                 .padding(.vertical, 3)

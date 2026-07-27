@@ -228,7 +228,11 @@ struct BoardFiltersBar: View {
                 } label: {
                     Image(systemName: "xmark.circle.fill")
                         .foregroundStyle(Color.brindooTextSecondary)
+                        .frame(width: 44, height: 44)
+                        .contentShape(Rectangle())
                 }
+                .buttonStyle(.plain)
+                .accessibilityLabel("Cancella la ricerca")
             }
         }
         .padding(.horizontal, BrindooSpacing.md)

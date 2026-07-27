@@ -99,12 +99,14 @@ struct EditFAQsView: View {
                     Image(systemName: "pencil")
                         .foregroundStyle(Color.brindooCoral)
                 }
+                .accessibilityLabel("Modifica la domanda")
                 Button {
                     faqs.remove(at: index)
                 } label: {
                     Image(systemName: "trash")
                         .foregroundStyle(Color.brindooError)
                 }
+                .accessibilityLabel("Elimina la domanda")
             }
             Text(faq.answer)
                 .font(BrindooFont.bodySmall)

@@ -30,7 +30,7 @@ struct PaywallView: View {
                             Circle()
                                 .fill(BrindooGradient.pro)
                                 .frame(width: 80, height: 80)
-                                .shadow(color: Color(red: 0.93, green: 0.50, blue: 0.20).opacity(0.4), radius: 10, x: 0, y: 4)
+                                .shadow(color: Color.brindooProGoldDeep.opacity(0.4), radius: 10, x: 0, y: 4)
 
                             Image(systemName: "crown.fill")
                                 .font(.system(size: 34, weight: .bold))
@@ -219,7 +219,7 @@ struct PaywallView: View {
             VStack(spacing: BrindooSpacing.xxs) {
                 HStack(alignment: .firstTextBaseline, spacing: 4) {
                     Text(product.displayPrice)
-                        .font(.system(size: 36, weight: .bold, design: .rounded))
+                        .font(BrindooFont.scaled(36, weight: .bold, rounded: true, relativeTo: .largeTitle))
                     Text("/mese")
                         .font(BrindooFont.bodyLarge)
                         .foregroundStyle(Color.brindooTextSecondary)

@@ -85,7 +85,7 @@ struct OrganizerStatsView: View {
                 .font(.system(size: 18))
                 .foregroundStyle(Color.brindooCoral)
             Text(value)
-                .font(.system(size: 28, weight: .bold, design: .rounded))
+                .font(BrindooFont.scaled(28, weight: .bold, rounded: true, relativeTo: .title1))
                 .foregroundStyle(Color.brindooTextPrimary)
             Text(title)
                 .font(BrindooFont.caption)

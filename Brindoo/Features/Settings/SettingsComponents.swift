@@ -146,7 +146,7 @@ struct SettingsPromoCard: View {
                         .font(BrindooFont.bodyMedium.weight(.semibold))
                     if let badgeText {
                         Text(badgeText)
-                            .font(.system(size: 9, weight: .bold))
+                            .font(BrindooFont.scaled(9, weight: .bold, relativeTo: .caption2))
                             .padding(.horizontal, 6)
                             .padding(.vertical, 2)
                             .background(Color.brindooSuccess)

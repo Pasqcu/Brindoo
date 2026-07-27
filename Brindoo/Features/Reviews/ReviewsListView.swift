@@ -263,7 +263,7 @@ struct ReviewsListView: View {
                             Image(systemName: "checkmark.seal.fill")
                                 .font(.system(size: 10))
                             Text("Verificata")
-                                .font(.system(size: 10, weight: .semibold))
+                                .font(BrindooFont.scaled(10, weight: .semibold, relativeTo: .caption2))
                         }
                         .foregroundStyle(Color.brindooSuccess)
                     }
@@ -283,9 +283,10 @@ struct ReviewsListView: View {
                         Image(systemName: "ellipsis")
                             .font(.system(size: 14))
                             .foregroundStyle(Color.brindooTextSecondary)
-                            .frame(width: 32, height: 32)
+                            .frame(width: 44, height: 44)
                             .contentShape(Rectangle())
                     }
+                    .accessibilityLabel("Altre azioni")
                 }
             }
 

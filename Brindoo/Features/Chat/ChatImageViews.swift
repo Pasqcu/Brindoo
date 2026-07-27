@@ -44,6 +44,7 @@ struct FullScreenImageView: View {
                     .foregroundStyle(.white)
             }
             .padding()
+            .accessibilityLabel("Chiudi")
         }
     }
 }
@@ -73,6 +74,7 @@ struct PhotoPreviewSendView: View {
                         .contentShape(Circle())
                 }
                 .buttonStyle(.plain)
+                .accessibilityLabel("Annulla")
 
                 Spacer()
 
@@ -182,6 +184,7 @@ struct BombImageViewer: View {
                             .font(.system(size: 28))
                             .foregroundStyle(.white)
                     }
+                    .accessibilityLabel("Chiudi")
                 }
                 .padding()
 

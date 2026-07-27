@@ -40,7 +40,7 @@ struct BrindooStatTile: View {
                     }
                 }
                 Text(value)
-                    .font(.system(size: 24, weight: .bold, design: .rounded))
+                    .font(BrindooFont.scaled(24, weight: .bold, rounded: true, relativeTo: .title2))
                     .foregroundStyle(Color.brindooTextPrimary)
                 Text(label)
                     .font(BrindooFont.bodySmall)

@@ -106,7 +106,7 @@ struct ReferralView: View {
             } else if let code = vm.code {
                 HStack(spacing: BrindooSpacing.xs) {
                     Text(code.displayCode)
-                        .font(.system(size: 28, weight: .heavy, design: .monospaced))
+                        .font(BrindooFont.scaled(28, weight: .heavy, relativeTo: .title1))
                         .foregroundStyle(.white)
                         .padding(.horizontal, BrindooSpacing.md)
                         .padding(.vertical, BrindooSpacing.xs)
@@ -123,6 +123,7 @@ struct ReferralView: View {
                             .background(Color.white.opacity(0.18))
                             .clipShape(Circle())
                     }
+                    .accessibilityLabel("Copia il codice invito")
                 }
                 BrindooButton("Condividi invito", style: .white, size: .medium, icon: BrindooIcon.share) {
                     showShare = true
@@ -154,7 +155,7 @@ struct ReferralView: View {
                 icon: BrindooIcon.crown,
                 value: "\(vm.stats.proMonthsEarned)",
                 label: "Mesi Pro ottenuti",
-                tint: Color(red: 0.95, green: 0.6, blue: 0.15)
+                tint: Color.brindooProGold
             )
         }
     }

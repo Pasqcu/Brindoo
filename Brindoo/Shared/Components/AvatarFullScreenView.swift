@@ -48,6 +48,7 @@ struct AvatarFullScreenView: View {
                     .foregroundStyle(.white, .black.opacity(0.5))
             }
             .padding()
+            .accessibilityLabel("Chiudi")
         }
     }
 

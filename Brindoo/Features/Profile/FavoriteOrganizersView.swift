@@ -71,6 +71,9 @@ struct FavoriteOrganizersView: View {
                                 }
                             }
                             .buttonStyle(.plain)
+                            .accessibilityAddTraits(
+                                selectedIds.contains(profile.id) ? [.isSelected] : []
+                            )
                         } else {
                             NavigationLink {
                                 OrganizerDetailView(organizer: profile)

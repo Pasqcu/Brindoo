@@ -53,6 +53,7 @@ struct OfferPackagesEditor: View {
                                 .foregroundStyle(Color.brindooTextSecondary)
                         }
                         .disabled(isDisabled)
+                        .accessibilityLabel("Rimuovi pacchetto")
                     }
                     TextField("Cosa include (opzionale)", text: $package.description)
                         .font(BrindooFont.bodySmall)

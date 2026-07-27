@@ -230,7 +230,7 @@ struct ProfileView: View {
             Image(systemName: role.iconName)
                 .font(.system(size: 10, weight: .semibold))
             Text(role.displayName)
-                .font(.system(size: 11, weight: .semibold))
+                .font(BrindooFont.scaled(11, weight: .semibold, relativeTo: .caption1))
         }
         .foregroundStyle(.white)
         .padding(.horizontal, BrindooSpacing.sm)

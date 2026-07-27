@@ -191,7 +191,7 @@ struct OfferCard: View {
                 Text(label)
                     .font(BrindooFont.caption.weight(.semibold))
                 Text(proposal.currentPriceDisplay)
-                    .font(.system(size: 11))
+                    .font(BrindooFont.scaled(11, relativeTo: .caption1))
             }
             Spacer()
         }

@@ -24,7 +24,7 @@ enum BrindooBadgeStyle {
         case .error:   return Color.brindooError.opacity(0.15)
         case .info:    return Color.blue.opacity(0.14)
         case .coral:   return Color.brindooCoral.opacity(0.14)
-        case .pro:     return Color(red: 0.95, green: 0.74, blue: 0.30).opacity(0.18)
+        case .pro:     return Color.brindooProGoldLight.opacity(0.18)
         }
     }
 
@@ -36,7 +36,7 @@ enum BrindooBadgeStyle {
         case .error:   return .brindooError
         case .info:    return .blue
         case .coral:   return .brindooCoral
-        case .pro:     return Color(red: 0.78, green: 0.45, blue: 0.10)
+        case .pro:     return Color.brindooProGoldInk
         }
     }
 }
@@ -59,7 +59,7 @@ struct BrindooBadge: View {
                     .font(.system(size: 11, weight: .bold))
             }
             Text(text)
-                .font(.system(size: 12, weight: .semibold, design: .rounded))
+                .font(BrindooFont.scaled(12, weight: .semibold, rounded: true, relativeTo: .caption1))
         }
         .foregroundStyle(style.foreground)
         .padding(.horizontal, BrindooSpacing.xs)

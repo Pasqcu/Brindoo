@@ -60,7 +60,7 @@ struct OrganizerCard: View {
                                 Image(systemName: category.icon)
                                     .font(.system(size: 10, weight: .medium))
                                 Text(category.name)
-                                    .font(.system(size: 11, weight: .medium))
+                                    .font(BrindooFont.scaled(11, weight: .medium, relativeTo: .caption1))
                                     .lineLimit(1)
                             }
                             .foregroundStyle(category.tint)
@@ -72,7 +72,7 @@ struct OrganizerCard: View {
                         
                         if categories.count > 3 {
                             Text("+\(categories.count - 3)")
-                                .font(.system(size: 11, weight: .medium))
+                                .font(BrindooFont.scaled(11, weight: .medium, relativeTo: .caption1))
                                 .foregroundStyle(Color.brindooTextSecondary)
                         }
                     }
@@ -115,13 +115,13 @@ struct ProBadge: View {
             Image(systemName: "crown.fill")
                 .font(.system(size: 8, weight: .bold))
             Text("PRO")
-                .font(.system(size: 10, weight: .bold, design: .rounded))
+                .font(BrindooFont.scaled(10, weight: .bold, rounded: true, relativeTo: .caption2))
         }
         .foregroundStyle(.white)
         .padding(.horizontal, 6)
         .padding(.vertical, 2)
         .background(BrindooGradient.pro)
         .clipShape(Capsule())
-        .shadow(color: Color(red: 0.93, green: 0.50, blue: 0.20).opacity(0.4), radius: 3, x: 0, y: 1)
+        .shadow(color: Color.brindooProGoldDeep.opacity(0.4), radius: 3, x: 0, y: 1)
     }
 }

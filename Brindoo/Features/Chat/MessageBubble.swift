@@ -124,12 +124,12 @@ struct MessageBubble: View {
             HStack(spacing: 4) {
                 if message.isEdited && !message.isDeleted {
                     Text("modificato")
-                        .font(.system(size: 10))
+                        .font(BrindooFont.scaled(10, relativeTo: .caption2))
                         .italic()
                         .foregroundStyle(Color.brindooTextSecondary)
                 }
                 Text(timeLabel)
-                    .font(.system(size: 10))
+                    .font(BrindooFont.scaled(10, relativeTo: .caption2))
                     .foregroundStyle(Color.brindooTextSecondary)
                 
                 if showReadReceipt {
@@ -150,10 +150,10 @@ struct MessageBubble: View {
             
             VStack(alignment: .leading, spacing: 1) {
                 Text("Risposta")
-                    .font(.system(size: 11, weight: .semibold))
+                    .font(BrindooFont.scaled(11, weight: .semibold, relativeTo: .caption1))
                     .foregroundStyle(isOwn ? .white.opacity(0.9) : Color.brindooCoral)
                 Text(quotePreview(replied))
-                    .font(.system(size: 12))
+                    .font(BrindooFont.scaled(12, relativeTo: .caption1))
                     .foregroundStyle(isOwn ? .white.opacity(0.85) : Color.brindooTextSecondary)
                     .lineLimit(1)
             }
@@ -241,7 +241,7 @@ struct MessageBubble: View {
                         .font(BrindooFont.bodySmall.weight(.semibold))
                         .foregroundStyle(textColor)
                     Text(alreadyViewed ? "Non più disponibile" : (isOwn ? "Tap del destinatario per aprirla" : "Tocca per visualizzare"))
-                        .font(.system(size: 11))
+                        .font(BrindooFont.scaled(11, relativeTo: .caption1))
                         .foregroundStyle(isOwn ? .white.opacity(0.8) : Color.brindooTextSecondary)
                 }
             }

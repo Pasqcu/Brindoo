@@ -191,7 +191,7 @@ struct CompareOrganizersView: View {
     /// più economico non è il migliore, e il professionista bravo ci perde.
     private func bestTag(_ label: String) -> some View {
         Text(label)
-            .font(.system(size: 9, weight: .bold))
+            .font(BrindooFont.scaled(9, weight: .bold, relativeTo: .caption2))
             .textCase(.uppercase)
             .padding(.horizontal, 6)
             .padding(.vertical, 2)

@@ -60,7 +60,11 @@ struct ChatReplyBanner: View {
             Button { onClose() } label: {
                 Image(systemName: "xmark.circle.fill")
                     .foregroundStyle(Color.brindooTextSecondary)
+                    .frame(width: 44, height: 44)
+                    .contentShape(Rectangle())
             }
+            .buttonStyle(.plain)
+            .accessibilityLabel("Chiudi")
         }
         .padding(.horizontal, BrindooSpacing.md)
         .padding(.vertical, BrindooSpacing.xs)
@@ -86,7 +90,11 @@ struct ChatEditBanner: View {
             } label: {
                 Image(systemName: "xmark.circle.fill")
                     .foregroundStyle(Color.brindooTextSecondary)
+                    .frame(width: 44, height: 44)
+                    .contentShape(Rectangle())
             }
+            .buttonStyle(.plain)
+            .accessibilityLabel("Chiudi")
         }
         .padding(.horizontal, BrindooSpacing.md)
         .padding(.vertical, BrindooSpacing.xs)

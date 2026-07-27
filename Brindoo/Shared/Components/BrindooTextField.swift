@@ -83,6 +83,7 @@ struct BrindooTextField: View {
                             .foregroundStyle(Color.brindooTextSecondary)
                     }
                     .buttonStyle(.plain)
+                    .accessibilityLabel(isPasswordVisible ? "Nascondi la password" : "Mostra la password")
                 }
             }
             .padding(.horizontal, BrindooSpacing.md)

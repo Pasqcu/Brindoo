@@ -69,8 +69,11 @@ struct BrindooBanner: View {
                     Image(systemName: BrindooIcon.close)
                         .font(.system(size: 13, weight: .bold))
                         .foregroundStyle(Color.brindooTextSecondary)
-                        .padding(6)
+                        .frame(width: 44, height: 44)
+                        .contentShape(Rectangle())
                 }
+                .buttonStyle(.plain)
+                .accessibilityLabel("Chiudi l'avviso")
             }
         }
         .padding(BrindooSpacing.md)

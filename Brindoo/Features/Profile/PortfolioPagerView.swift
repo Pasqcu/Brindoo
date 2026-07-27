@@ -71,6 +71,7 @@ struct PortfolioPagerView: View {
                                 .symbolRenderingMode(.palette)
                                 .foregroundStyle(.white, .black.opacity(0.5))
                         }
+                        .accessibilityLabel("Altre azioni")
                     }
 
                     Button {
@@ -81,6 +82,7 @@ struct PortfolioPagerView: View {
                             .symbolRenderingMode(.palette)
                             .foregroundStyle(.white, .black.opacity(0.5))
                     }
+                    .accessibilityLabel("Chiudi")
                 }
                 .padding(.horizontal, BrindooSpacing.md)
                 .padding(.top, BrindooSpacing.sm)

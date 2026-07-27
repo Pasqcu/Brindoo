@@ -67,7 +67,7 @@ struct UpgradeCelebrationView: View {
 
                 VStack(spacing: BrindooSpacing.xs) {
                     Text("Sei un Professionista!")
-                        .font(.system(size: 28, weight: .bold, design: .rounded))
+                        .font(BrindooFont.scaled(28, weight: .bold, rounded: true, relativeTo: .title1))
                         .foregroundStyle(.white)
                     Text("Ora completiamo il tuo profilo.")
                         .font(BrindooFont.bodyLarge)

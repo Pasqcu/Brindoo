@@ -253,7 +253,7 @@ struct ProfileSetupView: View {
                             Text(province.rawValue)
                                 .font(BrindooFont.bodySmall.weight(.bold))
                             Text(province.displayName)
-                                .font(.system(size: 10))
+                                .font(BrindooFont.scaled(10, relativeTo: .caption2))
                         }
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, BrindooSpacing.xs)

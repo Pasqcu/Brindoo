@@ -13,7 +13,7 @@ import SwiftUI
 struct NewOfferBadge: View {
     var body: some View {
         Text("NUOVO")
-            .font(.system(size: 9, weight: .heavy))
+            .font(BrindooFont.scaled(9, weight: .heavy, relativeTo: .caption2))
             .foregroundStyle(.white)
             .padding(.horizontal, 6)
             .padding(.vertical, 3)
@@ -103,7 +103,7 @@ struct OrganizerWithOffersCard: View {
                             HStack(spacing: 2) {
                                 Image(systemName: "star.fill").font(.system(size: 10))
                                 Text(String(format: "%.1f", rating.avgRating))
-                                    .font(.system(size: 11, weight: .bold))
+                                    .font(BrindooFont.scaled(11, weight: .bold, relativeTo: .caption1))
                             }
                             .foregroundStyle(Color.brindooWarning)
                         }
@@ -146,7 +146,7 @@ struct OrganizerWithOffersCard: View {
                                 Image(systemName: cat.icon)
                                     .font(.system(size: 10, weight: .medium))
                                 Text(cat.name)
-                                    .font(.system(size: 11, weight: .medium))
+                                    .font(BrindooFont.scaled(11, weight: .medium, relativeTo: .caption1))
                             }
                             .foregroundStyle(cat.tint)
                             .padding(.horizontal, 8)
@@ -156,7 +156,7 @@ struct OrganizerWithOffersCard: View {
                         }
                         if categories.count > 4 {
                             Text("+\(categories.count - 4)")
-                                .font(.system(size: 11, weight: .medium))
+                                .font(BrindooFont.scaled(11, weight: .medium, relativeTo: .caption1))
                                 .foregroundStyle(Color.brindooTextSecondary)
                         }
                     }
@@ -252,7 +252,7 @@ struct FeaturedOrganizerCard: View {
 
                 HStack(spacing: 3) {
                     Image(systemName: "star.fill").font(.system(size: 9))
-                    Text("In evidenza").font(.system(size: 10, weight: .bold))
+                    Text("In evidenza").font(BrindooFont.scaled(10, weight: .bold, relativeTo: .caption2))
                 }
                 .foregroundStyle(.white)
                 .padding(.horizontal, 8)
@@ -283,7 +283,7 @@ struct FeaturedOrganizerCard: View {
                     if let rating, rating.reviewCount > 0 {
                         HStack(spacing: 2) {
                             Image(systemName: "star.fill").font(.system(size: 9))
-                            Text(String(format: "%.1f", rating.avgRating)).font(.system(size: 11, weight: .bold))
+                            Text(String(format: "%.1f", rating.avgRating)).font(BrindooFont.scaled(11, weight: .bold, relativeTo: .caption1))
                         }
                         .foregroundStyle(Color.brindooWarning)
                     }

@@ -155,6 +155,7 @@ struct OrganizerDetailView: View {
                         Image(systemName: "ellipsis.circle.fill")
                             .foregroundStyle(Color.brindooCoral)
                     }
+                    .accessibilityLabel("Altre azioni")
                 }
             }
         }

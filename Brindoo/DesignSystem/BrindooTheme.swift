@@ -54,6 +54,14 @@ extension Color {
     /// Oro/arancio del piano Pro (corona e accenti premium).
     static let brindooProGold = Color(red: 0.93, green: 0.55, blue: 0.20)
 
+    /// Estremi del gradiente Pro. Erano ricopiati a mano in cinque schermate:
+    /// bastava sbagliare una cifra per avere due ori diversi nella stessa app.
+    static let brindooProGoldLight = Color(red: 0.95, green: 0.74, blue: 0.30)
+    static let brindooProGoldDeep = Color(red: 0.93, green: 0.50, blue: 0.20)
+
+    /// Testo/icona su fondo oro chiaro (contrasto sufficiente sul badge Pro).
+    static let brindooProGoldInk = Color(red: 0.78, green: 0.45, blue: 0.10)
+
     /// Giallo warning (in attesa, pending). Più luminoso in modalità scura.
     static let brindooWarning = Color(UIColor { trait in
         trait.userInterfaceStyle == .dark
@@ -138,6 +146,19 @@ enum BrindooFont {
     static let caption       = brindooScaledFont(size: 12, weight: .medium,   rounded: false, relativeTo: .caption1)
     static let button        = brindooScaledFont(size: 16, weight: .semibold, rounded: true,  relativeTo: .headline)
     static let buttonSmall   = brindooScaledFont(size: 14, weight: .semibold, rounded: true,  relativeTo: .subheadline)
+
+    /// Font di dimensione libera che continua a rispettare la scelta di
+    /// grandezza del testo fatta nelle impostazioni del telefono.
+    /// Da preferire sempre a `.system(size:)` su un testo: quello resta fisso
+    /// e per chi legge in grande diventa illeggibile.
+    static func scaled(
+        _ size: CGFloat,
+        weight: UIFont.Weight = .regular,
+        rounded: Bool = false,
+        relativeTo textStyle: UIFont.TextStyle = .body
+    ) -> Font {
+        brindooScaledFont(size: size, weight: weight, rounded: rounded, relativeTo: textStyle)
+    }
 }
 
 // MARK: - Ombre
