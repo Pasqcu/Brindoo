@@ -38,7 +38,7 @@ struct ClientFeedbackPrompt: View {
                 .foregroundStyle(Color.brindooTextSecondary)
 
             if isSending {
-                ProgressView().frame(maxWidth: .infinity)
+                ProgressView().tint(.brindooCoral).frame(maxWidth: .infinity)
             } else {
                 VStack(spacing: BrindooSpacing.xs) {
                     ForEach(ClientOutcome.allCases) { outcome in

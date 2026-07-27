@@ -17,6 +17,17 @@ import Foundation
 
 enum BrindooText {
 
+    // MARK: - Nomi
+
+    /// Iniziali per gli avatar: al massimo due lettere, "?" se manca il nome.
+    /// Era ricopiata in tre punti, con esiti diversi sui nomi composti.
+    static func initials(from name: String?) -> String {
+        guard let name, !name.trimmingCharacters(in: .whitespaces).isEmpty else { return "?" }
+        let parts = name.split(separator: " ").prefix(2)
+        let letters = parts.compactMap { $0.first?.uppercased() }.joined()
+        return letters.isEmpty ? "?" : letters
+    }
+
     // MARK: - Errori comuni
 
     /// Suggerimento standard sotto ogni errore di rete.

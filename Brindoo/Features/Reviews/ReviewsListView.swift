@@ -177,7 +177,7 @@ struct ReviewsListView: View {
         HStack(spacing: BrindooSpacing.lg) {
             VStack(alignment: .leading, spacing: BrindooSpacing.xxs) {
                 HStack(spacing: BrindooSpacing.xs) {
-                    Image(systemName: "star.fill")
+                    Image(systemName: BrindooIcon.starFilled)
                         .font(.system(size: 18))
                         .foregroundStyle(Color.brindooCoral)
                     
@@ -260,7 +260,7 @@ struct ReviewsListView: View {
 
                     if review.isVerified {
                         HStack(spacing: 3) {
-                            Image(systemName: "checkmark.seal.fill")
+                            Image(systemName: BrindooIcon.badge)
                                 .font(.system(size: 10))
                             Text("Verificata")
                                 .font(BrindooFont.scaled(10, weight: .semibold, relativeTo: .caption2))
@@ -280,7 +280,7 @@ struct ReviewsListView: View {
                             Label("Segnala recensione", systemImage: "exclamationmark.bubble")
                         }
                     } label: {
-                        Image(systemName: "ellipsis")
+                        Image(systemName: BrindooIcon.more)
                             .font(.system(size: 14))
                             .foregroundStyle(Color.brindooTextSecondary)
                             .frame(width: 44, height: 44)
@@ -441,15 +441,7 @@ struct ReplyToReviewSheet: View {
                         .foregroundStyle(Color.brindooTextSecondary)
 
                     TextField("Scrivi la tua risposta…", text: $text, axis: .vertical)
-                        .lineLimit(4...10)
-                        .font(BrindooFont.bodyLarge)
-                        .padding(BrindooSpacing.md)
-                        .background(Color.brindooSurface)
-                        .overlay(
-                            RoundedRectangle(cornerRadius: BrindooRadius.md)
-                                .strokeBorder(Color.brindooBorder, lineWidth: 1)
-                        )
-                        .clipShape(RoundedRectangle(cornerRadius: BrindooRadius.md))
+                        .brindooMultilineFieldStyle()
                         .disabled(isLoading)
 
                     if let error {

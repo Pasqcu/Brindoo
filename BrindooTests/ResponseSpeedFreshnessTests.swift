@@ -10,6 +10,9 @@
 import XCTest
 @testable import Brindoo
 
+// I modelli dell'app vivono sul main actor: la suite ci sta sopra anche lei,
+// altrimenti ogni accesso e' un errore nel linguaggio Swift 6.
+@MainActor
 final class ResponseSpeedFreshnessTests: XCTestCase {
 
     private func makeProfile(responseMinutes: Int?, updatedDaysAgo: Int) throws -> Profile {

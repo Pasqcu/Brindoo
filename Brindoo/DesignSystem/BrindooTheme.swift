@@ -199,12 +199,6 @@ enum BrindooElevation {
     }
 }
 
-enum BrindooShadow {
-    static let cardShadowColor = BrindooElevation.card.color
-    static let cardShadowRadius = BrindooElevation.card.radius
-    static let cardShadowY = BrindooElevation.card.y
-}
-
 // MARK: - Modifier helper
 
 extension View {

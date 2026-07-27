@@ -52,7 +52,7 @@ struct AvatarEditSection: View {
                         if isUploading {
                             ProgressView().tint(.white).scaleEffect(0.7)
                         } else {
-                            Image(systemName: "camera.fill")
+                            Image(systemName: BrindooIcon.camera)
                                 .font(.system(size: 14, weight: .bold))
                                 .foregroundStyle(.white)
                         }
@@ -88,7 +88,7 @@ struct EditCategoryRow: View {
             // categoria non si poteva più togliere.
             HStack(spacing: BrindooSpacing.sm) {
                 Button {
-                    withAnimation(.easeInOut(duration: 0.2)) {
+                    withAnimation(BrindooAnimation.quickEase) {
                         if isSelected {
                             expandedId = isExpanded ? nil : category.id
                         } else {
@@ -186,7 +186,7 @@ struct EditCategoryRow: View {
 struct PostUpgradeBanner: View {
     var body: some View {
         HStack(alignment: .top, spacing: BrindooSpacing.sm) {
-            Image(systemName: "sparkles")
+            Image(systemName: BrindooIcon.explore)
                 .font(.system(size: 22))
                 .foregroundStyle(Color.brindooCoral)
             VStack(alignment: .leading, spacing: 2) {
@@ -232,7 +232,7 @@ struct SuggestCategoryButton: View {
                     .font(BrindooFont.bodyMedium.weight(.medium))
                     .foregroundStyle(Color.brindooCoral)
                 Spacer()
-                Image(systemName: "chevron.right")
+                Image(systemName: BrindooIcon.forward)
                     .font(.system(size: 12, weight: .semibold))
                     .foregroundStyle(Color.brindooTextSecondary)
             }
@@ -270,7 +270,7 @@ struct CoverageAreasField: View {
                 showAreaPicker = true
             } label: {
                 HStack(spacing: BrindooSpacing.sm) {
-                    Image(systemName: "mappin.and.ellipse")
+                    Image(systemName: BrindooIcon.location)
                         .font(.system(size: 16))
                         .foregroundStyle(.white)
                         .frame(width: 32, height: 32)
@@ -293,7 +293,7 @@ struct CoverageAreasField: View {
                         }
                     }
                     Spacer()
-                    Image(systemName: "chevron.right")
+                    Image(systemName: BrindooIcon.forward)
                         .font(.system(size: 13, weight: .semibold))
                         .foregroundStyle(Color.brindooTextSecondary)
                 }

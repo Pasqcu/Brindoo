@@ -73,7 +73,7 @@ struct SignUpView: View {
                 Button {
                     dismiss()
                 } label: {
-                    Image(systemName: "chevron.left")
+                    Image(systemName: BrindooIcon.back)
                         .font(.system(size: 16, weight: .semibold))
                         .foregroundStyle(Color.brindooTextPrimary)
                 }
@@ -134,7 +134,7 @@ struct SignUpView: View {
             // Banner che spiega perché le password sono bloccate
             if !arePasswordsEnabled && !email.isEmpty {
                 HStack(spacing: BrindooSpacing.xs) {
-                    Image(systemName: "info.circle.fill")
+                    Image(systemName: BrindooIcon.info)
                         .foregroundStyle(Color.brindooTextSecondary)
                     Text("Completa prima l'email per impostare la password")
                         .font(BrindooFont.caption)
@@ -176,16 +176,7 @@ struct SignUpView: View {
             )
             
             if let generalError {
-                HStack(spacing: BrindooSpacing.xs) {
-                    Image(systemName: "exclamationmark.triangle.fill")
-                    Text(generalError)
-                        .font(BrindooFont.bodySmall)
-                }
-                .foregroundStyle(Color.brindooError)
-                .padding(BrindooSpacing.sm)
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .background(Color.brindooError.opacity(0.1))
-                .clipShape(RoundedRectangle(cornerRadius: BrindooRadius.sm))
+                BrindooInlineError(generalError)
             }
             
             consentCheckbox
@@ -211,7 +202,7 @@ struct SignUpView: View {
         // essere sempre raggiungibili.
         VStack(alignment: .leading, spacing: BrindooSpacing.xs) {
             Button {
-                withAnimation(.easeInOut(duration: 0.15)) {
+                withAnimation(BrindooAnimation.quickEase) {
                     acceptedTermsAt = acceptedTermsAndAge
                         ? ""
                         : ISO8601DateFormatter().string(from: Date())

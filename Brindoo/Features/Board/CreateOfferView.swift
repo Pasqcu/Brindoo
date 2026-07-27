@@ -145,15 +145,7 @@ struct CreateOfferView: View {
                     OfferPackagesEditor(packages: $packages, isDisabled: isLoading)
 
                     if let generalError {
-                        HStack(spacing: BrindooSpacing.xs) {
-                            Image(systemName: "exclamationmark.triangle.fill")
-                            Text(generalError).font(BrindooFont.bodySmall)
-                        }
-                        .foregroundStyle(Color.brindooError)
-                        .padding(BrindooSpacing.sm)
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                        .background(Color.brindooError.opacity(0.1))
-                        .clipShape(RoundedRectangle(cornerRadius: BrindooRadius.sm))
+                        BrindooInlineError(generalError)
                     }
                 }
                 .padding(BrindooSpacing.md)
@@ -273,7 +265,7 @@ struct CreateOfferView: View {
                     coverPickerItem = nil
                     templateImageUrl = nil
                 } label: {
-                    Label("Rimuovi foto", systemImage: "trash")
+                    Label("Rimuovi foto", systemImage: BrindooIcon.delete)
                         .font(BrindooFont.caption.weight(.medium))
                         .foregroundStyle(Color.brindooError)
                 }
@@ -292,7 +284,7 @@ struct CreateOfferView: View {
     private var coverageInheritedCard: some View {
         VStack(alignment: .leading, spacing: BrindooSpacing.xs) {
             HStack(spacing: BrindooSpacing.sm) {
-                Image(systemName: "mappin.and.ellipse")
+                Image(systemName: BrindooIcon.location)
                     .font(.system(size: 18))
                     .foregroundStyle(Color.brindooCoral)
                 VStack(alignment: .leading, spacing: 2) {

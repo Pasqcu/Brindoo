@@ -230,6 +230,7 @@ Il supporto generico risponde entro 5 giorni lavorativi.
                 }
             }
             .padding(BrindooSpacing.lg)
+            .brindooReadableWidth()
             .padding(.bottom, BrindooSpacing.xl)
         }
         .background(Color.brindooBackground)

@@ -57,24 +57,3 @@ enum AppleSignInHelper {
     }
 }
 
-// MARK: - Errori
-
-enum AppleSignInError: LocalizedError {
-    case noTokenFromApple
-    case invalidTokenEncoding
-    case userCancelled
-    case unknown(String)
-    
-    var errorDescription: String? {
-        switch self {
-        case .noTokenFromApple:
-            return "Apple non ha fornito il token di accesso"
-        case .invalidTokenEncoding:
-            return "Token Apple non valido"
-        case .userCancelled:
-            return "Accesso annullato"
-        case .unknown(let msg):
-            return msg
-        }
-    }
-}

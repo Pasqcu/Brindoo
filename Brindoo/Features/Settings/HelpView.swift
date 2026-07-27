@@ -56,11 +56,11 @@ struct HelpView: View {
                 if let url = URL(string: "mailto:supporto@brindoo.app?subject=Assistenza%20Brindoo") {
                     Link(destination: url) {
                         HStack(spacing: BrindooSpacing.sm) {
-                            Image(systemName: "envelope.fill")
+                            Image(systemName: BrindooIcon.invite)
                             Text("Non hai trovato risposta? Scrivici")
                                 .font(BrindooFont.bodyMedium.weight(.semibold))
                             Spacer()
-                            Image(systemName: "chevron.right").font(.system(size: 12, weight: .semibold))
+                            Image(systemName: BrindooIcon.forward).font(.system(size: 12, weight: .semibold))
                         }
                         .foregroundStyle(Color.brindooCoral)
                         .padding(BrindooSpacing.md)

@@ -56,7 +56,7 @@ struct UpgradeCelebrationView: View {
                         .scaleEffect(ringScale * 0.9)
                         .opacity(ringOpacity * 0.7)
 
-                    Image(systemName: "sparkles")
+                    Image(systemName: BrindooIcon.explore)
                         .font(.system(size: 90, weight: .bold))
                         .foregroundStyle(.white)
                         .scaleEffect(iconScale)

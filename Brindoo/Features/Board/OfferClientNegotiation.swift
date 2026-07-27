@@ -264,7 +264,7 @@ struct ClientNegotiationSection: View {
                 VStack(spacing: BrindooSpacing.sm) {
                     HStack(spacing: BrindooSpacing.sm) {
                         Button { onReject(proposal) } label: {
-                            Label("Rifiuta", systemImage: "xmark")
+                            Label("Rifiuta", systemImage: BrindooIcon.close)
                                 .font(BrindooFont.bodySmall.weight(.semibold))
                                 .frame(maxWidth: .infinity)
                                 .padding(.vertical, 10)

@@ -40,7 +40,7 @@ struct CategoryChip: View {
             )
         }
         .buttonStyle(.plain)
-        .animation(.easeInOut(duration: 0.2), value: isSelected)
+        .animation(BrindooAnimation.quickEase, value: isSelected)
     }
 }
 

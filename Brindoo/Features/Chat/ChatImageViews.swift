@@ -65,7 +65,7 @@ struct PhotoPreviewSendView: View {
                 Button {
                     onCancel()
                 } label: {
-                    Image(systemName: "xmark")
+                    Image(systemName: BrindooIcon.close)
                         .font(.system(size: 18, weight: .semibold))
                         .foregroundStyle(.white)
                         .frame(width: 44, height: 44)
@@ -102,7 +102,7 @@ struct PhotoPreviewSendView: View {
             HStack(spacing: BrindooSpacing.md) {
                 // Toggle bomba
                 Button {
-                    withAnimation(.easeInOut(duration: 0.15)) {
+                    withAnimation(BrindooAnimation.quickEase) {
                         asBomb.toggle()
                     }
                 } label: {
@@ -129,7 +129,7 @@ struct PhotoPreviewSendView: View {
                     HStack(spacing: BrindooSpacing.xs) {
                         Text("Invia")
                             .font(BrindooFont.bodyMedium.weight(.bold))
-                        Image(systemName: "paperplane.fill")
+                        Image(systemName: BrindooIcon.send)
                             .font(.system(size: 16, weight: .bold))
                     }
                     .foregroundStyle(.white)
@@ -145,7 +145,7 @@ struct PhotoPreviewSendView: View {
 
             if asBomb {
                 HStack(spacing: BrindooSpacing.xs) {
-                    Image(systemName: "info.circle.fill")
+                    Image(systemName: BrindooIcon.info)
                     Text("La foto sparirà dopo che il destinatario la apre")
                         .font(BrindooFont.caption)
                 }
@@ -172,7 +172,7 @@ struct BombImageViewer: View {
             VStack(spacing: BrindooSpacing.lg) {
                 HStack {
                     HStack(spacing: BrindooSpacing.xs) {
-                        Image(systemName: "flame.fill")
+                        Image(systemName: BrindooIcon.flame)
                             .foregroundStyle(.orange)
                         Text("Foto bomba")
                             .font(BrindooFont.bodyMedium.weight(.semibold))

@@ -220,3 +220,23 @@ extension String {
         return self.range(of: regex, options: .regularExpression) != nil
     }
 }
+
+// MARK: - Campo di testo lungo
+
+extension View {
+    /// Veste di un campo su piu' righe (bio, recensione, risposta).
+    /// Erano dieci righe ricopiate in tre schermate: una si scostava e i
+    /// tre riquadri non sembravano piu' lo stesso controllo.
+    func brindooMultilineFieldStyle() -> some View {
+        self
+            .lineLimit(4...10)
+            .font(BrindooFont.bodyLarge)
+            .padding(BrindooSpacing.md)
+            .background(Color.brindooSurface)
+            .overlay(
+                RoundedRectangle(cornerRadius: BrindooRadius.md)
+                    .strokeBorder(Color.brindooBorder, lineWidth: 1)
+            )
+            .clipShape(RoundedRectangle(cornerRadius: BrindooRadius.md))
+    }
+}

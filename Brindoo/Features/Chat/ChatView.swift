@@ -31,7 +31,6 @@ struct ChatView: View {
 
     @State private var sendErrorMessage: String?
 
-    @State private var showOptionsMenu: Bool = false
     @State private var showBlockConfirm: Bool = false
     @State private var showDeleteConvConfirm: Bool = false
     @State private var isBlocked: Bool = false
@@ -295,10 +294,6 @@ struct ChatView: View {
                 if !draft.isEmpty { inputText = draft }
             }
         }
-    }
-    
-    private var canSend: Bool {
-        !inputText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
     }
     
     // MARK: - Actions

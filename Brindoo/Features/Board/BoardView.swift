@@ -125,7 +125,7 @@ struct BoardView: View {
                     Button {
                         showSavedSearches = true
                     } label: {
-                        Image(systemName: "bookmark")
+                        Image(systemName: BrindooIcon.bookmark)
                             .font(.system(size: 16, weight: .semibold))
                             .foregroundStyle(Color.brindooCoral)
                     }
@@ -297,6 +297,7 @@ struct BoardView: View {
             if vm.canLoadMore {
                 VStack(spacing: BrindooSpacing.md) {
                     ProgressView()
+                        .tint(.brindooCoral)
                     Text("Cerco altri profili che rispettano i filtri…")
                         .font(BrindooFont.bodySmall)
                         .foregroundStyle(Color.brindooTextSecondary)
@@ -361,6 +362,7 @@ struct BoardView: View {
 
                     if vm.canLoadMore {
                         ProgressView()
+                            .tint(.brindooCoral)
                             .frame(maxWidth: .infinity)
                             .padding(.vertical, BrindooSpacing.md)
                             .task(id: vm.pageOffset) { await loadMoreOrganizers() }

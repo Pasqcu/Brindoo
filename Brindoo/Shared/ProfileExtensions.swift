@@ -27,8 +27,5 @@ extension Profile {
     }
 
     /// Iniziali coerenti per avatar.
-    var initials: String {
-        let parts = displayName.split(separator: " ").prefix(2)
-        return parts.compactMap { $0.first?.uppercased() }.joined()
-    }
+    var initials: String { BrindooText.initials(from: displayName) }
 }

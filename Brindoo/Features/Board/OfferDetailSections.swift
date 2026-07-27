@@ -95,7 +95,7 @@ struct EventDateRow: View {
 
     var body: some View {
         HStack(spacing: BrindooSpacing.xs) {
-            Image(systemName: "calendar")
+            Image(systemName: BrindooIcon.calendar)
                 .font(.system(size: 13, weight: .medium))
             Text("Data evento: \(dateText)")
                 .font(BrindooFont.bodySmall.weight(.medium))
@@ -366,7 +366,7 @@ struct ReceivedProposalsSection: View {
             VStack(spacing: BrindooSpacing.sm) {
                 HStack(spacing: BrindooSpacing.sm) {
                     Button { onReject(proposal) } label: {
-                        Label("Rifiuta", systemImage: "xmark")
+                        Label("Rifiuta", systemImage: BrindooIcon.close)
                             .font(BrindooFont.bodySmall.weight(.semibold))
                             .frame(maxWidth: .infinity)
                             .padding(.vertical, 10)

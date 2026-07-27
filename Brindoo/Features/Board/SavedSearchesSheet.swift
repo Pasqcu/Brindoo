@@ -103,7 +103,7 @@ struct SavedSearchesSheet: View {
                         newName = current.summary(categories: categories)
                         showNameField = true
                     } label: {
-                        Label("Salva questa ricerca", systemImage: "bookmark.fill")
+                        Label("Salva questa ricerca", systemImage: BrindooIcon.bookmarkFilled)
                             .font(BrindooFont.bodyMedium.weight(.medium))
                             .foregroundStyle(Color.brindooCoral)
                     }

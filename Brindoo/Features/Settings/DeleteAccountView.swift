@@ -30,7 +30,7 @@ struct DeleteAccountView: View {
                     Circle()
                         .fill(Color.brindooError.opacity(0.1))
                         .frame(width: 100, height: 100)
-                    Image(systemName: "exclamationmark.triangle.fill")
+                    Image(systemName: BrindooIcon.warning)
                         .font(.system(size: 44))
                         .foregroundStyle(Color.brindooError)
                 }
@@ -93,16 +93,7 @@ struct DeleteAccountView: View {
                 }
                 
                 if let errorMessage {
-                    HStack(spacing: BrindooSpacing.xs) {
-                        Image(systemName: "exclamationmark.triangle.fill")
-                        Text(errorMessage)
-                            .font(BrindooFont.bodySmall)
-                    }
-                    .foregroundStyle(Color.brindooError)
-                    .padding(BrindooSpacing.sm)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .background(Color.brindooError.opacity(0.1))
-                    .clipShape(RoundedRectangle(cornerRadius: BrindooRadius.sm))
+                    BrindooInlineError(errorMessage)
                 }
             }
             .padding(BrindooSpacing.lg)

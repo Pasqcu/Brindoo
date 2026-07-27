@@ -135,7 +135,7 @@ struct BoardFiltersBar: View {
                 Task { await vm.loadOrganizers() }
             } label: {
                 HStack(spacing: BrindooSpacing.xxs) {
-                    Image(systemName: "xmark")
+                    Image(systemName: BrindooIcon.close)
                         .font(.system(size: 11, weight: .semibold))
                     Text("Pulisci")
                         .font(BrindooFont.bodySmall.weight(.medium))
@@ -194,7 +194,7 @@ struct BoardFiltersBar: View {
             showAreaPicker = true
         } label: {
             HStack(spacing: BrindooSpacing.xxs) {
-                Image(systemName: "mappin.and.ellipse")
+                Image(systemName: BrindooIcon.location)
                     .font(.system(size: 13, weight: .medium))
                 Text(areaFilterTitle)
                     .font(BrindooFont.bodySmall.weight(.medium))
@@ -211,7 +211,7 @@ struct BoardFiltersBar: View {
     @ViewBuilder
     private var searchBar: some View {
         HStack(spacing: BrindooSpacing.sm) {
-            Image(systemName: "magnifyingglass")
+            Image(systemName: BrindooIcon.search)
                 .foregroundStyle(Color.brindooTextSecondary)
 
             TextField("Cerca professionista", text: $vm.searchText)

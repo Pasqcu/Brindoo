@@ -88,12 +88,7 @@ struct OrganizerDashboardView: View {
                     statsGrid(stats)
                     insightsCard(stats)
                 case .error(let message):
-                    BrindooEmptyState(
-                        icon: BrindooIcon.error,
-                        title: "Errore di caricamento",
-                        message: message,
-                        actionTitle: "Riprova"
-                    ) {
+                    BrindooErrorState(message: message) {
                         Task { await vm.refresh() }
                     }
                 }

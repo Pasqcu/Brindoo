@@ -96,14 +96,14 @@ struct EditFAQsView: View {
                     draftAnswer = faq.answer
                     showEditor = true
                 } label: {
-                    Image(systemName: "pencil")
+                    Image(systemName: BrindooIcon.edit)
                         .foregroundStyle(Color.brindooCoral)
                 }
                 .accessibilityLabel("Modifica la domanda")
                 Button {
                     faqs.remove(at: index)
                 } label: {
-                    Image(systemName: "trash")
+                    Image(systemName: BrindooIcon.delete)
                         .foregroundStyle(Color.brindooError)
                 }
                 .accessibilityLabel("Elimina la domanda")

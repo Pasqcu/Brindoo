@@ -118,7 +118,7 @@ struct CreateClientRequestView: View {
                     VStack(alignment: .leading, spacing: BrindooSpacing.xs) {
                         Toggle(isOn: $isUrgent) {
                             HStack(spacing: 6) {
-                                Image(systemName: "flame.fill")
+                                Image(systemName: BrindooIcon.flame)
                                     .font(.system(size: 14))
                                     .foregroundStyle(Color.brindooError)
                                 Text("Richiesta urgente")
@@ -168,15 +168,7 @@ struct CreateClientRequestView: View {
                     }
 
                     if let generalError {
-                        HStack(spacing: BrindooSpacing.xs) {
-                            Image(systemName: "exclamationmark.triangle.fill")
-                            Text(generalError).font(BrindooFont.bodySmall)
-                        }
-                        .foregroundStyle(Color.brindooError)
-                        .padding(BrindooSpacing.sm)
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                        .background(Color.brindooError.opacity(0.1))
-                        .clipShape(RoundedRectangle(cornerRadius: BrindooRadius.sm))
+                        BrindooInlineError(generalError)
                     }
                 }
                 .padding(BrindooSpacing.lg)

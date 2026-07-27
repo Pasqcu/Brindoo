@@ -46,7 +46,7 @@ struct CompleteProfileHint: View {
                         .lineLimit(2)
                 }
                 Spacer()
-                Image(systemName: "chevron.right")
+                Image(systemName: BrindooIcon.forward)
                     .font(.system(size: 13, weight: .semibold))
                     .foregroundStyle(Color.brindooTextSecondary)
             }
@@ -70,7 +70,7 @@ struct BoardFeaturedCarousel: View {
     var body: some View {
         VStack(alignment: .leading, spacing: BrindooSpacing.xs) {
             HStack(spacing: 6) {
-                Image(systemName: "star.fill")
+                Image(systemName: BrindooIcon.starFilled)
                     .font(.system(size: 13))
                 Text("In evidenza")
                     .font(BrindooFont.titleSmall)
@@ -109,7 +109,7 @@ struct BoardDiscoveryHeader: View {
 
     var body: some View {
         HStack(spacing: BrindooSpacing.xs) {
-            Image(systemName: "sparkles")
+            Image(systemName: BrindooIcon.explore)
                 .font(.system(size: 14, weight: .semibold))
                 .foregroundStyle(Color.brindooCoral)
             Text("\(count)\(hasMore ? "+" : "") professionisti consigliati per te")
@@ -145,7 +145,7 @@ struct BoardInviteCard: View {
                         .foregroundStyle(Color.brindooTextSecondary)
                 }
                 Spacer()
-                Image(systemName: "square.and.arrow.up")
+                Image(systemName: BrindooIcon.share)
                     .font(.system(size: 15, weight: .semibold))
                     .foregroundStyle(Color.brindooCoral)
             }
@@ -265,7 +265,7 @@ struct BoardErrorView: View {
     var body: some View {
         VStack(spacing: BrindooSpacing.md) {
             Spacer()
-            Image(systemName: "exclamationmark.triangle.fill")
+            Image(systemName: BrindooIcon.warning)
                 .font(.system(size: 48))
                 .foregroundStyle(Color.brindooWarning)
             Text(message)

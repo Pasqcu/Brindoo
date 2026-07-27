@@ -36,7 +36,7 @@ struct ComuneField: View {
                 showPicker = true
             } label: {
                 HStack(spacing: BrindooSpacing.sm) {
-                    Image(systemName: "mappin.and.ellipse")
+                    Image(systemName: BrindooIcon.location)
                         .foregroundStyle(Color.brindooTextSecondary)
                     Text(city.isEmpty ? "Scegli il comune" : city)
                         .font(BrindooFont.bodyLarge)
@@ -135,7 +135,7 @@ private struct ComunePicker: View {
     private func comuneRow(name: String, province: LazioProvince?, action: @escaping () -> Void) -> some View {
         Button(action: action) {
             HStack(spacing: BrindooSpacing.sm) {
-                Image(systemName: "mappin.and.ellipse")
+                Image(systemName: BrindooIcon.location)
                     .foregroundStyle(Color.brindooCoral)
                 Text(name)
                     .font(BrindooFont.bodyMedium.weight(.medium))

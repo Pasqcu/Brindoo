@@ -84,6 +84,7 @@ struct GdprRightsView: View {
                     .foregroundStyle(Color.brindooTextSecondary)
             }
             .padding(BrindooSpacing.md)
+            .brindooReadableWidth()
         }
         .background(Color.brindooBackground)
         .navigationTitle("I tuoi dati e diritti")

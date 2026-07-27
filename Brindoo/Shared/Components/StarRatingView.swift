@@ -82,7 +82,7 @@ struct CompactRatingView: View {
     
     var body: some View {
         HStack(spacing: 4) {
-            Image(systemName: "star.fill")
+            Image(systemName: BrindooIcon.starFilled)
                 .font(.system(size: size - 2))
                 .foregroundStyle(rating.reviewCount > 0 ? Color.brindooCoral : Color.brindooBorder)
             

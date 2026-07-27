@@ -111,7 +111,7 @@ struct NegotiationsView: View {
                 NavigationLink {
                     AgendaView()
                 } label: {
-                    Image(systemName: "calendar")
+                    Image(systemName: BrindooIcon.calendar)
                         .font(.system(size: 17, weight: .semibold))
                         .foregroundStyle(Color.brindooCoral)
                 }
@@ -177,7 +177,7 @@ struct NegotiationsView: View {
     @ViewBuilder
     private func unavailableRow(_ proposal: OfferProposal) -> some View {
         HStack(spacing: BrindooSpacing.sm) {
-            Image(systemName: "arrow.clockwise")
+            Image(systemName: BrindooIcon.refresh)
                 .font(.system(size: 16, weight: .semibold))
                 .foregroundStyle(Color.brindooTextSecondary)
                 .frame(width: 44, height: 44)
@@ -219,7 +219,7 @@ struct NegotiationsView: View {
                             let otherId = (currentUserId == proposal.clientId) ? proposal.organizerId : proposal.clientId
                             reviewTarget = profileMap[otherId]
                         } label: {
-                            Image(systemName: "star.fill")
+                            Image(systemName: BrindooIcon.starFilled)
                                 .font(.system(size: 16, weight: .semibold))
                                 .foregroundStyle(.white)
                                 .frame(width: 44, height: 44)
@@ -338,7 +338,7 @@ struct NegotiationsView: View {
                 }
                 if let eventDate = proposal.eventDateDisplay {
                     HStack(spacing: 3) {
-                        Image(systemName: "calendar")
+                        Image(systemName: BrindooIcon.calendar)
                             .font(.system(size: 10))
                         Text(eventDate)
                             .font(BrindooFont.caption.weight(.medium))
@@ -378,7 +378,7 @@ struct NegotiationsView: View {
                     .foregroundStyle(Color.brindooCoral)
                     .lineLimit(1)
                     .minimumScaleFactor(0.7)
-                Image(systemName: "chevron.right")
+                Image(systemName: BrindooIcon.forward)
                     .font(.system(size: 11, weight: .semibold))
                     .foregroundStyle(Color.brindooTextSecondary)
             }

@@ -92,12 +92,7 @@ struct FavoriteOrganizersView: View {
                 }
                 .listStyle(.plain)
             case .error(let message):
-                BrindooEmptyState(
-                    icon: BrindooIcon.error,
-                    title: "Qualcosa è andato storto",
-                    message: message,
-                    actionTitle: "Riprova"
-                ) {
+                BrindooErrorState(message: message) {
                     Task { await vm.refresh() }
                 }
             }

@@ -43,7 +43,7 @@ struct CompareOrganizersView: View {
                         if let rating = ratings[profile.id] {
                             VStack(spacing: 2) {
                                 HStack(spacing: 2) {
-                                    Image(systemName: "star.fill")
+                                    Image(systemName: BrindooIcon.starFilled)
                                         .font(.system(size: 11))
                                         .foregroundStyle(Color.brindooWarning)
                                     Text(String(format: "%.1f", rating.avgRating))

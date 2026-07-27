@@ -105,7 +105,7 @@ struct OfferDetailView: View {
                 }
 
                 if let error = vm.actionError {
-                    errorBanner(error)
+                    BrindooInlineError(error)
                 }
 
                 if canClientInteract {
@@ -175,7 +175,7 @@ struct OfferDetailView: View {
                     if isPreparingShare {
                         ProgressView()
                     } else {
-                        Image(systemName: "square.and.arrow.up")
+                        Image(systemName: BrindooIcon.share)
                             .foregroundStyle(Color.brindooCoral)
                     }
                 }
@@ -200,7 +200,7 @@ struct OfferDetailView: View {
                                 Label("Segnala offerta", systemImage: "exclamationmark.bubble")
                             }
                         } label: {
-                            Image(systemName: "ellipsis")
+                            Image(systemName: BrindooIcon.more)
                                 .foregroundStyle(Color.brindooTextSecondary)
                         }
                         .accessibilityLabel("Altre opzioni")
@@ -256,19 +256,6 @@ struct OfferDetailView: View {
                  ? "L'azione non può essere annullata. Verranno chiuse anche \(vm.openProposalsCount) trattative ancora aperte su questa offerta."
                  : "L'azione non può essere annullata.")
         }
-    }
-
-    @ViewBuilder
-    private func errorBanner(_ message: String) -> some View {
-        HStack(spacing: BrindooSpacing.xs) {
-            Image(systemName: "exclamationmark.triangle.fill")
-            Text(message).font(BrindooFont.bodySmall)
-        }
-        .foregroundStyle(Color.brindooError)
-        .padding(BrindooSpacing.sm)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Color.brindooError.opacity(0.1))
-        .clipShape(RoundedRectangle(cornerRadius: BrindooRadius.sm))
     }
 
     // MARK: - Lato organizzatore: gestione + proposte ricevute

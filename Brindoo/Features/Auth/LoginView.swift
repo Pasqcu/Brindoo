@@ -109,16 +109,7 @@ struct LoginView: View {
                     }
                     
                     if let generalError {
-                        HStack(spacing: BrindooSpacing.xs) {
-                            Image(systemName: "exclamationmark.triangle.fill")
-                            Text(generalError)
-                                .font(BrindooFont.bodySmall)
-                        }
-                        .foregroundStyle(Color.brindooError)
-                        .padding(BrindooSpacing.sm)
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                        .background(Color.brindooError.opacity(0.1))
-                        .clipShape(RoundedRectangle(cornerRadius: BrindooRadius.sm))
+                        BrindooInlineError(generalError)
                     }
                     
                     BrindooButton(
@@ -161,7 +152,7 @@ struct LoginView: View {
                 Button {
                     dismiss()
                 } label: {
-                    Image(systemName: "chevron.left")
+                    Image(systemName: BrindooIcon.back)
                         .font(.system(size: 16, weight: .semibold))
                         .foregroundStyle(Color.brindooTextPrimary)
                 }
@@ -183,7 +174,7 @@ struct LoginView: View {
         // label il tocco verrebbe intercettato e non si aprirebbero mai.
         VStack(alignment: .leading, spacing: BrindooSpacing.xs) {
             Button {
-                withAnimation(.easeInOut(duration: 0.15)) {
+                withAnimation(BrindooAnimation.quickEase) {
                     acceptedTermsAt = hasAcceptedTerms
                         ? ""
                         : ISO8601DateFormatter().string(from: Date())

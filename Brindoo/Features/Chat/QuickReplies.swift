@@ -62,7 +62,7 @@ struct QuickReplyMenuButton: View {
             Button {
                 showManage = true
             } label: {
-                Label("Gestisci risposte rapide", systemImage: "pencil")
+                Label("Gestisci risposte rapide", systemImage: BrindooIcon.edit)
             }
         } label: {
             Image(systemName: "bolt.circle")
@@ -109,7 +109,7 @@ struct QuickRepliesManageSheet: View {
                                     replies.remove(at: index)
                                     QuickRepliesStore.save(replies)
                                 } label: {
-                                    Image(systemName: "trash")
+                                    Image(systemName: BrindooIcon.delete)
                                         .font(.system(size: 14))
                                         .foregroundStyle(Color.brindooError)
                                 }

@@ -140,7 +140,7 @@ struct BoostView: View {
                     Button {
                         dismiss()
                     } label: {
-                        Image(systemName: "xmark")
+                        Image(systemName: BrindooIcon.close)
                             .font(.system(size: 16, weight: .semibold))
                             .foregroundStyle(Color.brindooTextPrimary)
                     }

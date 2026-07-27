@@ -70,6 +70,7 @@ struct AppGuideView: View {
                         steps: isOrganizer ? clientSteps : organizerSteps)
             }
             .padding(BrindooSpacing.md)
+            .brindooReadableWidth()
         }
         .background(Color.brindooBackground)
         .navigationTitle("Guida all'app")

@@ -37,7 +37,7 @@ struct AvailabilityCalendarView: View {
                 Button {
                     monthOffset -= 1
                 } label: {
-                    Image(systemName: "chevron.left")
+                    Image(systemName: BrindooIcon.back)
                         .font(.system(size: 14, weight: .semibold))
                         .foregroundStyle(monthOffset > 0 ? Color.brindooCoral : Color.brindooTextTertiary)
                 }
@@ -54,7 +54,7 @@ struct AvailabilityCalendarView: View {
                 Button {
                     monthOffset += 1
                 } label: {
-                    Image(systemName: "chevron.right")
+                    Image(systemName: BrindooIcon.forward)
                         .font(.system(size: 14, weight: .semibold))
                         .foregroundStyle(monthOffset < maxMonthsAhead ? Color.brindooCoral : Color.brindooTextTertiary)
                 }

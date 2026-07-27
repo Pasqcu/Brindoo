@@ -101,7 +101,7 @@ struct ProfileCompletionCard: View {
                     }
                 }
                 Spacer()
-                Image(systemName: "chevron.right")
+                Image(systemName: BrindooIcon.forward)
                     .font(.system(size: 13, weight: .semibold))
                     .foregroundStyle(Color.brindooTextSecondary)
             }

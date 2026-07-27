@@ -79,7 +79,7 @@ struct ChatEditBanner: View {
 
     var body: some View {
         HStack(spacing: BrindooSpacing.sm) {
-            Image(systemName: "pencil")
+            Image(systemName: BrindooIcon.edit)
                 .foregroundStyle(Color.brindooCoral)
             Text("Modifica messaggio")
                 .font(BrindooFont.caption.weight(.semibold))
@@ -124,7 +124,7 @@ struct ChatNegotiationBanner: View {
                 Spacer()
                 Text("Apri")
                     .font(BrindooFont.caption.weight(.semibold))
-                Image(systemName: "chevron.right")
+                Image(systemName: BrindooIcon.forward)
                     .font(.system(size: 11, weight: .semibold))
             }
             .foregroundStyle(Color.brindooCoral)

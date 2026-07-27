@@ -20,7 +20,7 @@ struct OrganizerTitleSection: View {
                 Text(organizer.displayName)
                     .font(BrindooFont.titleLarge)
                 if organizer.isPro {
-                    Image(systemName: "checkmark.seal.fill")
+                    Image(systemName: BrindooIcon.badge)
                         .foregroundStyle(Color.brindooCoral)
                 }
             }
@@ -31,7 +31,7 @@ struct OrganizerTitleSection: View {
 
             if let city = organizer.city {
                 HStack(spacing: 4) {
-                    Image(systemName: "mappin.and.ellipse").font(.system(size: 12))
+                    Image(systemName: BrindooIcon.location).font(.system(size: 12))
                     Text(city).font(BrindooFont.bodySmall)
                 }
                 .foregroundStyle(Color.brindooTextSecondary)
@@ -234,7 +234,7 @@ struct OrganizerCoverageSection: View {
                     .frame(maxWidth: .infinity)
 
                 HStack(spacing: 4) {
-                    Image(systemName: "mappin.and.ellipse")
+                    Image(systemName: BrindooIcon.location)
                         .font(.system(size: 11))
                     Text(organizer.coverageAreasDisplay)
                         .font(BrindooFont.caption.weight(.medium))

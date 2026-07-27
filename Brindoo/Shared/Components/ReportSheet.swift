@@ -112,16 +112,7 @@ struct ReportSheet: View {
                 }
 
                 if let errorMessage {
-                    HStack(spacing: BrindooSpacing.xs) {
-                        Image(systemName: "exclamationmark.triangle.fill")
-                        Text(errorMessage)
-                            .font(BrindooFont.bodySmall)
-                    }
-                    .foregroundStyle(Color.brindooError)
-                    .padding(BrindooSpacing.sm)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .background(Color.brindooError.opacity(0.1))
-                    .clipShape(RoundedRectangle(cornerRadius: BrindooRadius.sm))
+                    BrindooInlineError(errorMessage)
                 }
             }
             .padding(BrindooSpacing.lg)
@@ -153,7 +144,7 @@ struct ReportSheet: View {
         let isSelected = selectedReason == reason
 
         Button {
-            withAnimation(.easeInOut(duration: 0.15)) {
+            withAnimation(BrindooAnimation.quickEase) {
                 selectedReason = reason
             }
         } label: {

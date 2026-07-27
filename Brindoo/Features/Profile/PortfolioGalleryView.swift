@@ -141,7 +141,7 @@ struct PortfolioGalleryView: View {
                 Circle()
                     .fill(Color.brindooCoral.opacity(0.1))
                     .frame(width: 100, height: 100)
-                Image(systemName: "photo.on.rectangle.angled")
+                Image(systemName: BrindooIcon.gallery)
                     .font(.system(size: 44))
                     .foregroundStyle(Color.brindooCoral)
             }
@@ -166,7 +166,7 @@ struct PortfolioGalleryView: View {
                     photoLibrary: .shared()
                 ) {
                     HStack(spacing: BrindooSpacing.xs) {
-                        Image(systemName: "plus")
+                        Image(systemName: BrindooIcon.add)
                         Text("Aggiungi foto")
                     }
                     .font(BrindooFont.button)
@@ -249,7 +249,7 @@ struct PortfolioGalleryView: View {
                     case .failure:
                         ZStack {
                             Color.brindooSurface
-                            Image(systemName: "photo")
+                            Image(systemName: BrindooIcon.photo)
                                 .foregroundStyle(Color.brindooTextSecondary)
                         }
                     @unknown default:

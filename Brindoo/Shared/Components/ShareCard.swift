@@ -55,7 +55,7 @@ struct ProfileShareCard: View {
                         .foregroundStyle(.white)
                         .lineLimit(1)
                     if isPro {
-                        Image(systemName: "checkmark.seal.fill")
+                        Image(systemName: BrindooIcon.badge)
                             .font(.system(size: 18))
                             .foregroundStyle(.white)
                     }
@@ -87,7 +87,7 @@ struct ProfileShareCard: View {
 
                 if let city, !city.isEmpty {
                     HStack(spacing: 4) {
-                        Image(systemName: "mappin.and.ellipse").font(.system(size: 12))
+                        Image(systemName: BrindooIcon.location).font(.system(size: 12))
                         Text(city).font(.system(size: 14, weight: .medium, design: .rounded))
                     }
                     .foregroundStyle(.white.opacity(0.9))

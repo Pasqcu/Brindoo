@@ -14,6 +14,9 @@
 import XCTest
 @testable import Brindoo
 
+// I modelli dell'app vivono sul main actor: la suite ci sta sopra anche lei,
+// altrimenti ogni accesso e' un errore nel linguaggio Swift 6.
+@MainActor
 final class OfflineOutboxPersistenceTests: XCTestCase {
 
     private func makeKey() -> String { "brindoo_test_outbox_\(UUID().uuidString)" }

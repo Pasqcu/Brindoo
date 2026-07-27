@@ -44,7 +44,7 @@ struct OrganizerCard: View {
                 // Città
                 if let city = organizer.city, !city.isEmpty {
                     HStack(spacing: BrindooSpacing.xxs) {
-                        Image(systemName: "mappin.and.ellipse")
+                        Image(systemName: BrindooIcon.location)
                             .font(.system(size: 11))
                         Text(city)
                             .font(BrindooFont.caption)
@@ -82,7 +82,7 @@ struct OrganizerCard: View {
             
             Spacer()
             
-            Image(systemName: "chevron.right")
+            Image(systemName: BrindooIcon.forward)
                 .font(.system(size: 13, weight: .semibold))
                 .foregroundStyle(Color.brindooTextSecondary)
         }
@@ -112,7 +112,7 @@ struct OrganizerCard: View {
 struct ProBadge: View {
     var body: some View {
         HStack(spacing: 2) {
-            Image(systemName: "crown.fill")
+            Image(systemName: BrindooIcon.crown)
                 .font(.system(size: 8, weight: .bold))
             Text("PRO")
                 .font(BrindooFont.scaled(10, weight: .bold, rounded: true, relativeTo: .caption2))

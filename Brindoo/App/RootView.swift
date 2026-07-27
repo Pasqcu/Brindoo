@@ -49,7 +49,7 @@ struct RootView: View {
         // Il testo scala con le impostazioni di accessibilità, ma con un limite
         // ragionevole per non rompere i layout a dimensioni estreme.
         .dynamicTypeSize(...DynamicTypeSize.accessibility2)
-        .animation(.easeInOut(duration: 0.3), value: session.authState)
+        .animation(BrindooAnimation.standardEase, value: session.authState)
         .animation(BrindooAnimation.smooth, value: network.isOnline)
         .sheet(isPresented: $showNotificationPrePrompt) {
             NotificationPrePromptView(
@@ -191,13 +191,7 @@ struct LoadingView: View {
             VStack(spacing: BrindooSpacing.lg) {
                 ZStack {
                     Circle()
-                        .fill(
-                            LinearGradient(
-                                colors: [Color.brindooCoral, Color.brindooCoralDark],
-                                startPoint: .topLeading,
-                                endPoint: .bottomTrailing
-                            )
-                        )
+                        .fill(BrindooGradient.coral)
                         .frame(width: 110, height: 110)
                         .shadow(color: Color.brindooCoral.opacity(0.35), radius: 16, x: 0, y: 8)
                     Image(systemName: "party.popper.fill")

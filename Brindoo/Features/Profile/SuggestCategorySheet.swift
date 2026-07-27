@@ -11,7 +11,6 @@ import SwiftUI
 struct SuggestCategorySheet: View {
 
     @Environment(\.dismiss) private var dismiss
-    @EnvironmentObject private var toasts: BrindooToastCenter
 
     @State private var name: String = ""
     @State private var description: String = ""
@@ -108,15 +107,7 @@ struct SuggestCategorySheet: View {
             }
 
             if let generalError {
-                HStack(spacing: BrindooSpacing.xs) {
-                    Image(systemName: "exclamationmark.triangle.fill")
-                    Text(generalError).font(BrindooFont.bodySmall)
-                }
-                .foregroundStyle(Color.brindooError)
-                .padding(BrindooSpacing.sm)
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .background(Color.brindooError.opacity(0.1))
-                .clipShape(RoundedRectangle(cornerRadius: BrindooRadius.sm))
+                BrindooInlineError(generalError)
             }
 
             BrindooButton(
@@ -137,7 +128,7 @@ struct SuggestCategorySheet: View {
                 Circle()
                     .fill(Color.brindooSuccess.opacity(0.15))
                     .frame(width: 100, height: 100)
-                Image(systemName: "paperplane.fill")
+                Image(systemName: BrindooIcon.send)
                     .font(.system(size: 44))
                     .foregroundStyle(Color.brindooSuccess)
             }

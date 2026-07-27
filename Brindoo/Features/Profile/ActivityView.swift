@@ -132,7 +132,7 @@ struct ActivityView: View {
             OfferDetailView(offer: offer)
         } label: {
             HStack(spacing: BrindooSpacing.sm) {
-                Image(systemName: "tag.fill")
+                Image(systemName: BrindooIcon.tag)
                     .font(.system(size: 15, weight: .semibold))
                     .foregroundStyle(.white)
                     .frame(width: 36, height: 36)
@@ -152,7 +152,7 @@ struct ActivityView: View {
                         .lineLimit(1)
                 }
                 Spacer()
-                Image(systemName: "chevron.right")
+                Image(systemName: BrindooIcon.forward)
                     .font(.system(size: 12, weight: .semibold))
                     .foregroundStyle(Color.brindooTextSecondary)
             }
@@ -201,7 +201,7 @@ struct ActivityView: View {
             }
             Spacer()
             if action != nil {
-                Image(systemName: "chevron.right").font(.system(size: 12, weight: .semibold))
+                Image(systemName: BrindooIcon.forward).font(.system(size: 12, weight: .semibold))
                     .foregroundStyle(Color.brindooTextSecondary)
             }
         }

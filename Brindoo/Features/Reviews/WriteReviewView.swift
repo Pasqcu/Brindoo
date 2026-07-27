@@ -74,7 +74,7 @@ struct WriteReviewView: View {
                             size: 40,
                             spacing: 8
                         ) { newValue in
-                            withAnimation(.easeInOut(duration: 0.15)) {
+                            withAnimation(BrindooAnimation.quickEase) {
                                 rating = newValue
                             }
                         }
@@ -106,15 +106,7 @@ struct WriteReviewView: View {
                             text: $comment,
                             axis: .vertical
                         )
-                        .lineLimit(4...10)
-                        .font(BrindooFont.bodyLarge)
-                        .padding(BrindooSpacing.md)
-                        .background(Color.brindooSurface)
-                        .overlay(
-                            RoundedRectangle(cornerRadius: BrindooRadius.md)
-                                .strokeBorder(Color.brindooBorder, lineWidth: 1)
-                        )
-                        .clipShape(RoundedRectangle(cornerRadius: BrindooRadius.md))
+                        .brindooMultilineFieldStyle()
                         .disabled(isLoading)
                         
                         HStack {
@@ -128,16 +120,7 @@ struct WriteReviewView: View {
                     photoSection
 
                     if let generalError {
-                        HStack(spacing: BrindooSpacing.xs) {
-                            Image(systemName: "exclamationmark.triangle.fill")
-                            Text(generalError)
-                                .font(BrindooFont.bodySmall)
-                        }
-                        .foregroundStyle(Color.brindooError)
-                        .padding(BrindooSpacing.sm)
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                        .background(Color.brindooError.opacity(0.1))
-                        .clipShape(RoundedRectangle(cornerRadius: BrindooRadius.sm))
+                        BrindooInlineError(generalError)
                     }
                     
                     // Elimina (solo in edit mode)
@@ -262,7 +245,7 @@ struct WriteReviewView: View {
                     photoPickerItem = nil
                     existingPhotoUrl = nil
                 } label: {
-                    Label("Rimuovi foto", systemImage: "trash")
+                    Label("Rimuovi foto", systemImage: BrindooIcon.delete)
                         .font(BrindooFont.caption.weight(.medium))
                         .foregroundStyle(Color.brindooError)
                 }

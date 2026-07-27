@@ -61,13 +61,7 @@ struct AvatarView: View {
     private var initialsPlaceholder: some View {
         ZStack {
             Circle()
-                .fill(
-                    LinearGradient(
-                        colors: [Color.brindooCoral, Color.brindooCoralDark],
-                        startPoint: .topLeading,
-                        endPoint: .bottomTrailing
-                    )
-                )
+                .fill(BrindooGradient.coral)
             
             Text(initials)
                 .font(.system(size: size * 0.36, weight: .bold, design: .rounded))
@@ -75,11 +69,7 @@ struct AvatarView: View {
         }
     }
     
-    private var initials: String {
-        guard let name, !name.isEmpty else { return "?" }
-        let parts = name.split(separator: " ").prefix(2)
-        return parts.compactMap { $0.first?.uppercased() }.joined()
-    }
+    private var initials: String { BrindooText.initials(from: name) }
 }
 
 #Preview {

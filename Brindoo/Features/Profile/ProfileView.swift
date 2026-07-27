@@ -107,7 +107,7 @@ struct ProfileView: View {
                             showEditProfile = true
                         } label: {
                             HStack(spacing: BrindooSpacing.sm) {
-                                Image(systemName: "pencil")
+                                Image(systemName: BrindooIcon.edit)
                                     .font(.system(size: 16, weight: .semibold))
                                 Text("Modifica profilo")
                                     .font(BrindooFont.bodyLarge.weight(.semibold))
@@ -135,7 +135,7 @@ struct ProfileView: View {
                     NavigationLink {
                         SettingsView()
                     } label: {
-                        Image(systemName: "gearshape.fill")
+                        Image(systemName: BrindooIcon.settings)
                             .font(.system(size: 20))
                             .foregroundStyle(Color.brindooCoral)
                     }
@@ -204,7 +204,7 @@ struct ProfileView: View {
                     Text(profile.displayName)
                         .font(BrindooFont.titleLarge)
                     if profile.isPro {
-                        Image(systemName: "checkmark.seal.fill")
+                        Image(systemName: BrindooIcon.badge)
                             .foregroundStyle(Color.brindooCoral)
                     }
                 }
@@ -213,7 +213,7 @@ struct ProfileView: View {
 
                 if let city = profile.city {
                     HStack(spacing: 4) {
-                        Image(systemName: "mappin.and.ellipse").font(.system(size: 12))
+                        Image(systemName: BrindooIcon.location).font(.system(size: 12))
                         Text(city).font(BrindooFont.bodySmall)
                     }
                     .foregroundStyle(Color.brindooTextSecondary)
@@ -287,7 +287,7 @@ struct ProfileView: View {
                     .foregroundStyle(Color.brindooTextSecondary)
             }
             Spacer()
-            Image(systemName: "chevron.right")
+            Image(systemName: BrindooIcon.forward)
                 .font(.system(size: 13, weight: .semibold))
                 .foregroundStyle(Color.brindooTextSecondary)
         }
@@ -377,7 +377,7 @@ struct ProfileView: View {
                         .foregroundStyle(Color.brindooTextSecondary)
                 }
                 Spacer()
-                Image(systemName: "chevron.right")
+                Image(systemName: BrindooIcon.forward)
                     .font(.system(size: 13, weight: .semibold))
                     .foregroundStyle(Color.brindooTextSecondary)
             }

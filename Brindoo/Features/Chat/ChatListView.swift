@@ -23,7 +23,6 @@ struct ChatListView: View {
 
     @State private var conversationToDelete: Conversation?
     @State private var conversationToBlock: (conversation: Conversation, otherUserId: UUID)?
-    @State private var profileToView: Profile?
     @State private var navigateToProfile: Profile?
 
     private var currentUserId: UUID? { session.userID }
@@ -127,7 +126,7 @@ struct ChatListView: View {
                             Button(role: .destructive) {
                                 conversationToDelete = conv
                             } label: {
-                                Label("Elimina", systemImage: "trash")
+                                Label("Elimina", systemImage: BrindooIcon.delete)
                             }
                         }
                         .swipeActions(edge: .leading, allowsFullSwipe: false) {
@@ -215,7 +214,7 @@ struct ChatListView: View {
             Button(role: .destructive) {
                 conversationToDelete = conv
             } label: {
-                Label("Elimina conversazione", systemImage: "trash")
+                Label("Elimina conversazione", systemImage: BrindooIcon.delete)
             }
 
             Button(role: .destructive) {
@@ -377,7 +376,7 @@ struct ChatListRow: View {
                         .lineLimit(1)
 
                     if otherUser.isPro {
-                        Image(systemName: "checkmark.seal.fill")
+                        Image(systemName: BrindooIcon.badge)
                             .font(.system(size: 13))
                             .foregroundStyle(Color.brindooCoral)
                     }

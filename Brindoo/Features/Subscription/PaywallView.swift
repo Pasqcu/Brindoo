@@ -32,7 +32,7 @@ struct PaywallView: View {
                                 .frame(width: 80, height: 80)
                                 .shadow(color: Color.brindooProGoldDeep.opacity(0.4), radius: 10, x: 0, y: 4)
 
-                            Image(systemName: "crown.fill")
+                            Image(systemName: BrindooIcon.crown)
                                 .font(.system(size: 34, weight: .bold))
                                 .foregroundStyle(.white)
                         }
@@ -130,7 +130,7 @@ struct PaywallView: View {
                     Button {
                         dismiss()
                     } label: {
-                        Image(systemName: "xmark")
+                        Image(systemName: BrindooIcon.close)
                             .font(.system(size: 16, weight: .semibold))
                             .foregroundStyle(Color.brindooTextPrimary)
                     }
@@ -191,7 +191,7 @@ struct PaywallView: View {
     @ViewBuilder
     private var currentStatusCard: some View {
         HStack(spacing: BrindooSpacing.md) {
-            Image(systemName: "checkmark.circle.fill")
+            Image(systemName: BrindooIcon.success)
                 .font(.system(size: 24))
                 .foregroundStyle(Color.brindooSuccess)
             
@@ -293,7 +293,7 @@ struct PaywallView: View {
                 .ignoresSafeArea()
             
             VStack(spacing: BrindooSpacing.sm) {
-                Image(systemName: "checkmark.circle.fill")
+                Image(systemName: BrindooIcon.success)
                     .font(.system(size: 48))
                     .foregroundStyle(Color.brindooSuccess)
                 Text("Benvenuto Pro!")

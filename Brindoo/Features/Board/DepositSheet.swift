@@ -293,7 +293,7 @@ struct DepositSheet: View {
                 if saving {
                     ProgressView().tint(.white).frame(maxWidth: .infinity)
                 } else {
-                    Label("Confermo, l'acconto è stato versato", systemImage: "checkmark.circle.fill")
+                    Label("Confermo, l'acconto è stato versato", systemImage: BrindooIcon.success)
                         .font(BrindooFont.button)
                         .frame(maxWidth: .infinity)
                 }

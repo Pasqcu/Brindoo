@@ -78,7 +78,7 @@ struct OfferCard: View {
                                 .font(BrindooFont.bodyMedium.weight(.semibold))
                                 .lineLimit(1)
                             if organizer.isPro {
-                                Image(systemName: "checkmark.seal.fill")
+                                Image(systemName: BrindooIcon.badge)
                                     .font(.system(size: 11))
                                     .foregroundStyle(Color.brindooCoral)
                             }
@@ -139,7 +139,7 @@ struct OfferCard: View {
 
             HStack(spacing: BrindooSpacing.md) {
                 HStack(spacing: 4) {
-                    Image(systemName: "mappin.and.ellipse").font(.system(size: 11))
+                    Image(systemName: BrindooIcon.location).font(.system(size: 11))
                     Text(offer.coverageArea)
                         .font(BrindooFont.caption)
                         .lineLimit(1)

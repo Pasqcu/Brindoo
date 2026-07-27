@@ -53,13 +53,13 @@ struct MessageBubble: View {
 
                         if isOwn && message.isEditable {
                             Button { onEdit() } label: {
-                                Label("Modifica", systemImage: "pencil")
+                                Label("Modifica", systemImage: BrindooIcon.edit)
                             }
                         }
 
                         if isOwn {
                             Button(role: .destructive) { onDelete() } label: {
-                                Label("Elimina", systemImage: "trash")
+                                Label("Elimina", systemImage: BrindooIcon.delete)
                             }
                         }
 
@@ -90,7 +90,7 @@ struct MessageBubble: View {
                 // Body
                 if message.isDeleted {
                     HStack(spacing: 4) {
-                        Image(systemName: "trash")
+                        Image(systemName: BrindooIcon.delete)
                             .font(.system(size: 11))
                         Text("Messaggio eliminato")
                             .italic()
@@ -193,6 +193,7 @@ struct MessageBubble: View {
                     imageNotAvailable
                 case .empty:
                     ProgressView()
+                        .tint(.brindooCoral)
                         .frame(width: 200, height: 200)
                 @unknown default:
                     EmptyView()

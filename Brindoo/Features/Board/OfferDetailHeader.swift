@@ -68,7 +68,7 @@ struct OfferHeaderSection: View {
                                 Text(profile.displayName)
                                     .font(BrindooFont.bodyMedium.weight(.medium))
                                 if profile.isPro {
-                                    Image(systemName: "checkmark.seal.fill")
+                                    Image(systemName: BrindooIcon.badge)
                                         .font(.system(size: 11))
                                         .foregroundStyle(Color.brindooCoral)
                                 }
@@ -81,7 +81,7 @@ struct OfferHeaderSection: View {
                                 .foregroundStyle(Color.brindooCoral)
                         }
                         Spacer()
-                        Image(systemName: "chevron.right")
+                        Image(systemName: BrindooIcon.forward)
                             .font(.system(size: 12, weight: .semibold))
                             .foregroundStyle(Color.brindooTextSecondary)
                     }

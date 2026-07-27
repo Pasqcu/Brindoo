@@ -105,7 +105,7 @@ struct OrganizerDetailView: View {
                         if isPreparingShare {
                             ProgressView()
                         } else {
-                            Image(systemName: "square.and.arrow.up")
+                            Image(systemName: BrindooIcon.share)
                                 .font(.system(size: 17, weight: .semibold))
                                 .foregroundStyle(Color.brindooCoral)
                         }

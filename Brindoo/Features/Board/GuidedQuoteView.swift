@@ -212,7 +212,7 @@ struct GuidedQuoteView: View {
 
                     if let rating = resultRatings[offer.organizerId], rating.reviewCount > 0 {
                         HStack(spacing: 3) {
-                            Image(systemName: "star.fill")
+                            Image(systemName: BrindooIcon.starFilled)
                                 .font(.system(size: 9))
                             Text(String(format: "%.1f", rating.avgRating))
                                 .font(BrindooFont.caption.weight(.semibold))
@@ -234,7 +234,7 @@ struct GuidedQuoteView: View {
                     .font(BrindooFont.bodyMedium.weight(.semibold))
                     .foregroundStyle(Color.brindooCoral)
 
-                Image(systemName: "chevron.right")
+                Image(systemName: BrindooIcon.forward)
                     .font(.system(size: 11, weight: .semibold))
                     .foregroundStyle(Color.brindooTextSecondary)
             }
@@ -259,7 +259,7 @@ struct GuidedQuoteView: View {
             } else {
                 ZStack {
                     Color.brindooCoral.opacity(0.1)
-                    Image(systemName: "sparkles")
+                    Image(systemName: BrindooIcon.explore)
                         .foregroundStyle(Color.brindooCoral)
                 }
             }

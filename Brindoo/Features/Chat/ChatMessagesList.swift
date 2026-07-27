@@ -91,7 +91,7 @@ struct ChatOptionsMenu: View {
             }
 
             Button(role: .destructive, action: onDeleteConversation) {
-                Label("Elimina conversazione", systemImage: "trash")
+                Label("Elimina conversazione", systemImage: BrindooIcon.delete)
             }
 
             if !isBlocked {
@@ -110,7 +110,7 @@ struct ChatOptionsMenu: View {
                 Label("Segnala utente", systemImage: "exclamationmark.bubble")
             }
         } label: {
-            Image(systemName: "ellipsis")
+            Image(systemName: BrindooIcon.more)
                 .foregroundStyle(Color.brindooTextPrimary)
         }
         .accessibilityLabel("Opzioni conversazione")

@@ -122,7 +122,7 @@ struct PortfolioPagerView: View {
                     .scaledToFit()
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
             case .failure:
-                Image(systemName: "photo")
+                Image(systemName: BrindooIcon.photo)
                     .font(.system(size: 64))
                     .foregroundStyle(.white)
             @unknown default:

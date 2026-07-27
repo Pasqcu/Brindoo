@@ -84,7 +84,7 @@ struct ProfileSetupView: View {
                 Capsule()
                     .fill(index <= currentStep.rawValue ? Color.brindooCoral : Color.brindooBorder)
                     .frame(height: 4)
-                    .animation(.easeInOut(duration: 0.3), value: currentStep)
+                    .animation(BrindooAnimation.standardEase, value: currentStep)
             }
         }
     }
@@ -219,16 +219,7 @@ struct ProfileSetupView: View {
             }
 
             if let generalError {
-                HStack(spacing: BrindooSpacing.xs) {
-                    Image(systemName: "exclamationmark.triangle.fill")
-                    Text(generalError)
-                        .font(BrindooFont.bodySmall)
-                }
-                .foregroundStyle(Color.brindooError)
-                .padding(BrindooSpacing.sm)
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .background(Color.brindooError.opacity(0.1))
-                .clipShape(RoundedRectangle(cornerRadius: BrindooRadius.sm))
+                BrindooInlineError(generalError)
             }
         }
     }

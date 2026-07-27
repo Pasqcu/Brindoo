@@ -130,7 +130,7 @@ struct AgendaView: View {
             GuidedQuoteView(prefilledDate: upcoming.first?.date)
         } label: {
             HStack(spacing: BrindooSpacing.sm) {
-                Image(systemName: "sparkles")
+                Image(systemName: BrindooIcon.explore)
                     .font(.system(size: 18))
                     .foregroundStyle(Color.brindooCoral)
                     .frame(width: 36, height: 36)
@@ -148,7 +148,7 @@ struct AgendaView: View {
 
                 Spacer()
 
-                Image(systemName: "chevron.right")
+                Image(systemName: BrindooIcon.forward)
                     .font(.system(size: 11, weight: .semibold))
                     .foregroundStyle(Color.brindooTextSecondary)
             }
@@ -279,7 +279,7 @@ struct AgendaView: View {
 
                 if proposal.isDepositPaid {
                     HStack(spacing: 3) {
-                        Image(systemName: "eurosign.circle.fill")
+                        Image(systemName: BrindooIcon.money)
                             .font(.system(size: 10))
                         Text("Acconto versato\(proposal.depositAmountDisplay.map { " · \($0)" } ?? "")")
                             .font(BrindooFont.caption.weight(.semibold))
@@ -341,7 +341,7 @@ struct AgendaView: View {
                     }
                     .accessibilityLabel("Altre azioni")
                 } else {
-                    Image(systemName: "chevron.right")
+                    Image(systemName: BrindooIcon.forward)
                         .font(.system(size: 11, weight: .semibold))
                         .foregroundStyle(Color.brindooTextSecondary)
                 }

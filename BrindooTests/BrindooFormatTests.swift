@@ -94,3 +94,30 @@ final class BrindooFormatTests: XCTestCase {
         XCTAssertFalse(BrindooFormat.timeAgoShort(past).isEmpty)
     }
 }
+
+// MARK: - Iniziali per gli avatar
+
+final class BrindooInitialsTests: XCTestCase {
+
+    func test_nomeECognome_dueLettere() {
+        XCTAssertEqual(BrindooText.initials(from: "Mario Rossi"), "MR")
+    }
+
+    func test_soloNome_unaLettera() {
+        XCTAssertEqual(BrindooText.initials(from: "Mario"), "M")
+    }
+
+    func test_treParole_siFermaADue() {
+        XCTAssertEqual(BrindooText.initials(from: "Maria Luisa Bianchi"), "ML")
+    }
+
+    func test_nomeMancanteOVuoto() {
+        XCTAssertEqual(BrindooText.initials(from: nil), "?")
+        XCTAssertEqual(BrindooText.initials(from: ""), "?")
+        XCTAssertEqual(BrindooText.initials(from: "   "), "?")
+    }
+
+    func test_minuscolo_diventaMaiuscolo() {
+        XCTAssertEqual(BrindooText.initials(from: "anna verdi"), "AV")
+    }
+}

@@ -15,7 +15,6 @@ struct UpgradeToProfessionalView: View {
 
     @Environment(\.dismiss) private var dismiss
     @Environment(SessionStore.self) private var session
-    @EnvironmentObject private var toasts: BrindooToastCenter
 
     @State private var showFinalConfirm: Bool = false
     @State private var isLoading: Bool = false
@@ -35,15 +34,7 @@ struct UpgradeToProfessionalView: View {
                     warningCard
 
                     if let generalError {
-                        HStack(spacing: BrindooSpacing.xs) {
-                            Image(systemName: "exclamationmark.triangle.fill")
-                            Text(generalError).font(BrindooFont.bodySmall)
-                        }
-                        .foregroundStyle(Color.brindooError)
-                        .padding(BrindooSpacing.sm)
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                        .background(Color.brindooError.opacity(0.1))
-                        .clipShape(RoundedRectangle(cornerRadius: BrindooRadius.sm))
+                        BrindooInlineError(generalError)
                     }
 
                     BrindooButton(
@@ -113,7 +104,7 @@ struct UpgradeToProfessionalView: View {
                 Circle()
                     .fill(Color.brindooCoral.opacity(0.15))
                     .frame(width: 120, height: 120)
-                Image(systemName: "sparkles")
+                Image(systemName: BrindooIcon.explore)
                     .font(.system(size: 56))
                     .foregroundStyle(Color.brindooCoral)
             }
@@ -182,7 +173,7 @@ struct UpgradeToProfessionalView: View {
     @ViewBuilder
     private var warningCard: some View {
         HStack(alignment: .top, spacing: BrindooSpacing.sm) {
-            Image(systemName: "info.circle.fill")
+            Image(systemName: BrindooIcon.info)
                 .font(.system(size: 20))
                 .foregroundStyle(Color.brindooCoral)
             VStack(alignment: .leading, spacing: BrindooSpacing.xxs) {

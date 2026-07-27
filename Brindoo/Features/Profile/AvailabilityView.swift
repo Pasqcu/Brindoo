@@ -28,7 +28,7 @@ struct AvailabilityView: View {
             ScrollView {
                 VStack(alignment: .leading, spacing: BrindooSpacing.md) {
                     HStack(alignment: .top, spacing: BrindooSpacing.sm) {
-                        Image(systemName: "info.circle.fill")
+                        Image(systemName: BrindooIcon.info)
                             .foregroundStyle(Color.brindooCoral)
                         Text("Tocca i giorni in cui non sei disponibile. I clienti non potranno fissare l'evento in quelle date. I giorni degli eventi già confermati risultano occupati da soli.")
                             .font(BrindooFont.bodySmall)

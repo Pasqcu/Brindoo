@@ -89,14 +89,14 @@ struct OnboardingView: View {
                     HStack(spacing: BrindooSpacing.xs) {
                         ForEach(slides.indices, id: \.self) { index in
                             Button {
-                                withAnimation(.easeInOut(duration: 0.25)) {
+                                withAnimation(BrindooAnimation.standardEase) {
                                     currentSlide = index
                                 }
                             } label: {
                                 Capsule()
                                     .fill(currentSlide == index ? Color.brindooCoral : Color.brindooBorder)
                                     .frame(width: currentSlide == index ? 24 : 8, height: 8)
-                                    .animation(.easeInOut(duration: 0.2), value: currentSlide)
+                                    .animation(BrindooAnimation.quickEase, value: currentSlide)
                             }
                             .buttonStyle(.plain)
                             .accessibilityLabel("Vai alla slide \(index + 1)")
@@ -110,7 +110,7 @@ struct OnboardingView: View {
                         // Mantiene comunque spazio per non far saltare il layout.
                         consentCheckbox
                             .opacity(isLastSlide ? 1 : 0)
-                            .animation(.easeInOut(duration: 0.2), value: isLastSlide)
+                            .animation(BrindooAnimation.quickEase, value: isLastSlide)
 
                         BrindooButton(
                             isLastSlide ? "Inizia ora" : "Continua",
@@ -145,7 +145,7 @@ struct OnboardingView: View {
                             .opacity(acceptedTermsAndAge ? 1 : 0.4)
                         }
                         .opacity(isLastSlide ? 1 : 0)
-                        .animation(.easeInOut(duration: 0.2), value: isLastSlide)
+                        .animation(BrindooAnimation.quickEase, value: isLastSlide)
                     }
                     .padding(.horizontal, BrindooSpacing.lg)
                     .padding(.bottom, BrindooSpacing.xl)
@@ -179,7 +179,7 @@ struct OnboardingView: View {
         // label il tocco verrebbe intercettato e non si aprirebbero mai.
         VStack(alignment: .leading, spacing: BrindooSpacing.xs) {
             Button {
-                withAnimation(.easeInOut(duration: 0.15)) {
+                withAnimation(BrindooAnimation.quickEase) {
                     acceptedTermsAndAge.toggle()
                 }
             } label: {
@@ -243,13 +243,7 @@ struct OnboardingView: View {
                     .frame(width: 200 * iconScale, height: 200 * iconScale)
 
                 Circle()
-                    .fill(
-                        LinearGradient(
-                            colors: [Color.brindooCoral, Color.brindooCoralDark],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        )
-                    )
+                    .fill(BrindooGradient.coral)
                     .frame(width: 150 * iconScale, height: 150 * iconScale)
                     .shadow(color: Color.brindooCoral.opacity(0.35), radius: 18, x: 0, y: 10)
 
@@ -290,9 +284,9 @@ struct OnboardingView: View {
         HStack(spacing: BrindooSpacing.xxs) {
             Text("Scorri")
                 .font(BrindooFont.bodySmall.weight(.medium))
-            Image(systemName: "chevron.right")
+            Image(systemName: BrindooIcon.forward)
                 .font(.system(size: 14, weight: .semibold))
-            Image(systemName: "chevron.right")
+            Image(systemName: BrindooIcon.forward)
                 .font(.system(size: 14, weight: .semibold))
                 .opacity(0.5)
         }

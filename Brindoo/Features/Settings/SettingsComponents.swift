@@ -55,7 +55,7 @@ struct SettingsRow: View {
                 }
             }
             Spacer()
-            Image(systemName: "chevron.right")
+            Image(systemName: BrindooIcon.forward)
                 .font(.system(size: 12))
                 .foregroundStyle(Color.brindooTextSecondary)
         }
@@ -160,7 +160,7 @@ struct SettingsPromoCard: View {
                     .lineLimit(2)
             }
             Spacer()
-            Image(systemName: "chevron.right")
+            Image(systemName: BrindooIcon.forward)
                 .font(.system(size: 14))
                 .foregroundStyle(Color.brindooTextSecondary)
         }
@@ -200,7 +200,7 @@ struct SettingsVacationCard: View {
                         Text("Sono in vacanza")
                             .font(BrindooFont.bodyMedium.weight(.semibold))
                         if !isPro {
-                            Image(systemName: "lock.fill")
+                            Image(systemName: BrindooIcon.lock)
                                 .font(.system(size: 11))
                                 .foregroundStyle(Color.brindooTextSecondary)
                         }

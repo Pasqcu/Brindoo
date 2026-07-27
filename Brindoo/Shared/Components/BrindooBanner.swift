@@ -29,6 +29,36 @@ enum BrindooBannerStyle {
     }
 }
 
+/// Errore in linea, sotto un modulo o dentro una scheda.
+///
+/// Prima queste dieci righe erano ricopiate in otto schermate: bastava che
+/// una divergesse di un padding perché l'app sembrasse cucita a pezzi.
+struct BrindooInlineError: View {
+    let message: String
+
+    init(_ message: String) {
+        self.message = message
+    }
+
+    var body: some View {
+        HStack(alignment: .firstTextBaseline, spacing: BrindooSpacing.xs) {
+            Image(systemName: BrindooIcon.warning)
+                .accessibilityHidden(true)
+            Text(message)
+                .font(BrindooFont.bodySmall)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+        .foregroundStyle(Color.brindooError)
+        .padding(BrindooSpacing.sm)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(Color.brindooError.opacity(0.1))
+        .clipShape(RoundedRectangle(cornerRadius: BrindooRadius.sm))
+        // Una sola battuta di VoiceOver invece di icona + testo separati.
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("Errore: \(message)")
+    }
+}
+
 struct BrindooBanner: View {
     let style: BrindooBannerStyle
     let title: String

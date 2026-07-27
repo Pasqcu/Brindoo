@@ -101,7 +101,7 @@ struct OrganizerWithOffersCard: View {
                         }
                         if let rating, rating.reviewCount > 0 {
                             HStack(spacing: 2) {
-                                Image(systemName: "star.fill").font(.system(size: 10))
+                                Image(systemName: BrindooIcon.starFilled).font(.system(size: 10))
                                 Text(String(format: "%.1f", rating.avgRating))
                                     .font(BrindooFont.scaled(11, weight: .bold, relativeTo: .caption1))
                             }
@@ -111,7 +111,7 @@ struct OrganizerWithOffersCard: View {
 
                     if let city = organizer.city, !city.isEmpty {
                         HStack(spacing: 4) {
-                            Image(systemName: "mappin.and.ellipse")
+                            Image(systemName: BrindooIcon.location)
                                 .font(.system(size: 11))
                             Text(city)
                                 .font(BrindooFont.caption)
@@ -133,7 +133,7 @@ struct OrganizerWithOffersCard: View {
 
                 Spacer()
 
-                Image(systemName: "chevron.right")
+                Image(systemName: BrindooIcon.forward)
                     .font(.system(size: 13, weight: .semibold))
                     .foregroundStyle(Color.brindooTextSecondary)
             }
@@ -196,7 +196,7 @@ struct OrganizerWithOffersCard: View {
     @ViewBuilder
     private func offerRow(_ offer: ServiceOffer) -> some View {
         HStack(alignment: .top, spacing: BrindooSpacing.sm) {
-            Image(systemName: "tag.fill")
+            Image(systemName: BrindooIcon.tag)
                 .font(.system(size: 12))
                 .foregroundStyle(Color.brindooCoral)
                 .frame(width: 24, height: 24)
@@ -251,7 +251,7 @@ struct FeaturedOrganizerCard: View {
                 }
 
                 HStack(spacing: 3) {
-                    Image(systemName: "star.fill").font(.system(size: 9))
+                    Image(systemName: BrindooIcon.starFilled).font(.system(size: 9))
                     Text("In evidenza").font(BrindooFont.scaled(10, weight: .bold, relativeTo: .caption2))
                 }
                 .foregroundStyle(.white)
@@ -275,14 +275,14 @@ struct FeaturedOrganizerCard: View {
                 HStack(spacing: BrindooSpacing.xs) {
                     if let city = organizer.city, !city.isEmpty {
                         HStack(spacing: 3) {
-                            Image(systemName: "mappin.and.ellipse").font(.system(size: 10))
+                            Image(systemName: BrindooIcon.location).font(.system(size: 10))
                             Text(city).font(BrindooFont.caption).lineLimit(1)
                         }
                         .foregroundStyle(Color.brindooTextSecondary)
                     }
                     if let rating, rating.reviewCount > 0 {
                         HStack(spacing: 2) {
-                            Image(systemName: "star.fill").font(.system(size: 9))
+                            Image(systemName: BrindooIcon.starFilled).font(.system(size: 9))
                             Text(String(format: "%.1f", rating.avgRating)).font(BrindooFont.scaled(11, weight: .bold, relativeTo: .caption1))
                         }
                         .foregroundStyle(Color.brindooWarning)

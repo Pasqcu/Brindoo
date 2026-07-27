@@ -22,12 +22,7 @@ struct FavoriteOffersView: View {
             case .empty:
                 emptyView
             case .error(let message):
-                BrindooEmptyState(
-                    icon: "exclamationmark.triangle",
-                    title: message,
-                    message: BrindooText.retryHint,
-                    actionTitle: "Riprova"
-                ) {
+                BrindooErrorState(message: message) {
                     Task { await load() }
                 }
             case .loaded(let offers):

@@ -117,7 +117,7 @@ struct ClientRequestsView: View {
             Button(role: .destructive) {
                 Task { await delete(request) }
             } label: {
-                Label("Elimina", systemImage: "trash")
+                Label("Elimina", systemImage: BrindooIcon.delete)
             }
         }
     }
@@ -325,7 +325,7 @@ struct ClientRequestCard: View {
 
     private var urgentPill: some View {
         HStack(spacing: 3) {
-            Image(systemName: "flame.fill").font(.system(size: 9))
+            Image(systemName: BrindooIcon.flame).font(.system(size: 9))
             Text("Urgente").font(BrindooFont.scaled(11, weight: .semibold, relativeTo: .caption1))
         }
         .padding(.horizontal, 8)

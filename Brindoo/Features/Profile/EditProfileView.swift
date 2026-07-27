@@ -225,16 +225,7 @@ struct EditProfileView: View {
 
 
                 if let generalError {
-                    HStack(spacing: BrindooSpacing.xs) {
-                        Image(systemName: "exclamationmark.triangle.fill")
-                        Text(generalError)
-                            .font(BrindooFont.bodySmall)
-                    }
-                    .foregroundStyle(Color.brindooError)
-                    .padding(BrindooSpacing.sm)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .background(Color.brindooError.opacity(0.1))
-                    .clipShape(RoundedRectangle(cornerRadius: BrindooRadius.sm))
+                    BrindooInlineError(generalError)
                 }
             }
             .padding(.horizontal, BrindooSpacing.lg)
@@ -277,15 +268,7 @@ struct EditProfileView: View {
                 text: $bio,
                 axis: .vertical
             )
-            .lineLimit(4...10)
-            .font(BrindooFont.bodyLarge)
-            .padding(BrindooSpacing.md)
-            .background(Color.brindooSurface)
-            .overlay(
-                RoundedRectangle(cornerRadius: BrindooRadius.md)
-                    .strokeBorder(Color.brindooBorder, lineWidth: 1)
-            )
-            .clipShape(RoundedRectangle(cornerRadius: BrindooRadius.md))
+            .brindooMultilineFieldStyle()
             .disabled(isLoading)
 
             HStack {
@@ -300,7 +283,7 @@ struct EditProfileView: View {
     @ViewBuilder
     private var successToast: some View {
         HStack(spacing: BrindooSpacing.xs) {
-            Image(systemName: "checkmark.circle.fill")
+            Image(systemName: BrindooIcon.success)
             Text("Profilo aggiornato")
                 .font(BrindooFont.bodyMedium.weight(.medium))
         }

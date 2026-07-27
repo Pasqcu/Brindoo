@@ -65,10 +65,3 @@ struct ServiceOffer: Identifiable, Codable, Hashable, Equatable {
     }
 }
 
-/// Struttura helper per raggruppare offerta + categorie collegate.
-struct ServiceOfferWithCategories: Identifiable, Hashable, Equatable {
-    let offer: ServiceOffer
-    let categories: [ServiceCategory]
-
-    var id: UUID { offer.id }
-}

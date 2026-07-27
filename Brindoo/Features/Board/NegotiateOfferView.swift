@@ -122,7 +122,7 @@ struct NegotiateOfferView: View {
                         VStack(alignment: .leading, spacing: BrindooSpacing.xs) {
                             Toggle(isOn: $includeEventDate) {
                                 HStack(spacing: BrindooSpacing.xs) {
-                                    Image(systemName: "calendar")
+                                    Image(systemName: BrindooIcon.calendar)
                                         .foregroundStyle(Color.brindooCoral)
                                     Text("Indica la data dell'evento")
                                         .font(BrindooFont.bodyMedium.weight(.medium))
@@ -144,7 +144,7 @@ struct NegotiateOfferView: View {
 
                                 if isDateUnavailable(eventDate) {
                                     HStack(spacing: BrindooSpacing.xxs) {
-                                        Image(systemName: "exclamationmark.triangle.fill")
+                                        Image(systemName: BrindooIcon.warning)
                                         // Non è un errore da correggere: la
                                         // proposta parte lo stesso. Dirlo
                                         // evita che sembri un blocco.
@@ -163,15 +163,7 @@ struct NegotiateOfferView: View {
                     }
 
                     if let generalError {
-                        HStack(spacing: BrindooSpacing.xs) {
-                            Image(systemName: "exclamationmark.triangle.fill")
-                            Text(generalError).font(BrindooFont.bodySmall)
-                        }
-                        .foregroundStyle(Color.brindooError)
-                        .padding(BrindooSpacing.sm)
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                        .background(Color.brindooError.opacity(0.1))
-                        .clipShape(RoundedRectangle(cornerRadius: BrindooRadius.sm))
+                        BrindooInlineError(generalError)
                     }
                 }
                 .padding(BrindooSpacing.md)

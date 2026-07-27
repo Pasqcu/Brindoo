@@ -227,6 +227,7 @@ Risponderemo entro 30 giorni dalla ricezione della richiesta.
                 }
             }
             .padding(BrindooSpacing.lg)
+            .brindooReadableWidth()
             .padding(.bottom, BrindooSpacing.xl)
         }
         .background(Color.brindooBackground)
