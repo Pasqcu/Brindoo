@@ -22,6 +22,7 @@ struct AvailabilityCalendarView: View {
         let f = DateFormatter()
         f.locale = Locale(identifier: "it_IT")
         f.dateFormat = "MMMM yyyy"
+        f.timeZone = BrindooFormat.dayTimeZone
         return f
     }()
 

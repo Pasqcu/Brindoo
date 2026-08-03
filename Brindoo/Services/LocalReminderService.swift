@@ -27,9 +27,12 @@ enum LocalReminderService {
 
         guard let day = BrindooFormat.day(from: eventDate) else { return }
 
-        // Avviso il giorno prima alle 10:00.
-        guard let remindDate = Calendar.current.date(byAdding: .day, value: -1, to: day) else { return }
-        var comps = Calendar.current.dateComponents([.year, .month, .day], from: remindDate)
+        // Avviso il giorno prima alle 10:00. Il giorno civile si calcola col
+        // calendario degli eventi (Roma): dall'estero, sottrarre un giorno col
+        // calendario locale può cadere due giorni prima e "Domani" diventa falso.
+        // Le 10:00 restano quelle del telefono: l'avviso serve a chi lo riceve.
+        guard let remindDate = BrindooFormat.dayCalendar.date(byAdding: .day, value: -1, to: day) else { return }
+        var comps = BrindooFormat.dayCalendar.dateComponents([.year, .month, .day], from: remindDate)
         comps.hour = 10
         comps.minute = 0
         guard let fireDate = Calendar.current.date(from: comps), fireDate > Date() else { return }

@@ -29,7 +29,7 @@ struct GuidedQuoteView: View {
     init(prefilledDate: Date? = nil) {
         _hasDate = State(initialValue: prefilledDate != nil)
         _eventDate = State(initialValue: prefilledDate
-            ?? Calendar.current.date(byAdding: .day, value: 30, to: Date()) ?? Date())
+            ?? BrindooFormat.dayCalendar.date(byAdding: .day, value: 30, to: Date()) ?? Date())
     }
 
     var body: some View {

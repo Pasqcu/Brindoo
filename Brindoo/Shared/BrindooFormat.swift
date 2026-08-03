@@ -151,6 +151,37 @@ enum BrindooFormat {
         italianDateFormatter.string(from: date)
     }
 
+    private static let italianDayMonthFormatter: DateFormatter = {
+        let f = DateFormatter()
+        f.locale = Locale(identifier: "it_IT")
+        f.dateFormat = "d MMMM"
+        f.timeZone = dayTimeZone
+        return f
+    }()
+
+    /// "12 settembre" — scadenze e banner, quando l'anno è ovvio.
+    static func italianDayMonth(from date: Date) -> String {
+        italianDayMonthFormatter.string(from: date)
+    }
+
+    private static let monthShortFormatter: DateFormatter = {
+        let f = DateFormatter()
+        f.locale = Locale(identifier: "it_IT")
+        f.dateFormat = "MMM"
+        f.timeZone = dayTimeZone
+        return f
+    }()
+
+    /// "set" — mese abbreviato per i riquadri stile calendario.
+    static func monthShort(from date: Date) -> String {
+        monthShortFormatter.string(from: date)
+    }
+
+    /// "12" — numero del giorno nel calendario degli eventi.
+    static func dayOfMonth(from date: Date) -> String {
+        String(dayCalendar.component(.day, from: date))
+    }
+
     /// "yyyy" della data (anno di iscrizione, intestazioni).
     static func year(from date: Date) -> String {
         yearFormatter.string(from: date)

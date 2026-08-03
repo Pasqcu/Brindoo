@@ -224,11 +224,7 @@ struct Profile: Identifiable, Codable, Hashable, Equatable {
 
     /// "Fino al 21 maggio" — usato nei banner.
     var vacationUntilDisplay: String? {
-        guard let vacationUntil else { return nil }
-        let f = DateFormatter()
-        f.locale = Locale(identifier: "it_IT")
-        f.dateFormat = "d MMMM"
-        return f.string(from: vacationUntil)
+        vacationUntil.map { BrindooFormat.italianDayMonth(from: $0) }
     }
 
     /// Oltre questo tempo senza farsi vedere, quello che sappiamo sulla

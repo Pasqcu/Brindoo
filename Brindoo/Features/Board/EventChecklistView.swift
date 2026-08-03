@@ -92,7 +92,7 @@ struct EventChecklistView: View {
             Text(offerTitle)
                 .font(BrindooFont.titleSmall)
                 .foregroundStyle(Color.brindooTextPrimary)
-            Text(eventDate.formatted(.dateTime.day().month(.wide).year().locale(Locale(identifier: "it_IT"))))
+            Text(BrindooFormat.italianDate(from: eventDate))
                 .font(BrindooFont.bodySmall)
                 .foregroundStyle(Color.brindooTextSecondary)
 
@@ -169,8 +169,7 @@ struct EventChecklistView: View {
     }
 
     private func dueLabel(_ task: ChecklistTask) -> String {
-        let day = dueDate(task).formatted(.dateTime.day().month(.wide).locale(Locale(identifier: "it_IT")))
-        return "Entro il \(day)"
+        "Entro il \(BrindooFormat.italianDayMonth(from: dueDate(task)))"
     }
 
     // MARK: - Salvataggio locale

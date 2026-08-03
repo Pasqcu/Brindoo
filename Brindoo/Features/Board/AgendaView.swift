@@ -239,14 +239,14 @@ struct AgendaView: View {
         HStack(spacing: BrindooSpacing.sm) {
             // Riquadro data stile calendario
             VStack(spacing: 0) {
-                Text(entry.date.formatted(.dateTime.month(.abbreviated).locale(Locale(identifier: "it_IT"))))
+                Text(BrindooFormat.monthShort(from: entry.date))
                     .font(BrindooFont.scaled(11, weight: .bold, relativeTo: .caption1))
                     .textCase(.uppercase)
                     .foregroundStyle(.white)
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 3)
                     .background(Color.brindooCoral)
-                Text(entry.date.formatted(.dateTime.day()))
+                Text(BrindooFormat.dayOfMonth(from: entry.date))
                     .font(BrindooFont.scaled(22, weight: .bold, rounded: true, relativeTo: .title2))
                     .foregroundStyle(Color.brindooTextPrimary)
                     .frame(maxWidth: .infinity)
