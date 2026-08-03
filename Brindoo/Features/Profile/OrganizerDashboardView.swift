@@ -17,6 +17,13 @@ struct OrganizerDashboardStats: Equatable {
     var unreadMessages: Int
     var responseTimeMinutes: Int
 
+    // Benchmark prezzi: mediana della categoria vs prezzo medio proprio.
+    // `benchmarkCount` = 0 quando non c'è abbastanza mercato per dirlo.
+    var benchmarkMedian: Double = 0
+    var benchmarkMyAvg: Double = 0
+    var benchmarkCount: Int = 0
+    var benchmarkCategory: String = ""
+
     static let placeholder = OrganizerDashboardStats(
         sentOffers: 0, acceptedOffers: 0, conversionRate: 0,
         avgRating: 0, reviewsCount: 0, profileViews: 0,
@@ -62,7 +69,32 @@ final class OrganizerDashboardViewModel: BrindooViewModel {
         let unreadDict = (try? await ConversationService.shared.fetchUnreadCounts()) ?? [:]
         let unread = unreadDict.values.reduce(0, +)
 
-        return OrganizerDashboardStats(
+        // Benchmark: mediana dei prezzi attivi nella categoria principale.
+        // Chi prezza male non riceve richieste e non sa perché: questo glielo dice.
+        var benchMedian = 0.0
+        var benchMyAvg = 0.0
+        var benchCount = 0
+        var benchCategory = ""
+        if let userId = SupabaseManager.shared.currentUserID,
+           let mine = try? await ServiceOfferService.shared.fetchMyOffers(), !mine.isEmpty,
+           let mainCategory = (try? await OrganizerService.shared
+               .fetchOrganizerCategories(organizerID: userId))?.first,
+           let market = try? await ServiceOfferService.shared
+               .fetchActiveOffers(categoryFilters: [mainCategory.id]) {
+            // Il confronto ha senso solo con un minimo di mercato attorno.
+            let others = market.filter { $0.organizerId != userId }.map(\.price).sorted()
+            if others.count >= 3 {
+                let mid = others.count / 2
+                benchMedian = others.count.isMultiple(of: 2)
+                    ? (others[mid - 1] + others[mid]) / 2
+                    : others[mid]
+                benchMyAvg = mine.map(\.price).reduce(0, +) / Double(mine.count)
+                benchCount = others.count
+                benchCategory = mainCategory.name
+            }
+        }
+
+        var stats = OrganizerDashboardStats(
             sentOffers: sent,
             acceptedOffers: accepted,
             conversionRate: conversion,
@@ -72,6 +104,11 @@ final class OrganizerDashboardViewModel: BrindooViewModel {
             unreadMessages: unread,
             responseTimeMinutes: 0
         )
+        stats.benchmarkMedian = benchMedian
+        stats.benchmarkMyAvg = benchMyAvg
+        stats.benchmarkCount = benchCount
+        stats.benchmarkCategory = benchCategory
+        return stats
     }
 }
 
@@ -91,6 +128,7 @@ struct OrganizerDashboardView: View {
                 case .loaded(let stats):
                     statsGrid(stats)
                     insightsCard(stats)
+                    benchmarkCard(stats)
                 case .error(let message):
                     BrindooErrorState(message: message) {
                         Task { await vm.refresh() }
@@ -171,6 +209,37 @@ struct OrganizerDashboardView: View {
 
     private static func hasEnoughDeals(_ s: OrganizerDashboardStats) -> Bool {
         s.sentOffers >= minDealsForRate
+    }
+
+    /// Confronto col mercato: la propria media contro la mediana della
+    /// categoria. Compare solo con almeno 3 offerte altrui da confrontare.
+    @ViewBuilder
+    private func benchmarkCard(_ s: OrganizerDashboardStats) -> some View {
+        if s.benchmarkCount >= 3 {
+            let ratio = s.benchmarkMedian > 0 ? s.benchmarkMyAvg / s.benchmarkMedian : 1
+            let (verdict, tint): (String, Color) =
+                ratio > 1.1 ? ("sopra la mediana", .brindooWarning)
+                : ratio < 0.9 ? ("sotto la mediana", .blue)
+                : ("in linea col mercato", .brindooSuccess)
+
+            VStack(alignment: .leading, spacing: BrindooSpacing.xs) {
+                Label("Prezzi in \(s.benchmarkCategory)", systemImage: "eurosign.circle")
+                    .font(BrindooFont.bodyMedium.weight(.semibold))
+                    .foregroundStyle(Color.brindooTextPrimary)
+                Text("Mediana di \(s.benchmarkCount) offerte attive: \(BrindooFormat.euro(s.benchmarkMedian))")
+                    .font(BrindooFont.bodySmall)
+                    .foregroundStyle(Color.brindooTextSecondary)
+                Text("La tua media: \(BrindooFormat.euro(s.benchmarkMyAvg)) — \(verdict)")
+                    .font(BrindooFont.bodySmall.weight(.semibold))
+                    .foregroundStyle(tint)
+                Text("Un prezzo fuori scala, in alto o in basso, è il motivo più comune per cui le richieste non arrivano.")
+                    .font(BrindooFont.caption)
+                    .foregroundStyle(Color.brindooTextTertiary)
+            }
+            .padding(BrindooSpacing.md)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .brindooSurfaceBackground()
+        }
     }
 
     @ViewBuilder

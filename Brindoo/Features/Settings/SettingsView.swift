@@ -101,6 +101,25 @@ struct SettingsView: View {
                                 }
                                 .buttonStyle(.plain)
                             }
+
+                            // Icona dorata: piccolo lusso riservato ai Pro.
+                            Button {
+                                if isPro {
+                                    toggleGoldIcon()
+                                } else {
+                                    showPaywall = true
+                                }
+                            } label: {
+                                SettingsRow(
+                                    icon: "app.gift",
+                                    iconColor: .brindooProGold,
+                                    title: "Icona dorata",
+                                    subtitle: isPro
+                                        ? (goldIconActive ? "Attiva — tocca per tornare alla classica" : "Metti l'oro in Home")
+                                        : "Riservata agli abbonati Pro"
+                                )
+                            }
+                            .buttonStyle(.plain)
                         }
                     }
 
@@ -406,6 +425,18 @@ struct SettingsView: View {
             } message: {
                 Text("Le scelte sulle notifiche non hanno raggiunto il server. Con la linea attiva riprova.")
             }
+        }
+    }
+
+    private var goldIconActive: Bool {
+        UIApplication.shared.alternateIconName == "AppIconPro"
+    }
+
+    private func toggleGoldIcon() {
+        let target: String? = goldIconActive ? nil : "AppIconPro"
+        Task {
+            try? await UIApplication.shared.setAlternateIconName(target)
+            BrindooHaptics.notify(.success)
         }
     }
 

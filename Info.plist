@@ -6,6 +6,10 @@
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
 	<key>NSCalendarsWriteOnlyAccessUsageDescription</key>
 	<string>Brindoo aggiunge al tuo calendario gli eventi che hai confermato, così non li dimentichi.</string>
+	<key>NSCalendarsFullAccessUsageDescription</key>
+	<string>Brindoo legge i tuoi impegni solo per segnare come occupati i giorni in cui non sei disponibile. Niente viene salvato fuori dal tuo profilo.</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>Il microfono serve per registrare i messaggi vocali in chat.</string>
 	<key>CFBundleDisplayName</key>
 	<string>Brindoo</string>
 	<key>CFBundleExecutable</key>

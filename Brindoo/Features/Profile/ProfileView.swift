@@ -196,8 +196,23 @@ struct ProfileView: View {
                 showAvatarFullScreen = true
             } label: {
                 AvatarView(url: profile.avatarUrl, name: profile.fullName, size: 110)
+                    .overlay {
+                        // L'anello dice a colpo d'occhio quanto manca al profilo
+                        // completo; a profilo finito sparisce e resta pulito.
+                        if let completion, !completion.isComplete {
+                            Circle()
+                                .trim(from: 0, to: CGFloat(completion.score) / 100)
+                                .stroke(Color.brindooCoral, style: StrokeStyle(lineWidth: 3, lineCap: .round))
+                                .rotationEffect(.degrees(-90))
+                                .padding(-5)
+                        }
+                    }
             }
             .buttonStyle(.plain)
+            .accessibilityLabel(
+                completion.map { $0.isComplete ? "Foto profilo" : "Foto profilo, completato al \($0.score) per cento" }
+                    ?? "Foto profilo"
+            )
 
             VStack(spacing: 4) {
                 HStack(spacing: BrindooSpacing.xs) {

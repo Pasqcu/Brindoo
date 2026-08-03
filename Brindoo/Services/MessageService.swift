@@ -166,6 +166,60 @@ final class MessageService {
         return inserted
     }
     
+    /// Invia un messaggio vocale. Per il database è un "image" con URL .m4a:
+    /// nessun tipo nuovo da far digerire al server, decide tutto il client.
+    func sendVoice(
+        conversationId: UUID,
+        fileURL: URL,
+        duration: TimeInterval
+    ) async throws -> Message {
+        guard let senderId = SupabaseManager.shared.currentUserID else {
+            throw BrindooServiceError.notLoggedIn
+        }
+
+        let data = try Data(contentsOf: fileURL)
+        let path = "\(senderId.uuidString.lowercased())/\(UUID().uuidString.lowercased()).m4a"
+        try await client.storage
+            .from("chat-images")
+            .upload(path, data: data, options: FileOptions(contentType: "audio/mp4", upsert: false))
+        let publicUrl = try client.storage.from("chat-images").getPublicURL(path: path)
+
+        struct Payload: Encodable {
+            let conversation_id: UUID
+            let sender_id: UUID
+            let content: String
+            let message_type: String
+            let image_url: String
+            let is_bomb: Bool
+        }
+
+        let payload = Payload(
+            conversation_id: conversationId,
+            sender_id: senderId,
+            content: VoiceMessage.contentLabel(duration: duration),
+            message_type: "image",
+            image_url: publicUrl.absoluteString,
+            is_bomb: false
+        )
+
+        let inserted: Message = try await client
+            .from("messages")
+            .insert(payload)
+            .select()
+            .single()
+            .execute()
+            .value
+
+        // Il file temporaneo della registrazione ha finito il suo lavoro.
+        try? FileManager.default.removeItem(at: fileURL)
+
+        await updateConversationLastMessage(
+            conversationId: conversationId,
+            preview: "🎤 Vocale"
+        )
+        return inserted
+    }
+
     private func uploadChatImage(image: UIImage, senderId: UUID) async throws -> String {
         // Stessa compressione degli altri upload (max 1600px, fuori dal main
         // actor): prima la foto partiva intera e il JPEG si faceva sul main.

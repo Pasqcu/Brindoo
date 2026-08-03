@@ -335,6 +335,13 @@ struct ReceivedProposalsSection: View {
                         .padding(.vertical, BrindooSpacing.sm)
                         .foregroundStyle(Color.brindooCoral)
                 }
+
+                AgreementPDFShareButton(
+                    offer: offer,
+                    organizerName: nil,
+                    clientName: client.displayName,
+                    proposal: proposal
+                )
             }
         } else if proposal.status == .pending, proposal.lastProposer == .client {
             VStack(spacing: BrindooSpacing.sm) {

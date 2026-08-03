@@ -7,6 +7,7 @@
 //
 
 import SwiftUI
+import AVKit
 
 // MARK: - Preview swipe (FIX #15)
 
@@ -38,8 +39,13 @@ struct PortfolioPagerView: View {
             // Pager con swipe orizzontale
             TabView(selection: $currentIndex) {
                 ForEach(Array(items.enumerated()), id: \.element.id) { index, item in
-                    photoView(item)
-                        .tag(index)
+                    if item.isVideo {
+                        PortfolioVideoPage(urlString: item.imageUrl)
+                            .tag(index)
+                    } else {
+                        photoView(item)
+                            .tag(index)
+                    }
                 }
             }
             .tabViewStyle(.page(indexDisplayMode: .never))
@@ -136,5 +142,32 @@ struct PortfolioPagerView: View {
 private extension Array {
     subscript(safe index: Int) -> Element? {
         return indices.contains(index) ? self[index] : nil
+    }
+}
+
+// MARK: - Pagina video
+
+/// Una pagina del pager che riproduce un video del portfolio.
+/// Il player nasce all'apparire e si ferma sfogliando via.
+private struct PortfolioVideoPage: View {
+
+    let urlString: String
+    @State private var player: AVPlayer?
+
+    var body: some View {
+        Group {
+            if let player {
+                VideoPlayer(player: player)
+            } else {
+                ProgressView().tint(.white)
+            }
+        }
+        .onAppear {
+            if player == nil, let url = URL(string: urlString) {
+                player = AVPlayer(url: url)
+            }
+            player?.play()
+        }
+        .onDisappear { player?.pause() }
     }
 }

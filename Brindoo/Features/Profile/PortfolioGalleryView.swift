@@ -148,13 +148,13 @@ struct PortfolioGalleryView: View {
                 PhotosPicker(
                     selection: $pickerItems,
                     maxSelectionCount: 10,
-                    matching: .images,
+                    matching: .any(of: [.images, .videos]),
                     preferredItemEncoding: .compatible,
                     photoLibrary: .shared()
                 ) {
                     HStack(spacing: BrindooSpacing.xs) {
                         Image(systemName: BrindooIcon.add)
-                        Text("Aggiungi foto")
+                        Text("Aggiungi foto o video")
                     }
                     .font(BrindooFont.button)
                     .foregroundStyle(.white)
@@ -222,7 +222,7 @@ struct PortfolioGalleryView: View {
                 // FIX #15: apri preview a partire dall'indice toccato
                 previewStartIndex = index
             } label: {
-                BrindooCachedImage(url: URL(string: item.imageUrl)) { phase in
+                BrindooCachedImage(url: URL(string: item.thumbnailUrl)) { phase in
                     switch phase {
                     case .empty:
                         ZStack {
@@ -245,6 +245,15 @@ struct PortfolioGalleryView: View {
                 }
                 .frame(width: size, height: size)
                 .clipped()
+                .overlay(alignment: .bottomLeading) {
+                    if item.isVideo {
+                        Image(systemName: "play.circle.fill")
+                            .font(.system(size: 22))
+                            .symbolRenderingMode(.palette)
+                            .foregroundStyle(.white, .black.opacity(0.55))
+                            .padding(6)
+                    }
+                }
             }
             .buttonStyle(.plain)
             
@@ -314,13 +323,27 @@ struct PortfolioGalleryView: View {
             uploadProgress = "Caricamento \(index + 1) di \(total)..."
             
             do {
-                guard let data = try await pickerItem.loadTransferable(type: Data.self),
-                      let uiImage = UIImage(data: data) else {
-                    continue
+                let isVideo = pickerItem.supportedContentTypes.contains {
+                    $0.conforms(to: .audiovisualContent)
                 }
-                
-                _ = try await PortfolioService.shared.addPhoto(uiImage)
+                if isVideo {
+                    guard let picked = try await pickerItem.loadTransferable(type: PickedVideo.self) else {
+                        continue
+                    }
+                    defer { try? FileManager.default.removeItem(at: picked.url) }
+                    _ = try await PortfolioService.shared.addVideo(fileURL: picked.url)
+                } else {
+                    guard let data = try await pickerItem.loadTransferable(type: Data.self),
+                          let uiImage = UIImage(data: data) else {
+                        continue
+                    }
+                    _ = try await PortfolioService.shared.addPhoto(uiImage)
+                }
                 uploadedCount += 1
+            } catch let inputError as BrindooServiceError {
+                // Video troppo lungo o pesante: si dice chiaro e si va avanti.
+                errorMessage = inputError.errorDescription
+                BrindooLog.error("Upload portfolio: \(inputError)")
             } catch let limitError as BrindooLimitError {
                 limitMessage = limitError.errorDescription ?? "Limite raggiunto."
                 showLimitPaywall = true
@@ -355,6 +378,25 @@ private struct IndexWrapper: Identifiable {
     var id: Int { index }
 }
 
+// MARK: - Video scelto dalla libreria
+
+/// Copia il video del picker su un file temporaneo nostro: il file che
+/// PhotosPicker presta sparisce alla fine della closure.
+struct PickedVideo: Transferable {
+    let url: URL
+
+    static var transferRepresentation: some TransferRepresentation {
+        FileRepresentation(contentType: .movie) { video in
+            SentTransferredFile(video.url)
+        } importing: { received in
+            let copy = FileManager.default.temporaryDirectory
+                .appendingPathComponent("portfolio-\(UUID().uuidString).mp4")
+            try FileManager.default.copyItem(at: received.file, to: copy)
+            return Self(url: copy)
+        }
+    }
+}
+
 // MARK: - Pulsante "aggiungi foto"
 
 /// Vive fuori dalla schermata perché la closure di PhotosPicker è Sendable:
@@ -367,7 +409,7 @@ private struct PortfolioAddPhotosButton: View {
         PhotosPicker(
             selection: $selection,
             maxSelectionCount: 10,
-            matching: .images,
+            matching: .any(of: [.images, .videos]),
             preferredItemEncoding: .compatible,
             photoLibrary: .shared()
         ) {
@@ -381,6 +423,6 @@ private struct PortfolioAddPhotosButton: View {
             }
         }
         .disabled(isUploading)
-        .accessibilityLabel(isUploading ? "Caricamento foto in corso" : "Aggiungi foto")
+        .accessibilityLabel(isUploading ? "Caricamento in corso" : "Aggiungi foto o video")
     }
 }

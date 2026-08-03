@@ -263,12 +263,14 @@ final class OfferProposalService {
             lastProposer: proposal.lastProposer == .client ? .client : .organizer
         )
 
-        // Promemoria locale dell'evento (se è stata concordata una data).
+        // Serie di promemoria locali (se è stata concordata una data).
         let offerTitleForReminder = (try? await ServiceOfferService.shared.fetchOffer(id: proposal.offerId))?.title ?? "Evento"
-        await LocalReminderService.scheduleEventReminder(
+        await LocalReminderService.scheduleEventReminders(
             proposalId: proposal.id,
             eventDate: proposal.eventDate,
-            offerTitle: offerTitleForReminder
+            offerTitle: offerTitleForReminder,
+            offerId: proposal.offerId,
+            isClient: SupabaseManager.shared.currentUserID == proposal.clientId
         )
 
         // Crea/recupera la conversation tra cliente e organizzatore.
@@ -330,12 +332,14 @@ final class OfferProposalService {
             .eq("id", value: proposal.id)
             .execute()
 
-        // Riprogramma il promemoria del giorno prima (stesso identifier → sostituisce).
+        // Riprogramma la serie sulla nuova data (stessi identifier → sostituiscono).
         LocalReminderService.cancelReminder(proposalId: proposal.id)
-        await LocalReminderService.scheduleEventReminder(
+        await LocalReminderService.scheduleEventReminders(
             proposalId: proposal.id,
             eventDate: newDate,
-            offerTitle: offerTitle
+            offerTitle: offerTitle,
+            offerId: proposal.offerId,
+            isClient: SupabaseManager.shared.currentUserID == proposal.clientId
         )
 
         // Nota automatica in chat per l'altra parte (best effort).
@@ -429,6 +433,9 @@ final class OfferProposalService {
             ))
             .eq("id", value: proposalId)
             .execute()
+
+        // Acconto dichiarato: il promemoria dei 30 giorni non serve più.
+        LocalReminderService.cancelDepositReminder(proposalId: proposalId)
     }
 
     /// L'altra parte conferma di aver versato quell'acconto.
@@ -446,6 +453,8 @@ final class OfferProposalService {
             ))
             .eq("id", value: proposalId)
             .execute()
+
+        LocalReminderService.cancelDepositReminder(proposalId: proposalId)
     }
 
     /// Annulla la dichiarazione (errore di importo, pagamento non arrivato…).

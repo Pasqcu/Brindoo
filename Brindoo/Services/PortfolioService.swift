@@ -9,6 +9,7 @@
 import Foundation
 import UIKit
 import Supabase
+import AVFoundation
 
 @MainActor
 final class PortfolioService {
@@ -60,14 +61,7 @@ final class PortfolioService {
             throw BrindooServiceError.notLoggedIn
         }
 
-        // Enforce cap in base allo stato Pro.
-        let profile = try? await ProfileService.shared.fetchProfile(userID: userId)
-        let isPro = profile?.isPro ?? false
-        let cap = isPro ? Self.maxPhotosPro : Self.maxPhotosFree
-        let current = try await fetchPortfolio(organizerId: userId).count
-        if current >= cap {
-            throw BrindooLimitError.maxPortfolioReached(max: cap)
-        }
+        try await ensureCapacity(userId: userId)
 
         // 1. Upload su Storage
         let (publicUrl, storagePath) = try await StorageService.shared.uploadPortfolioImage(image)
@@ -106,6 +100,65 @@ final class PortfolioService {
         try await addPhoto(image, caption: caption)
     }
 
+    /// Stesso tetto foto+video insieme: il limite è del portfolio, non del formato.
+    private func ensureCapacity(userId: UUID) async throws {
+        let profile = try? await ProfileService.shared.fetchProfile(userID: userId)
+        let isPro = profile?.isPro ?? false
+        let cap = isPro ? Self.maxPhotosPro : Self.maxPhotosFree
+        let current = try await fetchPortfolio(organizerId: userId).count
+        if current >= cap {
+            throw BrindooLimitError.maxPortfolioReached(max: cap)
+        }
+    }
+
+    /// Durata massima di un video del portfolio: una clip, non un documentario.
+    static let maxVideoSeconds: Double = 60
+
+    /// Aggiunge un video breve al portfolio. Un DJ o un animatore si
+    /// vendono col movimento: la foto non basta.
+    @discardableResult
+    func addVideo(fileURL: URL, caption: String? = nil) async throws -> PortfolioItem {
+        guard let userId = SupabaseManager.shared.currentUserID else {
+            throw BrindooServiceError.notLoggedIn
+        }
+
+        let seconds = (try? await AVURLAsset(url: fileURL).load(.duration).seconds) ?? 0
+        guard seconds > 0 else {
+            throw BrindooServiceError.invalidInput("Video non leggibile. Riprova con un altro file.")
+        }
+        guard seconds <= Self.maxVideoSeconds else {
+            throw BrindooServiceError.invalidInput("Il video può durare al massimo 60 secondi.")
+        }
+
+        try await ensureCapacity(userId: userId)
+
+        let (publicUrl, storagePath) = try await StorageService.shared.uploadPortfolioVideo(fileURL: fileURL)
+
+        do {
+            let payload = NewPortfolioItem(
+                organizer_id: userId,
+                image_url: publicUrl,
+                storage_path: storagePath,
+                caption: caption?.trimmingCharacters(in: .whitespaces).isEmpty == true ? nil : caption,
+                sort_order: 0
+            )
+            let item: PortfolioItem = try await client
+                .from("portfolio_items")
+                .insert(payload)
+                .select()
+                .single()
+                .execute()
+                .value
+            BrindooLog.info("Video aggiunto al portfolio")
+            return item
+        } catch {
+            BrindooLog.error("Errore inserimento DB, rollback dello Storage")
+            try? await StorageService.shared.deletePortfolioImage(storagePath: storagePath)
+            try? await StorageService.shared.deletePortfolioImage(storagePath: storagePath + ".jpg")
+            throw error
+        }
+    }
+
     // MARK: - Cancella foto
 
     /// Cancella una foto: prima dal DB, poi dallo Storage
@@ -122,7 +175,11 @@ final class PortfolioService {
         }
 
         try? await StorageService.shared.deletePortfolioImage(storagePath: item.storagePath)
-        BrindooLog.info("Foto rimossa dal portfolio")
+        if item.isVideo {
+            // Con il video se ne va anche la sua copertina.
+            try? await StorageService.shared.deletePortfolioImage(storagePath: item.storagePath + ".jpg")
+        }
+        BrindooLog.info("Elemento rimosso dal portfolio")
     }
 
     /// Alias storico di `deletePhoto`.

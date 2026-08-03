@@ -21,6 +21,7 @@ struct ChatDataSource {
     var editMessage: (_ messageId: UUID, _ newContent: String) async throws -> Void
     var deleteMessage: (_ messageId: UUID) async throws -> Void
     var sendImage: (_ conversationId: UUID, _ image: UIImage, _ isBomb: Bool) async throws -> Void
+    var sendVoice: (_ conversationId: UUID, _ fileURL: URL, _ duration: TimeInterval) async throws -> Void
     var markBombViewed: (_ message: Message) async throws -> Void
     var markMessagesAsRead: (_ conversationId: UUID) async throws -> Void
 
@@ -78,6 +79,13 @@ extension ChatDataSource {
                     isBomb: isBomb
                 )
             },
+            sendVoice: { conversationId, fileURL, duration in
+                _ = try await MessageService.shared.sendVoice(
+                    conversationId: conversationId,
+                    fileURL: fileURL,
+                    duration: duration
+                )
+            },
             markBombViewed: { message in
                 try await MessageService.shared.markBombViewed(message: message)
             },
@@ -130,6 +138,7 @@ extension ChatDataSource {
             editMessage: { _, _ in },
             deleteMessage: { _ in },
             sendImage: { _, _, _ in },
+            sendVoice: { _, _, _ in },
             markBombViewed: { _ in },
             markMessagesAsRead: { _ in },
             setMarkedUnread: { _, _ in },

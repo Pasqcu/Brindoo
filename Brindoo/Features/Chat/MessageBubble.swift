@@ -102,7 +102,15 @@ struct MessageBubble: View {
                             .foregroundStyle(textColor)
                             .fixedSize(horizontal: false, vertical: true)
                     case .image:
-                        imageContent
+                        if VoiceMessage.isVoiceURL(message.imageUrl) {
+                            VoiceMessageBubble(
+                                urlString: message.imageUrl ?? "",
+                                isOwn: isOwn,
+                                fallbackContent: message.content
+                            )
+                        } else {
+                            imageContent
+                        }
                     case .bombImage:
                         bombContent
                     case .system:
@@ -165,7 +173,7 @@ struct MessageBubble: View {
     private func quotePreview(_ replied: Message) -> String {
         if replied.isDeleted { return "Messaggio eliminato" }
         switch replied.messageType {
-        case .image: return "📷 Foto"
+        case .image: return VoiceMessage.isVoiceURL(replied.imageUrl) ? "🎤 Vocale" : "📷 Foto"
         case .bombImage: return "💣 Foto bomba"
         default: return replied.content
         }

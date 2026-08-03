@@ -250,7 +250,10 @@ struct ChatView: View {
             // Risposte rapide: solo per il professionista.
             onQuickReply: session.currentProfile?.role == .organizer
                 ? { phrase in vm.appendQuickReply(phrase) }
-                : nil
+                : nil,
+            onSendVoice: { url, duration in
+                Task { await vm.sendVoice(url: url, duration: duration) }
+            }
         )
         .onChange(of: vm.inputText) { _, newValue in
             Task {

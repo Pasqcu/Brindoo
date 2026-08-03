@@ -238,6 +238,13 @@ struct ClientNegotiationSection: View {
                         .foregroundStyle(Color.brindooCoral)
                 }
 
+                AgreementPDFShareButton(
+                    offer: offer,
+                    organizerName: org.displayName,
+                    clientName: session.currentProfile?.displayName,
+                    proposal: proposal
+                )
+
                 CancellationPolicyRow()
 
                 BookingActionButtons(

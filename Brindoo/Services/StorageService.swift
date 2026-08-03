@@ -15,6 +15,7 @@
 import Foundation
 import UIKit
 import Supabase
+import AVFoundation
 
 @MainActor
 final class StorageService {
@@ -109,6 +110,56 @@ final class StorageService {
             BrindooLog.error("Errore upload \(description): \(error)")
             throw error
         }
+    }
+
+    /// Tetto di peso per un video del portfolio.
+    static let maxVideoBytes = 80 * 1024 * 1024
+
+    /// Carica un video del portfolio più il suo fotogramma di copertina
+    /// (stesso percorso + ".jpg"), così le griglie restano leggere.
+    func uploadPortfolioVideo(fileURL: URL) async throws -> (url: String, path: String) {
+        let path = try userPath("portfolio-\(UUID().uuidString.lowercased()).mp4").path
+
+        let data = try Data(contentsOf: fileURL)
+        guard data.count <= Self.maxVideoBytes else {
+            throw BrindooServiceError.invalidInput("Video troppo pesante: massimo 80 MB.")
+        }
+        guard let poster = await Self.videoPoster(fileURL: fileURL),
+              let posterData = await compressImage(poster, quality: 0.7) else {
+            throw BrindooServiceError.invalidImage
+        }
+
+        try await storage
+            .from(Bucket.portfolio)
+            .upload(path, data: data, options: FileOptions(
+                cacheControl: "3600", contentType: "video/mp4", upsert: false
+            ))
+        do {
+            try await storage
+                .from(Bucket.portfolio)
+                .upload(path + ".jpg", data: posterData, options: FileOptions(
+                    cacheControl: "3600", contentType: "image/jpeg", upsert: false
+                ))
+        } catch {
+            // Video senza copertina resterebbe un quadrato vuoto in griglia:
+            // meglio pulire e far riprovare.
+            _ = try? await storage.from(Bucket.portfolio).remove(paths: [path])
+            throw error
+        }
+
+        let publicUrl = try storage.from(Bucket.portfolio).getPublicURL(path: path)
+        BrindooLog.info("Video portfolio caricato")
+        return (publicUrl.absoluteString, path)
+    }
+
+    /// Fotogramma di copertina a mezzo secondo, fuori dal main actor.
+    nonisolated private static func videoPoster(fileURL: URL) async -> UIImage? {
+        let generator = AVAssetImageGenerator(asset: AVURLAsset(url: fileURL))
+        generator.appliesPreferredTrackTransform = true
+        generator.maximumSize = CGSize(width: 1200, height: 1200)
+        let time = CMTime(seconds: 0.5, preferredTimescale: 600)
+        guard let cg = try? await generator.image(at: time).image else { return nil }
+        return UIImage(cgImage: cg)
     }
 
     // MARK: - Avatar utente

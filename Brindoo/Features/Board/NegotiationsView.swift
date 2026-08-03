@@ -256,6 +256,14 @@ struct NegotiationsView: View {
                             .background(Color.brindooCoral.opacity(0.12))
                             .clipShape(RoundedRectangle(cornerRadius: BrindooRadius.md))
                     }
+
+                    AgreementPDFShareButton(
+                        offer: offer,
+                        organizerName: profileMap[proposal.organizerId]?.displayName,
+                        clientName: profileMap[proposal.clientId]?.displayName,
+                        proposal: proposal,
+                        compact: true
+                    )
                     .accessibilityLabel("Condividi riepilogo accordo")
                 }
             }

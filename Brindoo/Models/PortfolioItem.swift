@@ -28,6 +28,17 @@ struct PortfolioItem: Codable, Identifiable, Equatable, Hashable {
     }
 }
 
+extension PortfolioItem {
+
+    /// I video del portfolio sono file .mp4 nello stesso bucket delle foto:
+    /// nessuna colonna nuova, decide l'estensione.
+    var isVideo: Bool { imageUrl.hasSuffix(".mp4") }
+
+    /// Per i video le griglie mostrano il fotogramma di copertina caricato
+    /// accanto al file (stesso percorso + ".jpg").
+    var thumbnailUrl: String { isVideo ? imageUrl + ".jpg" : imageUrl }
+}
+
 /// Payload per inserire un nuovo item nel portfolio
 struct NewPortfolioItem: Encodable {
     let organizer_id: UUID

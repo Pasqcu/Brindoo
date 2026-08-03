@@ -224,6 +224,21 @@ final class ChatViewModel {
         }
     }
 
+    /// Invia un vocale registrato. Il file temporaneo lo pulisce il servizio.
+    func sendVoice(url: URL, duration: TimeInterval) async {
+        isSending = true
+        defer { isSending = false }
+        do {
+            try await data.sendVoice(conversation.id, url, duration)
+        } catch {
+            BrindooLog.error("chat sendVoice: \(error)")
+            sendErrorMessage = BrindooErrorText.message(
+                for: error,
+                fallback: "Invio del vocale non riuscito. \(BrindooText.retryHint)"
+            )
+        }
+    }
+
     func reportImageLoadFailure(_ error: Error?) {
         if let error {
             BrindooLog.error("chat loadPickedImage: \(error)")

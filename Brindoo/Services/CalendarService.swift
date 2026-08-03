@@ -53,4 +53,32 @@ enum CalendarService {
 
         try store.save(event, span: .thisEvent)
     }
+
+    /// Giorni (mezzanotte Roma) con almeno un impegno nel calendario iOS,
+    /// da oggi ai prossimi `monthsAhead` mesi. Serve al professionista per
+    /// importare in un tocco i giorni già occupati fuori da Brindoo.
+    /// La lettura resta sul telefono: nulla del calendario esce dall'app.
+    static func fetchDeviceBusyDays(monthsAhead: Int = 6) async throws -> Set<Date> {
+        let store = EKEventStore()
+        let granted = (try? await store.requestFullAccessToEvents()) ?? false
+        guard granted else { throw CalendarServiceError.accessDenied }
+
+        let cal = BrindooFormat.dayCalendar
+        let start = BrindooFormat.startOfDay()
+        guard let end = cal.date(byAdding: .month, value: monthsAhead, to: start) else { return [] }
+
+        let predicate = store.predicateForEvents(withStart: start, end: end, calendars: nil)
+        var days: Set<Date> = []
+        for event in store.events(matching: predicate) {
+            // Un impegno può coprire più giorni: si segnano tutti.
+            var day = cal.startOfDay(for: event.startDate)
+            let lastDay = cal.startOfDay(for: event.endDate)
+            while day <= lastDay {
+                if day >= start { days.insert(day) }
+                guard let next = cal.date(byAdding: .day, value: 1, to: day) else { break }
+                day = next
+            }
+        }
+        return days
+    }
 }

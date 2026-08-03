@@ -19,6 +19,8 @@ struct AvailabilityView: View {
     @State private var booked: [Date] = []
     @State private var isLoading: Bool = true
     @State private var isSaving: Bool = false
+    @State private var isImporting: Bool = false
+    @State private var importedCount: Int?
     @State private var error: String?
 
     private let calendar = BrindooFormat.dayCalendar
@@ -54,6 +56,24 @@ struct AvailabilityView: View {
                         Text("\(selected.count) giorni segnati come non disponibili")
                             .font(BrindooFont.caption)
                             .foregroundStyle(Color.brindooTextSecondary)
+
+                        // Chi ha il calendario pieno fuori da Brindoo risulterebbe
+                        // "libero": un tocco e gli impegni diventano giorni occupati.
+                        BrindooButton(
+                            isImporting ? "Importo..." : "Importa impegni dal calendario",
+                            style: .secondary, size: .medium, icon: "calendar.badge.plus"
+                        ) {
+                            Task { await importFromDeviceCalendar() }
+                        }
+                        .disabled(isImporting)
+
+                        if let importedCount {
+                            Text(importedCount == 0
+                                 ? "Nessun impegno nuovo nei prossimi 6 mesi."
+                                 : "\(importedCount) giorni aggiunti dal calendario. Controlla e salva.")
+                                .font(BrindooFont.caption)
+                                .foregroundStyle(Color.brindooSuccess)
+                        }
 
                         if !booked.isEmpty {
                             bookedSection
@@ -127,6 +147,24 @@ struct AvailabilityView: View {
         } catch {
             self.error = BrindooText.loadError("il calendario.")
             BrindooLog.error("\(error)")
+        }
+    }
+
+    /// Unisce gli impegni del calendario iOS ai giorni già selezionati.
+    /// Non salva da solo: la persona vede cosa è entrato e conferma con "Salva".
+    private func importFromDeviceCalendar() async {
+        isImporting = true
+        defer { isImporting = false }
+        error = nil
+        do {
+            let busy = try await CalendarService.fetchDeviceBusyDays()
+            let before = selected.count
+            selected.formUnion(busy.map { calendar.dateComponents([.year, .month, .day], from: $0) })
+            importedCount = selected.count - before
+            if importedCount != 0 { BrindooHaptics.notify(.success) }
+        } catch {
+            self.error = error.localizedDescription
+            BrindooLog.error("Import calendario: \(error)")
         }
     }
 

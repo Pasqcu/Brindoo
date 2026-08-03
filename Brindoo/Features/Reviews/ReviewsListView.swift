@@ -134,8 +134,10 @@ struct ReviewsListView: View {
                     emptyView
                         .padding(.top, BrindooSpacing.xl)
                 } else {
+                    distributionCard
+
                     Divider()
-                    
+
                     Text("Tutte le recensioni")
                         .font(BrindooFont.titleMedium)
                     
@@ -205,7 +207,47 @@ struct ReviewsListView: View {
         .frame(maxWidth: .infinity, alignment: .leading)
         .brindooSurfaceBackground()
     }
-    
+
+    /// Barre 5→1: come si distribuiscono i voti, non solo la media.
+    /// Una media di 4,0 fatta di 5 e di 1 racconta un'altra storia.
+    @ViewBuilder
+    private var distributionCard: some View {
+        if reviews.count >= 3 {
+            VStack(alignment: .leading, spacing: BrindooSpacing.xxs) {
+                ForEach([5, 4, 3, 2, 1], id: \.self) { stars in
+                    let count = reviews.count(where: { $0.rating == stars })
+                    HStack(spacing: BrindooSpacing.xs) {
+                        Text("\(stars)")
+                            .font(BrindooFont.caption.monospacedDigit())
+                            .foregroundStyle(Color.brindooTextSecondary)
+                            .frame(width: 12, alignment: .trailing)
+                        Image(systemName: "star.fill")
+                            .font(.system(size: 9))
+                            .foregroundStyle(Color.brindooWarning)
+                        GeometryReader { geo in
+                            ZStack(alignment: .leading) {
+                                Capsule().fill(Color.brindooBorder.opacity(0.5))
+                                Capsule()
+                                    .fill(Color.brindooWarning)
+                                    .frame(width: geo.size.width * CGFloat(count) / CGFloat(reviews.count))
+                            }
+                        }
+                        .frame(height: 6)
+                        Text("\(count)")
+                            .font(BrindooFont.caption.monospacedDigit())
+                            .foregroundStyle(Color.brindooTextTertiary)
+                            .frame(width: 24, alignment: .trailing)
+                    }
+                    .accessibilityElement(children: .ignore)
+                    .accessibilityLabel("\(count) recensioni da \(stars) stelle")
+                }
+            }
+            .padding(BrindooSpacing.md)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .brindooSurfaceBackground()
+        }
+    }
+
     // MARK: - Empty
     
     @ViewBuilder

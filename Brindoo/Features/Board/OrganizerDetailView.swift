@@ -248,7 +248,7 @@ struct OrganizerDetailView: View {
                     spacing: BrindooSpacing.xs
                 ) {
                     ForEach(portfolioItems.prefix(9)) { item in
-                        BrindooCachedImage(url: URL(string: item.imageUrl)) { image in
+                        BrindooCachedImage(url: URL(string: item.thumbnailUrl)) { image in
                             image.resizable().scaledToFill()
                         } placeholder: {
                             Color.brindooBorder
@@ -257,6 +257,15 @@ struct OrganizerDetailView: View {
                         .frame(maxWidth: .infinity)
                         .clipped()
                         .clipShape(RoundedRectangle(cornerRadius: BrindooRadius.sm))
+                        .overlay(alignment: .bottomLeading) {
+                            if item.isVideo {
+                                Image(systemName: "play.circle.fill")
+                                    .font(.system(size: 20))
+                                    .symbolRenderingMode(.palette)
+                                    .foregroundStyle(.white, .black.opacity(0.55))
+                                    .padding(4)
+                            }
+                        }
                     }
                 }
 
