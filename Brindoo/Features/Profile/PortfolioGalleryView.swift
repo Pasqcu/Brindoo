@@ -355,8 +355,10 @@ struct PortfolioGalleryView: View {
 
         await loadPortfolio()
 
-        if uploadedCount < total && !showLimitPaywall {
-            errorMessage = "Caricate \(uploadedCount) di \(total) foto. Alcune sono fallite."
+        // Il conteggio generico non deve coprire un motivo già spiegato
+        // (video troppo lungo, file troppo pesante).
+        if uploadedCount < total && !showLimitPaywall && errorMessage == nil {
+            errorMessage = "Caricati \(uploadedCount) elementi su \(total). Alcuni sono falliti."
         }
     }
     

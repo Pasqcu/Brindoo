@@ -69,7 +69,8 @@ struct PortfolioPagerView: View {
                             Button(role: .destructive) {
                                 itemToReport = current
                             } label: {
-                                Label("Segnala foto", systemImage: "exclamationmark.bubble")
+                                Label(current.isVideo ? "Segnala video" : "Segnala foto",
+                                      systemImage: "exclamationmark.bubble")
                             }
                         } label: {
                             Image(systemName: "ellipsis.circle.fill")
@@ -111,7 +112,7 @@ struct PortfolioPagerView: View {
             ReportSheet(
                 targetType: .portfolioItem,
                 targetId: item.id,
-                targetLabel: "questa foto"
+                targetLabel: item.isVideo ? "questo video" : "questa foto"
             )
         }
     }

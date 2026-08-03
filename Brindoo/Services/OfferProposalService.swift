@@ -270,7 +270,8 @@ final class OfferProposalService {
             eventDate: proposal.eventDate,
             offerTitle: offerTitleForReminder,
             offerId: proposal.offerId,
-            isClient: SupabaseManager.shared.currentUserID == proposal.clientId
+            isClient: SupabaseManager.shared.currentUserID == proposal.clientId,
+            depositDone: proposal.isDepositPaid || proposal.isDepositAwaitingConfirmation
         )
 
         // Crea/recupera la conversation tra cliente e organizzatore.
@@ -339,7 +340,8 @@ final class OfferProposalService {
             eventDate: newDate,
             offerTitle: offerTitle,
             offerId: proposal.offerId,
-            isClient: SupabaseManager.shared.currentUserID == proposal.clientId
+            isClient: SupabaseManager.shared.currentUserID == proposal.clientId,
+            depositDone: proposal.isDepositPaid || proposal.isDepositAwaitingConfirmation
         )
 
         // Nota automatica in chat per l'altra parte (best effort).

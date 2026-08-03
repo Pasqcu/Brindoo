@@ -23,7 +23,8 @@ enum LocalReminderService {
         eventDate: String?,
         offerTitle: String,
         offerId: UUID?,
-        isClient: Bool
+        isClient: Bool,
+        depositDone: Bool = false
     ) async {
         guard let eventDate, !eventDate.isEmpty else { return }
         // Rispetta la scelta fatta in Impostazioni.
@@ -40,8 +41,9 @@ enum LocalReminderService {
             userInfo = ["type": "new_proposal", "offer_id": offerId.uuidString]
         }
 
-        if isClient {
+        if isClient, !depositDone {
             // L'acconto lo versa il cliente: inutile ricordarlo all'altro lato.
+            // E se è già stato versato (es. cambio data), non si riesuma.
             await schedule(center, id: "event-deposit-\(proposalId.uuidString)",
                            day: day, daysOffset: -30,
                            title: "Un mese a \(offerTitle)",

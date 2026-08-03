@@ -130,6 +130,11 @@ struct AgreementPDFShareButton: View {
                     .frame(width: 44, height: 44)
                     .background(Color.brindooCoral.opacity(0.12))
                     .clipShape(RoundedRectangle(cornerRadius: BrindooRadius.md))
+            } else if isRendering {
+                ProgressView()
+                    .tint(Color.brindooCoral)
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, BrindooSpacing.sm)
             } else {
                 Label("Accordo in PDF", systemImage: "doc.richtext")
                     .font(BrindooFont.bodySmall.weight(.medium))

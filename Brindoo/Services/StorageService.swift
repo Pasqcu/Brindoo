@@ -120,7 +120,8 @@ final class StorageService {
     func uploadPortfolioVideo(fileURL: URL) async throws -> (url: String, path: String) {
         let path = try userPath("portfolio-\(UUID().uuidString.lowercased()).mp4").path
 
-        let data = try Data(contentsOf: fileURL)
+        // Fino a 80 MB da disco: la lettura sta fuori dal main actor.
+        let data = try await Self.fileData(fileURL)
         guard data.count <= Self.maxVideoBytes else {
             throw BrindooServiceError.invalidInput("Video troppo pesante: massimo 80 MB.")
         }
@@ -150,6 +151,10 @@ final class StorageService {
         let publicUrl = try storage.from(Bucket.portfolio).getPublicURL(path: path)
         BrindooLog.info("Video portfolio caricato")
         return (publicUrl.absoluteString, path)
+    }
+
+    nonisolated private static func fileData(_ url: URL) async throws -> Data {
+        try Data(contentsOf: url)
     }
 
     /// Fotogramma di copertina a mezzo secondo, fuori dal main actor.

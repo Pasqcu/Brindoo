@@ -38,6 +38,9 @@ struct ChatComposerView: View {
         .overlay(alignment: .top) {
             Rectangle().fill(Color.brindooBorder).frame(height: 0.5)
         }
+        // Se si esce dalla chat a metà registrazione, niente resti:
+        // né file orfani né sessione audio lasciata accesa.
+        .onDisappear { recorder.cancel() }
         .alert("Microfono non disponibile", isPresented: $micDenied) {
             Button("OK", role: .cancel) {}
         } message: {
@@ -75,11 +78,9 @@ struct ChatComposerView: View {
 
             Button {
                 BrindooHaptics.impact(.light)
+                // Sotto il secondo `stop()` butta da solo, senza drammi.
                 if let clip = recorder.stop() {
                     onSendVoice?(clip.url, clip.duration)
-                } else {
-                    // Troppo corto per dire qualcosa: si butta senza drammi.
-                    recorder.cancel()
                 }
             } label: {
                 Image(systemName: "arrow.up")

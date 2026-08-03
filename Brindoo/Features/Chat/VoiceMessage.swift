@@ -97,6 +97,8 @@ final class VoiceRecorder {
                     self.elapsed = rec.currentTime
                     rec.stop()
                     self.recorder = nil
+                    self.isRecording = false
+                    try? AVAudioSession.sharedInstance().setActive(false, options: .notifyOthersOnDeactivation)
                     return
                 }
             }
@@ -105,6 +107,8 @@ final class VoiceRecorder {
     }
 
     /// Ferma e restituisce file e durata; nil se troppo corto (< 1s).
+    /// Lo stato si azzera sempre: la barra di registrazione deve sparire
+    /// sia dopo l'invio sia dopo un tocco troppo corto per dire qualcosa.
     func stop() -> (url: URL, duration: TimeInterval)? {
         tick?.cancel()
         if let r = recorder {
@@ -114,8 +118,17 @@ final class VoiceRecorder {
         }
         isRecording = false
         try? AVAudioSession.sharedInstance().setActive(false, options: .notifyOthersOnDeactivation)
-        guard elapsed >= 1, let fileURL else { return nil }
-        return (fileURL, elapsed)
+
+        let url = fileURL
+        let duration = elapsed
+        fileURL = nil
+        elapsed = 0
+
+        guard duration >= 1, let url else {
+            if let url { try? FileManager.default.removeItem(at: url) }
+            return nil
+        }
+        return (url, duration)
     }
 
     /// Butta la registrazione e pulisce il file.
@@ -136,6 +149,9 @@ final class VoiceRecorder {
 @MainActor
 @Observable
 final class VoicePlayer {
+
+    /// Un vocale alla volta: premere play su una bolla mette in pausa l'altra.
+    private static weak var current: VoicePlayer?
 
     private var player: AVAudioPlayer?
     private var tick: Task<Void, Never>?
@@ -169,6 +185,9 @@ final class VoicePlayer {
                 return
             }
         }
+
+        if let other = Self.current, other !== self { other.pause() }
+        Self.current = self
 
         let session = AVAudioSession.sharedInstance()
         try? session.setCategory(.playback, mode: .spokenAudio)

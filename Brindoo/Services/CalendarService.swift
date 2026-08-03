@@ -67,12 +67,22 @@ enum CalendarService {
         let start = BrindooFormat.startOfDay()
         guard let end = cal.date(byAdding: .month, value: monthsAhead, to: start) else { return [] }
 
-        let predicate = store.predicateForEvents(withStart: start, end: end, calendars: nil)
+        // Fuori compleanni e calendari in abbonamento (feste comandate):
+        // per chi lavora agli eventi quelli sono giorni di lavoro, non impegni.
+        let calendars = store.calendars(for: .event).filter {
+            $0.type != .birthday && $0.type != .subscription
+        }
+        let predicate = store.predicateForEvents(withStart: start, end: end, calendars: calendars)
         var days: Set<Date> = []
         for event in store.events(matching: predicate) {
-            // Un impegno può coprire più giorni: si segnano tutti.
+            // Gli impegni segnati "disponibile" non bloccano la giornata.
+            guard event.availability != .free else { continue }
+            guard event.endDate > event.startDate else { continue }
+            // Un impegno può coprire più giorni: si segnano tutti. Il -1s
+            // evita che chi finisce a mezzanotte in punto occupi anche il
+            // giorno dopo.
             var day = cal.startOfDay(for: event.startDate)
-            let lastDay = cal.startOfDay(for: event.endDate)
+            let lastDay = cal.startOfDay(for: event.endDate.addingTimeInterval(-1))
             while day <= lastDay {
                 if day >= start { days.insert(day) }
                 guard let next = cal.date(byAdding: .day, value: 1, to: day) else { break }

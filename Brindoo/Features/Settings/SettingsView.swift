@@ -45,6 +45,9 @@ struct SettingsView: View {
         byAdding: .day, value: 7, to: BrindooFormat.startOfDay()
     ) ?? Date()
     @State private var vacationSaving: Bool = false
+    /// Copia osservabile dello stato icona: letta dal sistema all'apparire,
+    /// aggiornata al toggle. Il computed diretto non farebbe ridisegnare la riga.
+    @State private var goldIconActive: Bool = false
 
     private var isOrganizer: Bool {
         session.currentProfile?.role == .organizer
@@ -390,7 +393,10 @@ struct SettingsView: View {
             .background(Color.brindooBackground)
             .navigationTitle("Impostazioni")
             .navigationBarTitleDisplayMode(.large)
-            .task { await loadPreferences() }
+            .task {
+                goldIconActive = UIApplication.shared.alternateIconName == "AppIconPro"
+                await loadPreferences()
+            }
             .sheet(isPresented: $showPaywall) {
                 PaywallView()
             }
@@ -428,14 +434,12 @@ struct SettingsView: View {
         }
     }
 
-    private var goldIconActive: Bool {
-        UIApplication.shared.alternateIconName == "AppIconPro"
-    }
-
     private func toggleGoldIcon() {
         let target: String? = goldIconActive ? nil : "AppIconPro"
         Task {
             try? await UIApplication.shared.setAlternateIconName(target)
+            // Si rilegge dal sistema: se iOS ha rifiutato, la riga non mente.
+            goldIconActive = UIApplication.shared.alternateIconName == "AppIconPro"
             BrindooHaptics.notify(.success)
         }
     }
