@@ -45,6 +45,7 @@ struct BrindooConfettiView: View {
     }
 
     @State private var falling = false
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     var body: some View {
         GeometryReader { geo in
@@ -73,7 +74,9 @@ struct BrindooConfettiView: View {
         }
         .allowsHitTesting(false)
         .ignoresSafeArea()
-        .onAppear { falling = true }
+        // Con Riduci Movimento attivo i coriandoli restano fuori dallo schermo:
+        // sono pura decorazione, chi lo chiede non deve vederli volare.
+        .onAppear { if !reduceMotion { falling = true } }
         .accessibilityHidden(true)
     }
 }

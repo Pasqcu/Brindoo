@@ -489,6 +489,9 @@ struct SettingsView: View {
             }
         } catch {
             BrindooLog.error("\(error)")
+            // Il toggle non deve mentire: se il server non ha salvato,
+            // torna allo stato vero del profilo e lo scatto si vede.
+            vacationOn = session.currentProfile?.isOnVacation ?? !on
         }
     }
 }

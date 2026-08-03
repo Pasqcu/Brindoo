@@ -99,7 +99,7 @@ struct AvailabilityView: View {
             .foregroundStyle(Color.brindooSuccess)
 
             ForEach(booked, id: \.self) { day in
-                Text(day.formatted(.dateTime.day().month(.wide).year().locale(Locale(identifier: "it_IT"))))
+                Text(BrindooFormat.italianDate(from: day))
                     .font(BrindooFont.caption)
                     .foregroundStyle(Color.brindooTextSecondary)
             }

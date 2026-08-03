@@ -19,6 +19,7 @@ struct UpgradeCelebrationView: View {
     @State private var ringOpacity: Double = 0.6
     @State private var textOpacity: Double = 0
     @State private var textOffset: CGFloat = 16
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     var body: some View {
         ZStack {
@@ -83,18 +84,28 @@ struct UpgradeCelebrationView: View {
     private func runAnimation() {
         BrindooHaptics.notify(.success)
 
-        withAnimation(.spring(response: 0.55, dampingFraction: 0.55)) {
+        if reduceMotion {
+            // Stesso messaggio, senza scala né rotazione: stato finale diretto.
             iconScale = 1.0
             iconRotation = 0
             iconOpacity = 1
-        }
-        withAnimation(.easeOut(duration: 1.2)) {
-            ringScale = 1.8
             ringOpacity = 0
-        }
-        withAnimation(.easeOut(duration: 0.5).delay(0.35)) {
             textOpacity = 1
             textOffset = 0
+        } else {
+            withAnimation(.spring(response: 0.55, dampingFraction: 0.55)) {
+                iconScale = 1.0
+                iconRotation = 0
+                iconOpacity = 1
+            }
+            withAnimation(.easeOut(duration: 1.2)) {
+                ringScale = 1.8
+                ringOpacity = 0
+            }
+            withAnimation(.easeOut(duration: 0.5).delay(0.35)) {
+                textOpacity = 1
+                textOffset = 0
+            }
         }
 
         // Auto-dismiss dopo 1.8s
