@@ -37,7 +37,7 @@ struct EditFAQsView: View {
                         )
                     }
 
-                    ForEach(Array(faqs.enumerated()), id: \.offset) { index, faq in
+                    ForEach(Array(faqs.enumerated()), id: \.element.id) { index, faq in
                         faqCard(faq, index: index)
                     }
 

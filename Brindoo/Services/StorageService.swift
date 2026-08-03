@@ -38,13 +38,17 @@ final class StorageService {
 
     /// Comprime un'immagine UIImage in JPEG di qualità decente per upload.
     /// Ridimensiona a max 1600px lato lungo per limitare i kB.
-    private func compressImage(_ image: UIImage, quality: CGFloat = 0.7) -> Data? {
+    ///
+    /// `nonisolated async`: ridisegno e JPEG di una foto da fotocamera costano
+    /// centinaia di ms — sul main actor bloccherebbero l'interfaccia a ogni upload.
+    /// Non privato: lo usa anche la chat per le foto dei messaggi.
+    nonisolated func compressImage(_ image: UIImage, quality: CGFloat = 0.7) async -> Data? {
         let maxDimension: CGFloat = 1600
         let resized = resizeImage(image, maxDimension: maxDimension)
         return resized.jpegData(compressionQuality: quality)
     }
 
-    private func resizeImage(_ image: UIImage, maxDimension: CGFloat) -> UIImage {
+    nonisolated private func resizeImage(_ image: UIImage, maxDimension: CGFloat) -> UIImage {
         let size = image.size
         let largest = max(size.width, size.height)
         guard largest > maxDimension else { return image }
@@ -82,7 +86,7 @@ final class StorageService {
     ) async throws -> (url: String, path: String) {
         let path = try userPath(filename).path
 
-        guard let data = compressImage(image, quality: quality) else {
+        guard let data = await compressImage(image, quality: quality) else {
             throw BrindooServiceError.invalidImage
         }
 

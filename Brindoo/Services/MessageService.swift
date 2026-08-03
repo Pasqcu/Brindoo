@@ -167,7 +167,9 @@ final class MessageService {
     }
     
     private func uploadChatImage(image: UIImage, senderId: UUID) async throws -> String {
-        guard let data = image.jpegData(compressionQuality: 0.7) else {
+        // Stessa compressione degli altri upload (max 1600px, fuori dal main
+        // actor): prima la foto partiva intera e il JPEG si faceva sul main.
+        guard let data = await StorageService.shared.compressImage(image, quality: 0.7) else {
             throw BrindooServiceError.invalidImage
         }
         

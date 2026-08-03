@@ -41,10 +41,20 @@ enum PushActionHandler {
               let conversationID = UUID(uuidString: conversationIDString) else { return }
         let text = textResponse.userText.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !text.isEmpty else { return }
-        _ = try? await MessageService.shared.sendMessage(
-            conversationId: conversationID,
-            content: text
-        )
+        do {
+            _ = try await MessageService.shared.sendMessage(
+                conversationId: conversationID,
+                content: text
+            )
+        } catch {
+            // Stessa rete di sicurezza della chat: la risposta scritta dalla
+            // notifica non si perde, riparte alla prossima apertura dell'app.
+            await OfflineOutboxService.shared.enqueueMessage(
+                conversationId: conversationID,
+                text: text,
+                repliedToId: nil
+            )
+        }
     }
 
     private static func handleMarkRead(userInfo: [AnyHashable: Any]) async {

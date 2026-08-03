@@ -96,6 +96,14 @@ final class SessionStore {
                 case .signedOut:
                     self.clearUser()
                     self.authState = .signedOut
+                    // Igiene del dispositivo condiviso: snapshot bacheca, bozze
+                    // chat e coda offline non devono passare all'account dopo.
+                    // Solo qui, non a ogni avvio senza sessione: una sessione
+                    // scaduta non è un logout.
+                    Task {
+                        await OfflineOutboxService.shared.clearAll()
+                        await LocalCacheStore.shared.clearAll()
+                    }
 
                 case .initialSession:
                     // Con `emitLocalSessionAsInitialSession: true` la sessione locale

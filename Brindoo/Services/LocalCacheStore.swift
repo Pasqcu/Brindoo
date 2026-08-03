@@ -53,6 +53,9 @@ actor LocalCacheStore {
 
     func clearAll() {
         try? FileManager.default.removeItem(at: root)
+        // `root` è lazy e ormai valutata: senza ricrearla qui, ogni save
+        // successivo fallirebbe in silenzio fino al riavvio dell'app.
+        try? FileManager.default.createDirectory(at: root, withIntermediateDirectories: true)
     }
 }
 

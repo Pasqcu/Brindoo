@@ -144,6 +144,14 @@ final class OfflineOutboxService {
         await persist()
     }
 
+    /// Svuota coda e copia su disco: la coda appartiene all'account che
+    /// l'ha scritta e non deve sopravvivere a un logout.
+    func clearAll() async {
+        pending.removeAll()
+        loaded = true
+        await persist()
+    }
+
     // MARK: - Svuotamento
 
     /// Riprova a inviare tutto quello che è in coda. Sicuro da chiamare

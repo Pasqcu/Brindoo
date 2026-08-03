@@ -126,11 +126,13 @@ struct GdprRightsView: View {
             let export = Export(
                 generatedAt: Date(),
                 profile: session.currentProfile,
-                myOffers: (try? await ServiceOfferService.shared.fetchMyOffers()) ?? [],
-                myRequests: (try? await ClientRequestService.shared.fetchMyRequests()) ?? [],
-                myProposals: (try? await OfferProposalService.shared.fetchMyOngoingProposals()) ?? [],
+                // Niente `try?`: un fetch fallito produrrebbe un archivio che
+                // sembra completo ma ha sezioni vuote. Meglio l'errore e "Riprova".
+                myOffers: try await ServiceOfferService.shared.fetchMyOffers(),
+                myRequests: try await ClientRequestService.shared.fetchMyRequests(),
+                myProposals: try await OfferProposalService.shared.fetchMyOngoingProposals(),
                 reviewsReceived: isOrganizer
-                    ? ((try? await ReviewService.shared.fetchReviews(organizerId: session.userID ?? UUID())) ?? [])
+                    ? try await ReviewService.shared.fetchReviews(organizerId: session.userID ?? UUID())
                     : []
             )
 
