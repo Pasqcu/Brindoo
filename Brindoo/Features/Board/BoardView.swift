@@ -471,6 +471,12 @@ struct BoardView: View {
         }
         await vm.loadInitial()
 
+        // La bacheca ha i suoi dati: la schermata di avvio può togliersi.
+        // L'anteprima cliente non c'entra, arriva molto dopo l'avvio.
+        if !clientPreview {
+            AppLaunchGate.shared.markFirstScreenReady()
+        }
+
         // Primo passo guidato per il cliente (una sola volta).
         if isClient && !clientPreview && !welcomeSeen && !vm.categories.isEmpty {
             showWelcome = true

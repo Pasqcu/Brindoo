@@ -74,7 +74,7 @@ final class SessionStore {
             BrindooLog.info("Sessione attiva trovata per: \(session.user.email ?? "nessuna email")")
         } catch {
             self.clearUser()
-            self.authState = .signedOut
+            self.setAuthState(.signedOut)
             BrindooLog.info("Nessuna sessione attiva")
         }
     }
@@ -95,7 +95,7 @@ final class SessionStore {
 
                 case .signedOut:
                     self.clearUser()
-                    self.authState = .signedOut
+                    self.setAuthState(.signedOut)
                     // Igiene del dispositivo condiviso: snapshot bacheca, bozze
                     // chat e coda offline non devono passare all'account dopo.
                     // Solo qui, non a ogni avvio senza sessione: una sessione
@@ -113,7 +113,7 @@ final class SessionStore {
                         self.applyUser(session.user)
                         await self.loadProfileAndUpdateState()
                     } else if session == nil {
-                        self.authState = .signedOut
+                        self.setAuthState(.signedOut)
                     }
 
                 default:
@@ -127,7 +127,13 @@ final class SessionStore {
 
     /// Carica il profilo da Supabase e aggiorna lo stato dell'app
     private func loadProfileAndUpdateState() async {
-        self.authState = .loading
+        // Torniamo a "loading" solo se non abbiamo ancora un profilo: all'avvio
+        // questa funzione viene chiamata due volte (controllo sessione + evento
+        // `initialSession`), e il token si rinnova anche ad app aperta. Senza
+        // questa guardia l'interfaccia viene smontata e ricostruita ogni volta.
+        if currentProfile == nil {
+            self.setAuthState(.loading)
+        }
 
         do {
             var profile = try await ProfileService.shared.fetchCurrentProfile()
@@ -141,14 +147,18 @@ final class SessionStore {
             self.currentProfile = profile
 
             if let profile, profile.isComplete {
-                self.authState = .signedIn
+                self.setAuthState(.signedIn)
             } else {
-                self.authState = .profileSetup
+                self.setAuthState(.profileSetup)
             }
 
         } catch {
             BrindooLog.error("Errore caricamento profilo: \(error.localizedDescription)")
-            self.authState = .profileSetup
+            // Con un profilo già valido in mano, un errore di rete non deve
+            // sbattere l'utente nel setup: teniamo quello che abbiamo.
+            if currentProfile?.isComplete != true {
+                self.setAuthState(.profileSetup)
+            }
         }
     }
 
@@ -161,13 +171,22 @@ final class SessionStore {
     func updateLocalProfile(_ profile: Profile) {
         self.currentProfile = profile
         if profile.isComplete {
-            self.authState = .signedIn
+            self.setAuthState(.signedIn)
         } else {
-            self.authState = .profileSetup
+            self.setAuthState(.profileSetup)
         }
     }
 
     // MARK: - Helpers privati
+
+    /// Unico punto in cui cambia lo stato di autenticazione. Passa da qui anche
+    /// per lasciare una traccia nei log: i ritorni a `.loading` a sessione già
+    /// risolta hanno già fatto sparire l'interfaccia una volta.
+    private func setAuthState(_ new: AuthState) {
+        guard new != authState else { return }
+        BrindooLog.info("authState: \(authState) → \(new)")
+        authState = new
+    }
 
     private func applyUser(_ user: User) {
         self.currentUser = user
