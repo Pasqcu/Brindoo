@@ -13,13 +13,20 @@ struct AvatarView: View {
     let url: String?
     let name: String?
     let size: CGFloat
-    
-    init(url: String?, name: String?, size: CGFloat = 56) {
+    /// Anello disegnato attorno al cerchio: serve a staccare l'avatar
+    /// dallo sfondo quando sborda su una card.
+    let ringWidth: CGFloat
+    let ringColor: Color
+
+    init(url: String?, name: String?, size: CGFloat = 56,
+         ringWidth: CGFloat = 0, ringColor: Color = .clear) {
         self.url = url
         self.name = name
         self.size = size
+        self.ringWidth = ringWidth
+        self.ringColor = ringColor
     }
-    
+
     var body: some View {
         Group {
             if let urlString = url, !urlString.isEmpty, let validUrl = URL(string: urlString) {
@@ -44,6 +51,8 @@ struct AvatarView: View {
         }
         .frame(width: size, height: size)
         .clipShape(Circle())
+        .padding(ringWidth)
+        .background(ringColor, in: Circle())
     }
     
     @ViewBuilder
@@ -64,7 +73,7 @@ struct AvatarView: View {
                 .fill(BrindooGradient.coral)
             
             Text(initials)
-                .font(.system(size: size * 0.36, weight: .bold, design: .rounded))
+                .font(.system(size: size * 0.40, weight: .bold, design: .rounded))
                 .foregroundStyle(.white)
         }
     }

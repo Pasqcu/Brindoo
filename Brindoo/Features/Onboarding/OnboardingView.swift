@@ -10,8 +10,6 @@ import SwiftUI
 
 struct OnboardingView: View {
 
-    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
-
     @State private var currentSlide: Int = 0
     @State private var navigateToLogin: Bool = false
     @State private var navigateToSignUp: Bool = false
@@ -56,31 +54,33 @@ struct OnboardingView: View {
                 Color.brindooBackground.ignoresSafeArea()
                 
                 VStack {
-                    // Skip button in alto a destra (tranne ultima slide)
+                    // "Salta" resta sempre montato: farlo sparire dalla
+                    // gerarchia sull'ultima slide faceva scattare il layout
+                    // proprio mentre lo swipe stava finendo.
                     HStack {
                         Spacer()
-                        if currentSlide < slides.count - 1 {
-                            Button("Salta") {
-                                withAnimation {
-                                    currentSlide = slides.count - 1
-                                }
+                        Button("Salta") {
+                            withAnimation(BrindooAnimation.standardEase) {
+                                currentSlide = slides.count - 1
                             }
-                            .font(BrindooFont.bodyMedium.weight(.medium))
-                            .foregroundStyle(Color.brindooTextSecondary)
-                            .padding()
-                        } else {
-                            // Placeholder per mantenere altezza
-                            Text(" ")
-                                .padding()
                         }
+                        .font(BrindooFont.bodyMedium.weight(.medium))
+                        .foregroundStyle(Color.brindooTextSecondary)
+                        .padding()
+                        .opacity(isLastSlide ? 0 : 1)
+                        .allowsHitTesting(!isLastSlide)
+                        .animation(BrindooAnimation.standardEase, value: isLastSlide)
                     }
-                    
+
                     // TabView con le slide (occupa lo spazio verticale disponibile;
                     // il contenuto interno di ogni slide è centrato/scorrevole).
                     TabView(selection: $currentSlide) {
                         ForEach(slides.indices, id: \.self) { index in
-                            slideView(slides[index])
-                                .tag(index)
+                            OnboardingSlideView(
+                                slide: slides[index],
+                                showsSwipeHint: index == 0
+                            )
+                            .tag(index)
                         }
                     }
                     .tabViewStyle(.page(indexDisplayMode: .never))
@@ -110,7 +110,8 @@ struct OnboardingView: View {
                         // Mantiene comunque spazio per non far saltare il layout.
                         consentCheckbox
                             .opacity(isLastSlide ? 1 : 0)
-                            .animation(BrindooAnimation.quickEase, value: isLastSlide)
+                            .allowsHitTesting(isLastSlide)
+                            .animation(BrindooAnimation.standardEase, value: isLastSlide)
 
                         BrindooButton(
                             isLastSlide ? "Inizia ora" : "Continua",
@@ -145,7 +146,8 @@ struct OnboardingView: View {
                             .opacity(acceptedTermsAndAge ? 1 : 0.4)
                         }
                         .opacity(isLastSlide ? 1 : 0)
-                        .animation(BrindooAnimation.quickEase, value: isLastSlide)
+                        .allowsHitTesting(isLastSlide)
+                        .animation(BrindooAnimation.standardEase, value: isLastSlide)
                     }
                     .padding(.horizontal, BrindooSpacing.lg)
                     .padding(.bottom, BrindooSpacing.xl)
@@ -221,36 +223,45 @@ struct OnboardingView: View {
         .clipShape(RoundedRectangle(cornerRadius: BrindooRadius.md))
     }
 
-    // MARK: - Slide
-    
-    @ViewBuilder
-    private func slideView(_ slide: OnboardingSlide) -> some View {
-        // A dimensioni di testo Accessibilità il contenuto può eccedere l'altezza:
-        // lo racchiudiamo in una ScrollView che lo centra quando entra e lo rende
-        // scorrevole (senza troncare titolo/icona) quando è troppo alto.
-        GeometryReader { geo in
-            ScrollView(.vertical, showsIndicators: false) {
-                VStack(spacing: BrindooSpacing.xl) {
+}
+
+// MARK: - Slide
+
+// Vista a sé: così ogni pagina dipende solo dai suoi dati e cambiare
+// slide non costringe SwiftUI a ricostruire anche le altre due.
+private struct OnboardingSlideView: View {
+
+    let slide: OnboardingSlide
+    let showsSwipeHint: Bool
+
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
+    @State private var swipeHintOffset: CGFloat = 0
+
+    var body: some View {
+        // A dimensioni di testo Accessibilità il contenuto può eccedere
+        // l'altezza: solo in quel caso serve la ScrollView. Alle taglie
+        // normali resta un semplice VStack centrato, senza GeometryReader
+        // che rimisuri a ogni frame dello swipe.
+        if dynamicTypeSize.isAccessibilitySize {
+            GeometryReader { geo in
+                ScrollView(.vertical, showsIndicators: false) {
+                    content
+                        .frame(maxWidth: .infinity, minHeight: geo.size.height)
+                }
+            }
+        } else {
+            content
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+        }
+    }
+
+    private var content: some View {
+        VStack(spacing: BrindooSpacing.xl) {
             Spacer(minLength: 0)
 
-            // Icona grande con cerchio corallo sfumato. A dimensioni di testo
-            // Accessibilità la rimpiccioliamo per lasciare spazio a titolo e
-            // descrizione (che invece crescono col Dynamic Type).
-            let iconScale: CGFloat = dynamicTypeSize.isAccessibilitySize ? 0.6 : 1.0
-            ZStack {
-                Circle()
-                    .fill(Color.brindooCoral.opacity(0.10))
-                    .frame(width: 200 * iconScale, height: 200 * iconScale)
-
-                Circle()
-                    .fill(BrindooGradient.coral)
-                    .frame(width: 150 * iconScale, height: 150 * iconScale)
-                    .shadow(color: Color.brindooCoral.opacity(0.35), radius: 18, x: 0, y: 10)
-
-                Image(systemName: slide.icon)
-                    .font(.system(size: 70 * iconScale, weight: .semibold))
-                    .foregroundStyle(.white)
-            }
+            icon
 
             VStack(spacing: BrindooSpacing.md) {
                 Text(slide.title)
@@ -265,21 +276,39 @@ struct OnboardingView: View {
                     .padding(.horizontal, BrindooSpacing.xl)
             }
 
-            // Hint swipe solo sulla prima slide
-            if currentSlide == 0 && slide.icon == slides[0].icon {
-                swipeHint
-            }
+            // Hint swipe solo sulla prima slide. Resta sempre montato
+            // (opacità a zero altrove) per non alterare l'altezza.
+            swipeHint
+                .opacity(showsSwipeHint ? 1 : 0)
 
             Spacer(minLength: 0)
-                }
-                .frame(maxWidth: .infinity, minHeight: geo.size.height)
-            }
         }
     }
 
-    @State private var swipeHintOffset: CGFloat = 0
+    /// Icona grande con cerchio corallo sfumato. A dimensioni di testo
+    /// Accessibilità la rimpiccioliamo per lasciare spazio a titolo e
+    /// descrizione (che invece crescono col Dynamic Type).
+    private var icon: some View {
+        let iconScale: CGFloat = dynamicTypeSize.isAccessibilitySize ? 0.6 : 1.0
+        return ZStack {
+            Circle()
+                .fill(Color.brindooCoral.opacity(0.10))
+                .frame(width: 200 * iconScale, height: 200 * iconScale)
 
-    @ViewBuilder
+            Circle()
+                .fill(BrindooGradient.coral)
+                .frame(width: 150 * iconScale, height: 150 * iconScale)
+                .shadow(color: Color.brindooCoral.opacity(0.35), radius: 18, x: 0, y: 10)
+
+            Image(systemName: slide.icon)
+                .font(.system(size: 70 * iconScale, weight: .semibold))
+                .foregroundStyle(.white)
+        }
+        // L'ombra sfumata verrebbe ricalcolata a ogni frame dello swipe:
+        // rasterizzata una volta, la transizione resta fluida.
+        .drawingGroup()
+    }
+
     private var swipeHint: some View {
         HStack(spacing: BrindooSpacing.xxs) {
             Text("Scorri")
@@ -293,13 +322,12 @@ struct OnboardingView: View {
         .foregroundStyle(Color.brindooCoral)
         .offset(x: swipeHintOffset)
         .onAppear {
+            guard showsSwipeHint, !reduceMotion else { return }
             withAnimation(.easeInOut(duration: 1.0).repeatForever(autoreverses: true)) {
                 swipeHintOffset = 12
             }
         }
-        .onDisappear { swipeHintOffset = 0 }
     }
-    
 }
 
 // MARK: - Modello Slide

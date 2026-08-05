@@ -33,6 +33,9 @@ struct OrganizerWithOffersCard: View {
     var rating: OrganizerRating? = nil
 
     private let previewCount = 2
+    private let coverHeight: CGFloat = 104
+    private let avatarSize: CGFloat = 52
+    private let avatarRing: CGFloat = 4
 
     private var coverImageUrl: String? {
         offers.first(where: { ($0.imageUrl?.isEmpty == false) })?.imageUrl
@@ -51,9 +54,11 @@ struct OrganizerWithOffersCard: View {
     private var accent: Color { categories.first?.tint ?? .brindooCoral }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: BrindooSpacing.sm) {
+        VStack(alignment: .leading, spacing: BrindooSpacing.xs) {
+            // Senza copertina niente fascia: la card parte dal nome, che
+            // rientra per lasciare passare l'avatar sull'angolo.
             if let cover = coverImageUrl, let url = URL(string: cover) {
-                ZStack(alignment: .bottomLeading) {
+                ZStack(alignment: .bottomTrailing) {
                     BrindooCachedImage(url: url) { phase in
                         switch phase {
                         case .success(let image): image.resizable().scaledToFill()
@@ -62,7 +67,7 @@ struct OrganizerWithOffersCard: View {
                         }
                     }
                     .frame(maxWidth: .infinity)
-                    .frame(height: 150)
+                    .frame(height: coverHeight)
                     .clipped()
 
                     BrindooGradient.glassOverlay
@@ -76,13 +81,11 @@ struct OrganizerWithOffersCard: View {
                             .brindooOverlayPill()
                     }
                 }
-                .frame(height: 150)
+                .frame(height: coverHeight)
                 .clipShape(RoundedRectangle(cornerRadius: BrindooRadius.sm))
             }
 
             HStack(spacing: BrindooSpacing.sm) {
-                AvatarView(url: organizer.avatarUrl, name: organizer.fullName, size: 56)
-
                 VStack(alignment: .leading, spacing: 2) {
                     HStack(spacing: 4) {
                         Text(organizer.displayName)
@@ -128,10 +131,21 @@ struct OrganizerWithOffersCard: View {
 
                 Spacer()
 
+                // Senza copertina il pill "da …€" non ha dove stare:
+                // il prezzo minimo torna in riga, accanto alla freccia.
+                if coverImageUrl == nil, let price = minPriceDisplay {
+                    Text("da \(price)")
+                        .font(BrindooFont.bodySmall.weight(.semibold))
+                        .foregroundStyle(Color.brindooCoral)
+                }
+
                 Image(systemName: BrindooIcon.forward)
                     .font(.system(size: 13, weight: .semibold))
                     .foregroundStyle(Color.brindooTextSecondary)
             }
+            // Il cerchio arriva a 48pt dal bordo card: la prima riga si
+            // scosta solo quando non c'è copertina sotto cui passare.
+            .padding(.leading, coverImageUrl == nil ? 40 : 0)
 
             if !categories.isEmpty {
                 ScrollView(.horizontal, showsIndicators: false) {
@@ -144,8 +158,8 @@ struct OrganizerWithOffersCard: View {
                                     .font(BrindooFont.scaled(11, weight: .medium, relativeTo: .caption1))
                             }
                             .foregroundStyle(cat.tint)
-                            .padding(.horizontal, 8)
-                            .padding(.vertical, 3)
+                            .padding(.horizontal, 7)
+                            .padding(.vertical, 2)
                             .background(cat.tint.opacity(0.12))
                             .clipShape(Capsule())
                         }
@@ -176,13 +190,24 @@ struct OrganizerWithOffersCard: View {
                 }
             }
         }
-        .padding(BrindooSpacing.md)
+        .padding(BrindooSpacing.sm)
         .brindooSurfaceBackground(radius: BrindooRadius.lg)
         .overlay(
             RoundedRectangle(cornerRadius: BrindooRadius.lg)
                 .strokeBorder(organizer.isBoosted ? accent.opacity(0.5) : Color.brindooBorder,
                               lineWidth: organizer.isBoosted ? 1.5 : 1)
         )
+        // L'avatar sborda sull'angolo: l'anello del colore di sfondo lo
+        // stacca dalla card senza bucarla davvero.
+        .overlay(alignment: .topLeading) {
+            AvatarView(url: organizer.avatarUrl,
+                       name: organizer.fullName,
+                       size: avatarSize,
+                       ringWidth: avatarRing,
+                       ringColor: .brindooBackground)
+                .offset(x: -8, y: -16)
+                .allowsHitTesting(false)
+        }
         // Chi è in vetrina "sta sopra": ombra più marcata.
         .brindooElevation(organizer.isBoosted ? .raised : .card)
     }
@@ -193,7 +218,7 @@ struct OrganizerWithOffersCard: View {
             Image(systemName: BrindooIcon.tag)
                 .font(.system(size: 12))
                 .foregroundStyle(Color.brindooCoral)
-                .frame(width: 24, height: 24)
+                .frame(width: 20, height: 20)
                 .background(Color.brindooCoral.opacity(0.1))
                 .clipShape(Circle())
 
@@ -250,7 +275,7 @@ struct FeaturedOrganizerCard: View {
                 }
                 .brindooOverlayPill()
             }
-            .frame(width: 240, height: 130)
+            .frame(width: 200, height: 104)
             .clipped()
 
             VStack(alignment: .leading, spacing: 2) {
@@ -278,9 +303,9 @@ struct FeaturedOrganizerCard: View {
                     }
                 }
             }
-            .padding(BrindooSpacing.sm)
+            .padding(BrindooSpacing.xs)
         }
-        .frame(width: 240)
+        .frame(width: 200)
         .brindooSurfaceBackground(radius: BrindooRadius.lg)
         .overlay(
             RoundedRectangle(cornerRadius: BrindooRadius.lg)

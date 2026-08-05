@@ -318,7 +318,9 @@ struct BoardView: View {
             }
         } else {
             ScrollView {
-                LazyVStack(spacing: BrindooSpacing.md) {
+                // Spaziatura ampia: l'avatar delle card sborda di 16pt in
+                // alto e non deve toccare la card precedente.
+                LazyVStack(spacing: BrindooSpacing.xl) {
                     // Sonda invisibile: dice quanto si è scorso, così la
                     // barra filtri può ridursi e liberare schermo.
                     Color.clear
@@ -371,6 +373,8 @@ struct BoardView: View {
                     BoardInviteCard()
                 }
                 .padding(.horizontal, BrindooSpacing.md)
+                // Aria in cima: l'avatar della prima card sborda verso l'alto.
+                .padding(.top, BrindooSpacing.md)
                 .padding(.bottom, BrindooSpacing.lg)
                 .brindooReadableWidth()
             }
