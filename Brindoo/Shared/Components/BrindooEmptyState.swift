@@ -42,6 +42,9 @@ struct BrindooEmptyState: View {
                     .font(.system(size: 34, weight: .semibold))
                     .foregroundStyle(Color.brindooCoral)
             }
+            // Riquadro fisso: i coriandoli escono dal cerchio con degli offset,
+            // che non occupano spazio, quindi la stanza gliela diamo qui.
+            .frame(width: 132, height: 124)
             .accessibilityHidden(true)
             VStack(spacing: BrindooSpacing.xxs) {
                 Text(title)
@@ -61,6 +64,9 @@ struct BrindooEmptyState: View {
                     .padding(.horizontal, BrindooSpacing.xxl)
             }
         }
+        // Prende tutto lo spazio disponibile e si mette in mezzo: prima erano
+        // i coriandoli a dilatarsi, e il testo finiva spinto verso il basso.
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 
     /// Coriandoli e stelline fissi, sparsi attorno al cerchio dell'icona.
@@ -92,8 +98,6 @@ struct BrindooEmptyState: View {
                 .foregroundStyle(Color.brindooCoral.opacity(0.6))
                 .offset(x: 34, y: 52)
         }
-        .padding(BrindooSpacing.xl)
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 }
 
