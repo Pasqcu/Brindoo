@@ -124,6 +124,22 @@ nonisolated enum BrindooLayout {
     /// Sotto questa misura il dito sbaglia bersaglio, e chi ha meno precisione
     /// nel movimento non ci arriva proprio.
     static let minimumTapTarget: CGFloat = 44
+
+    /// Altezza dei bottoni social (Apple, Google): identica per tutti e due.
+    static let socialButtonHeight: CGFloat = 50
+
+    /// Corpo del testo dentro i bottoni social.
+    ///
+    /// Il bottone Apple è nativo: il suo titolo non si può impostare e non
+    /// espone nessuna etichetta da interrogare. La misura qui sotto viene dai
+    /// pixel del bottone renderizzato — alto 50, i glifi occupano 17 punti, che
+    /// corrisponde a un corpo di 18 (36% dell'altezza, non il 43% che gira in
+    /// giro). Gli altri bottoni social usano questo valore, così le scritte
+    /// hanno la stessa dimensione.
+    ///
+    /// Dimensione fissa di proposito: il titolo di Apple non segue Dynamic Type,
+    /// e due scritte affiancate che crescono in modo diverso stonano.
+    static let socialButtonTitleSize: CGFloat = (socialButtonHeight * 0.36).rounded()
 }
 
 // MARK: - Raggi

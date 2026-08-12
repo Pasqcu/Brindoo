@@ -2,8 +2,11 @@
 //  GoogleSignInButton.swift
 //  Brindoo
 //
-//  Bottone "Continua con Google". Aderisce alle linee guida di Google:
-//  fondo bianco, bordo grigio, testo scuro, logo a sinistra.
+//  Bottone "Continua con Google". Ricalca il bottone Apple nativo, che è
+//  l'unico dei due a non essere personalizzabile: pieno scuro col tema chiaro,
+//  pieno chiaro col tema scuro, stessa altezza, stesso raggio, stesso corpo del
+//  testo. Google ammette entrambe le varianti (chiara e scura) purché il logo
+//  resti il suo e il testo dica "Continua con Google".
 //
 //  Il logo ufficiale va messo negli Asset con nome "GoogleLogo" (Google lo
 //  distribuisce nel suo kit di branding, non è ridisegnabile a mano). Se
@@ -25,6 +28,19 @@ struct GoogleSignInButton: View {
         UIImage(named: "GoogleLogo") != nil
     }
 
+    @Environment(\.colorScheme) private var colorScheme
+
+    /// Il bottone Apple nativo è pieno nero col tema chiaro e pieno bianco con
+    /// quello scuro: qui si copiano quei due fondi, senza bordo, così affiancati
+    /// non si distingue quale sia quello di sistema.
+    private var background: Color {
+        colorScheme == .dark ? .white : .black
+    }
+
+    private var foreground: Color {
+        colorScheme == .dark ? .black : .white
+    }
+
     var body: some View {
         Button {
             Task { await signIn() }
@@ -32,22 +48,18 @@ struct GoogleSignInButton: View {
             HStack(spacing: BrindooSpacing.sm) {
                 if isLoading {
                     ProgressView()
-                        .tint(.black)
+                        .tint(foreground)
                 } else {
                     logo
                     Text("Continua con Google")
-                        .font(BrindooFont.button)
-                        .foregroundStyle(Color(white: 0.15))
+                        .font(.system(size: BrindooLayout.socialButtonTitleSize, weight: .medium))
+                        .foregroundStyle(foreground)
                 }
             }
             .frame(maxWidth: .infinity)
-            .frame(height: 56)
-            .background(Color.white)
+            .frame(height: BrindooLayout.socialButtonHeight)
+            .background(background)
             .clipShape(RoundedRectangle(cornerRadius: BrindooRadius.md))
-            .overlay(
-                RoundedRectangle(cornerRadius: BrindooRadius.md)
-                    .strokeBorder(Color(white: 0.85), lineWidth: 1)
-            )
         }
         .buttonStyle(.plain)
         .disabled(isLoading)
@@ -61,12 +73,15 @@ struct GoogleSignInButton: View {
             Image("GoogleLogo")
                 .resizable()
                 .scaledToFit()
-                .frame(width: 20, height: 20)
+                .frame(
+                    width: BrindooLayout.socialButtonTitleSize,
+                    height: BrindooLayout.socialButtonTitleSize
+                )
         } else {
             // Segnaposto neutro: nessuna imitazione del marchio.
             Image(systemName: "person.crop.circle")
-                .font(.system(size: 19, weight: .medium))
-                .foregroundStyle(Color(white: 0.35))
+                .font(.system(size: BrindooLayout.socialButtonTitleSize - 2, weight: .medium))
+                .foregroundStyle(foreground.opacity(0.8))
         }
     }
 

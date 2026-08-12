@@ -11,20 +11,25 @@ import AuthenticationServices
 
 /// Stile del bottone Apple
 enum BrindooAppleButtonStyle {
+    /// Segue il tema: pieno scuro col tema chiaro, pieno chiaro col tema scuro.
+    /// È lo stile che tiene il bottone Apple e quello Google identici.
+    case automatic
     case black
     case white
     case whiteOutline
-    
-    fileprivate var apple: SignInWithAppleButton.Style {
+
+    fileprivate func apple(for scheme: ColorScheme) -> SignInWithAppleButton.Style {
         switch self {
+        case .automatic: return scheme == .dark ? .white : .black
         case .black: return .black
         case .white: return .white
         case .whiteOutline: return .whiteOutline
         }
     }
-    
-    fileprivate var progressTint: Color {
+
+    fileprivate func progressTint(for scheme: ColorScheme) -> Color {
         switch self {
+        case .automatic: return scheme == .dark ? .black : .white
         case .black: return .white
         case .white, .whiteOutline: return .black
         }
@@ -35,11 +40,11 @@ struct AppleSignInButton: View {
     
     var onSuccess: () -> Void = {}
     var onError: (BrindooAuthError) -> Void = { _ in }
-    var style: BrindooAppleButtonStyle = .black
+    var style: BrindooAppleButtonStyle = .automatic
     
     @State private var currentNonce: String?
     @State private var isLoading: Bool = false
-    @State private var pulseScale: CGFloat = 1.0
+    @Environment(\.colorScheme) private var colorScheme
     
     var body: some View {
         ZStack {
@@ -56,35 +61,19 @@ struct AppleSignInButton: View {
                     Task { await handleResult(result) }
                 }
             )
-            .signInWithAppleButtonStyle(style.apple)
-            .frame(height: 56)
+            .signInWithAppleButtonStyle(style.apple(for: colorScheme))
+            // Il bottone di sistema legge lo stile solo quando nasce: al cambio
+            // di tema non si ridipinge da solo e resterebbe bianco su chiaro
+            // (o nero su scuro), cioè invisibile. L'id lo fa ricreare.
+            .id(colorScheme)
+            .frame(height: BrindooLayout.socialButtonHeight)
             .clipShape(RoundedRectangle(cornerRadius: BrindooRadius.md))
-            // Bordo corallo lampeggiante per attirare l'attenzione
-            .overlay(
-                RoundedRectangle(cornerRadius: BrindooRadius.md)
-                    .strokeBorder(
-                        LinearGradient(
-                            colors: [Color.brindooCoral, Color.brindooCoralDark, Color.brindooCoral],
-                            startPoint: .leading,
-                            endPoint: .trailing
-                        ),
-                        lineWidth: 2.5
-                    )
-                    .scaleEffect(pulseScale)
-                    .opacity(2.0 - pulseScale)
-            )
             .disabled(isLoading)
             .opacity(isLoading ? 0.6 : 1.0)
-            .onAppear {
-                // Animazione "pulse" del bordo per attirare l'attenzione
-                withAnimation(.easeInOut(duration: 1.2).repeatForever(autoreverses: false)) {
-                    pulseScale = 1.06
-                }
-            }
-            
+
             if isLoading {
                 ProgressView()
-                    .tint(style.progressTint)
+                    .tint(style.progressTint(for: colorScheme))
             }
         }
     }

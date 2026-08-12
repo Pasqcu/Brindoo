@@ -30,39 +30,38 @@ struct LoginView: View {
     
     var body: some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: BrindooSpacing.lg) {
+            // Spaziature strette di proposito: l'accesso deve stare in una
+            // schermata sola, senza scorrere. Lo ScrollView resta per i corpi
+            // di testo grandi e per quando la tastiera si prende metà schermo.
+            VStack(alignment: .leading, spacing: BrindooSpacing.md) {
 
                 BrindooAuthHero(subtitle: "Bentornato! Accedi al tuo account")
                     .frame(maxWidth: .infinity)
-                    .padding(.top, BrindooSpacing.md)
-                
+                    .padding(.top, BrindooSpacing.xs)
+
                 if !hasAcceptedTerms {
                     consentCheckbox
-                        .padding(.top, BrindooSpacing.md)
                 }
 
-                // Sign in with Apple
-                AppleSignInButton { } onError: { error in
-                    if error != .appleSignInCancelled {
-                        generalError = error.errorDescription
+                VStack(spacing: BrindooSpacing.xs) {
+                    // Sign in with Apple
+                    AppleSignInButton { } onError: { error in
+                        if error != .appleSignInCancelled {
+                            generalError = error.errorDescription
+                        }
+                    }
+
+                    // Accesso con Google, alle stesse condizioni di quello Apple.
+                    GoogleSignInButton { } onError: { error in
+                        if error != .googleSignInCancelled {
+                            generalError = error.errorDescription
+                        }
                     }
                 }
-                .padding(.top, BrindooSpacing.md)
                 .disabled(!hasAcceptedTerms)
                 .opacity(hasAcceptedTerms ? 1 : 0.4)
                 .allowsHitTesting(hasAcceptedTerms)
 
-                // Accesso con Google, alle stesse condizioni di quello Apple.
-                GoogleSignInButton { } onError: { error in
-                    if error != .googleSignInCancelled {
-                        generalError = error.errorDescription
-                    }
-                }
-                .padding(.top, BrindooSpacing.xs)
-                .disabled(!hasAcceptedTerms)
-                .opacity(hasAcceptedTerms ? 1 : 0.4)
-                .allowsHitTesting(hasAcceptedTerms)
-                
                 HStack {
                     Rectangle().fill(Color.brindooBorder).frame(height: 1)
                     Text("oppure")
@@ -71,9 +70,8 @@ struct LoginView: View {
                         .padding(.horizontal, BrindooSpacing.sm)
                     Rectangle().fill(Color.brindooBorder).frame(height: 1)
                 }
-                .padding(.vertical, BrindooSpacing.sm)
-                
-                VStack(spacing: BrindooSpacing.md) {
+
+                VStack(spacing: BrindooSpacing.sm) {
                     BrindooEmailField(
                         text: $email,
                         errorMessage: emailError,
@@ -115,9 +113,9 @@ struct LoginView: View {
                     ) {
                         Task { await performLogin() }
                     }
-                    .padding(.top, BrindooSpacing.sm)
+                    .padding(.top, BrindooSpacing.xxs)
                 }
-                
+
                 HStack(spacing: BrindooSpacing.xxs) {
                     Text("Non hai un account?")
                         .font(BrindooFont.bodyMedium)
@@ -131,9 +129,8 @@ struct LoginView: View {
                     }
                 }
                 .frame(maxWidth: .infinity)
-                .padding(.top, BrindooSpacing.lg)
-                
-                Spacer(minLength: BrindooSpacing.xl)
+
+                Spacer(minLength: BrindooSpacing.sm)
             }
             .padding(.horizontal, BrindooSpacing.lg)
         }

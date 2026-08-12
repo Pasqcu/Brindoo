@@ -48,11 +48,13 @@ struct SignUpView: View {
     
     var body: some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: BrindooSpacing.lg) {
+            // Come nell'accesso: spaziature strette per stare in una schermata
+            // sola. Lo ScrollView copre i corpi grandi e la tastiera aperta.
+            VStack(alignment: .leading, spacing: BrindooSpacing.md) {
 
                 BrindooAuthHero(subtitle: "Crea il tuo account gratuito")
                     .frame(maxWidth: .infinity)
-                    .padding(.top, BrindooSpacing.md)
+                    .padding(.top, BrindooSpacing.xs)
 
                 if showSuccessMessage {
                     successView
@@ -60,7 +62,7 @@ struct SignUpView: View {
                     formView
                 }
 
-                Spacer(minLength: BrindooSpacing.xl)
+                Spacer(minLength: BrindooSpacing.sm)
             }
             .padding(.horizontal, BrindooSpacing.lg)
         }
@@ -85,24 +87,23 @@ struct SignUpView: View {
     
     @ViewBuilder
     private var formView: some View {
-        VStack(spacing: BrindooSpacing.md) {
+        VStack(spacing: BrindooSpacing.sm) {
 
-            // Sign in with Apple — richiede T&C come l'email/password.
-            // La checkbox di accettazione è in fondo al form: finché non viene
-            // spuntata, il bottone Apple resta visibile ma disabilitato.
-            AppleSignInButton { } onError: { error in
-                if error != .appleSignInCancelled {
-                    generalError = error.errorDescription
+            VStack(spacing: BrindooSpacing.xs) {
+                // Sign in with Apple — richiede T&C come l'email/password.
+                // La checkbox di accettazione è in fondo al form: finché non viene
+                // spuntata, il bottone Apple resta visibile ma disabilitato.
+                AppleSignInButton { } onError: { error in
+                    if error != .appleSignInCancelled {
+                        generalError = error.errorDescription
+                    }
                 }
-            }
-            .disabled(!acceptedTermsAndAge || isLoading)
-            .opacity(acceptedTermsAndAge ? 1 : 0.4)
-            .allowsHitTesting(acceptedTermsAndAge && !isLoading)
 
-            // Registrazione con Google: stesse condizioni di Apple.
-            GoogleSignInButton { } onError: { error in
-                if error != .googleSignInCancelled {
-                    generalError = error.errorDescription
+                // Registrazione con Google: stesse condizioni di Apple.
+                GoogleSignInButton { } onError: { error in
+                    if error != .googleSignInCancelled {
+                        generalError = error.errorDescription
+                    }
                 }
             }
             .disabled(!acceptedTermsAndAge || isLoading)
@@ -117,7 +118,6 @@ struct SignUpView: View {
                     .padding(.horizontal, BrindooSpacing.sm)
                 Rectangle().fill(Color.brindooBorder).frame(height: 1)
             }
-            .padding(.vertical, BrindooSpacing.xs)
 
             BrindooEmailField(
                 text: $email,
@@ -174,7 +174,7 @@ struct SignUpView: View {
             }
             
             consentCheckbox
-                .padding(.top, BrindooSpacing.sm)
+                .padding(.top, BrindooSpacing.xxs)
 
             BrindooButton(
                 "Crea account",
@@ -185,7 +185,7 @@ struct SignUpView: View {
             ) {
                 Task { await performSignUp() }
             }
-            .padding(.top, BrindooSpacing.sm)
+            .padding(.top, BrindooSpacing.xxs)
         }
     }
 

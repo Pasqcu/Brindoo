@@ -11,23 +11,25 @@ struct BrindooAuthHero: View {
     let subtitle: String
 
     var body: some View {
-        VStack(spacing: BrindooSpacing.sm) {
+        // Misure contenute: accesso e registrazione devono stare in una schermata
+        // sola, e l'intestazione è la parte che si comprime senza perdere nulla.
+        VStack(spacing: BrindooSpacing.xs) {
             ZStack {
                 Circle()
                     .fill(BrindooGradient.coral)
-                    .frame(width: 88, height: 88)
-                    .shadow(color: Color.brindooCoral.opacity(0.35), radius: 14, x: 0, y: 8)
+                    .frame(width: 64, height: 64)
+                    .shadow(color: Color.brindooCoral.opacity(0.35), radius: 12, x: 0, y: 6)
                 Image(systemName: "party.popper.fill")
-                    .font(.system(size: 40, weight: .semibold))
+                    .font(.system(size: 30, weight: .semibold))
                     .foregroundStyle(.white)
             }
 
             Text("Brindoo")
-                .font(BrindooFont.displayMedium)
+                .font(BrindooFont.titleLarge)
                 .foregroundStyle(Color.brindooTextPrimary)
 
             Text(subtitle)
-                .font(BrindooFont.bodyLarge)
+                .font(BrindooFont.bodyMedium)
                 .foregroundStyle(Color.brindooTextSecondary)
                 .multilineTextAlignment(.center)
         }
