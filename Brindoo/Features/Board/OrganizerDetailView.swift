@@ -308,7 +308,7 @@ struct OrganizerDetailView: View {
             city: organizer.city,
             categories: categories.map { $0.category.name },
             rating: reviewSummary,
-            isPro: organizer.isPro,
+            isPro: organizer.showsProBadge,
             avatar: avatar
         )
 

@@ -218,7 +218,7 @@ struct ProfileView: View {
                 HStack(spacing: BrindooSpacing.xs) {
                     Text(profile.displayName)
                         .font(BrindooFont.titleLarge)
-                    if profile.isPro {
+                    if profile.showsProBadge {
                         Image(systemName: BrindooIcon.badge)
                             .foregroundStyle(Color.brindooCoral)
                     }

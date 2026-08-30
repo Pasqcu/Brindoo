@@ -33,7 +33,7 @@ struct OrganizerCard: View {
                         .foregroundStyle(Color.brindooTextPrimary)
                         .lineLimit(1)
 
-                    if organizer.isPro {
+                    if organizer.showsProBadge {
                         ProBadge()
                     }
                     if organizer.identityVerified {

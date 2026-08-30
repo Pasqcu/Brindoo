@@ -27,7 +27,7 @@ struct HelpView: View {
         FAQ(q: "Come divento professionista?",
             a: "Dal tuo profilo tocca «Diventa Professionista», completa categorie, descrizione e aree di copertura, poi pubblica la tua prima offerta."),
         FAQ(q: "Cos'è Brindoo Pro?",
-            a: "È l'abbonamento per i professionisti: offerte illimitate, priorità in bacheca, statistiche, modalità vacanza e portfolio ampliato."),
+            a: "È l'abbonamento di Brindoo, e cambia con quello che fai. Da professionista: offerte illimitate, priorità in bacheca, statistiche, modalità vacanza e portfolio ampliato. Da cliente: richieste aperte illimitate e le tue richieste in cima a quelle che i professionisti sfogliano."),
         FAQ(q: "Come segnalo un utente o un contenuto?",
             a: "Apri il profilo, l'offerta o la chat, tocca il menu «…» e scegli «Segnala». Le segnalazioni vengono esaminate dal nostro team.")
     ]

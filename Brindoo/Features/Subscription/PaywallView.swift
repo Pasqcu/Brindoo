@@ -46,43 +46,15 @@ struct PaywallView: View {
                     }
                     .padding(.top, BrindooSpacing.xl)
                     
-                    // Lista benefici
+                    // Lista benefici: cambia con il ruolo di chi guarda.
                     VStack(alignment: .leading, spacing: BrindooSpacing.md) {
-                        benefitRow(
-                            icon: "checkmark.seal.fill",
-                            title: "Badge Pro",
-                            description: "Sigillo di trust accanto al tuo nome ovunque"
-                        )
-
-                        benefitRow(
-                            icon: "infinity",
-                            title: "Offerte illimitate",
-                            description: "Pubblica tutti i pacchetti che vuoi (free: max 1)"
-                        )
-
-                        benefitRow(
-                            icon: "star.bubble.fill",
-                            title: "Priorità in bacheca",
-                            description: "Il tuo profilo e le tue offerte appaiono prima dei non-Pro"
-                        )
-
-                        benefitRow(
-                            icon: "beach.umbrella.fill",
-                            title: "Modalità vacanza",
-                            description: "Metti in pausa le offerte mantenendo il profilo"
-                        )
-
-                        benefitRow(
-                            icon: "chart.bar.fill",
-                            title: "Statistiche dettagliate",
-                            description: "Visite profilo, offerte, proposte e tempo medio risposta"
-                        )
-
-                        benefitRow(
-                            icon: "photo.on.rectangle.angled",
-                            title: "Portfolio fino a 50 foto",
-                            description: "Free: 5 foto. Pro: 50 foto."
-                        )
+                        ForEach(ProBenefits.list(for: role)) { benefit in
+                            benefitRow(
+                                icon: benefit.icon,
+                                title: benefit.title,
+                                description: benefit.description
+                            )
+                        }
                     }
                     .padding(BrindooSpacing.lg)
                     .brindooSurfaceBackground(radius: BrindooRadius.lg)
@@ -306,6 +278,12 @@ struct PaywallView: View {
     
     private var isCurrentlyPro: Bool {
         session.currentProfile?.isPro == true
+    }
+
+    /// Il profilo può non essere ancora caricato: in quel caso si mostra la
+    /// lista cliente, che è il ruolo di partenza di chiunque si iscriva.
+    private var role: UserRole {
+        session.currentProfile?.role ?? .client
     }
     
     // MARK: - Actions

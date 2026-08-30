@@ -25,7 +25,7 @@ struct ChatHeaderView: View {
                             .font(BrindooFont.bodyMedium.weight(.semibold))
                             .foregroundStyle(Color.brindooTextPrimary)
                             .lineLimit(1)
-                        if user.isPro {
+                        if user.showsProBadge {
                             Image(systemName: BrindooIcon.crown)
                                 .font(.system(size: 11, weight: .bold))
                                 .foregroundStyle(Color.brindooProGold)
@@ -34,7 +34,7 @@ struct ChatHeaderView: View {
                             VerifiedCheckIcon(size: 11)
                         }
                     }
-                    if user.isPro {
+                    if user.showsProBadge {
                         Text("Pro")
                             .font(BrindooFont.caption)
                             .foregroundStyle(Color.brindooCoral)

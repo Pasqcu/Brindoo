@@ -28,7 +28,7 @@ struct AppGuideView: View {
             Step(icon: "magnifyingglass", title: "Esplora",
                  text: "Sfoglia i professionisti del Lazio. Filtra per servizio, zona, prezzo, valutazione o data dell'evento. Tocca la bacchetta magica per il preventivo guidato: categoria + data + budget e vedi subito le offerte adatte."),
             Step(icon: "megaphone", title: "Pubblica una richiesta",
-                 text: "Non trovi quello che cerchi? Tocca il megafono e racconta cosa ti serve: saranno i professionisti a contattarti. Se l'evento è vicino, segnala la richiesta come urgente."),
+                 text: "Non trovi quello che cerchi? Tocca il megafono e racconta cosa ti serve: saranno i professionisti a contattarti. Se l'evento è vicino, segnala la richiesta come urgente. Con il piano gratuito puoi tenerne aperte \(ClientRequestService.maxOpenRequestsFree) alla volta."),
             Step(icon: "arrow.left.arrow.right", title: "Trattative",
                  text: "Su un'offerta puoi accettare il prezzo, scegliere un pacchetto (Base/Completo/Premium) o fare una proposta. Prima di accettare leggi le regole di annullamento. Ad accordo chiuso puoi condividere il riepilogo scritto."),
             Step(icon: "bubble.left.and.bubble.right", title: "Chat",
@@ -38,7 +38,9 @@ struct AppGuideView: View {
             Step(icon: "star", title: "Recensioni",
                  text: "A evento svolto, lascia una recensione (anche con foto). Si può recensire solo dopo che l'evento è passato o è stato segnato come svolto: per questo trovi il contrassegno «Verificata»."),
             Step(icon: "heart", title: "Preferiti e confronto",
-                 text: "Salva i profili che ti piacciono col cuore. Dai preferiti puoi confrontarne 2-3 fianco a fianco: valutazione, velocità di risposta, identità verificata, prezzo di partenza.")
+                 text: "Salva i profili che ti piacciono col cuore. Dai preferiti puoi confrontarne 2-3 fianco a fianco: valutazione, velocità di risposta, identità verificata, prezzo di partenza."),
+            Step(icon: "crown", title: "Brindoo Pro",
+                 text: "Con Pro tieni aperte tutte le richieste che vuoi e le tue finiscono in cima a quelle che i professionisti sfogliano, con il contrassegno «In evidenza».")
         ]
     }
 
@@ -47,7 +49,7 @@ struct AppGuideView: View {
             Step(icon: "list.bullet.rectangle", title: "Bacheca",
                  text: "Le tue offerte pubblicate. Tocca + per crearne una nuova; tieni premuta un'offerta per duplicarla. Ogni offerta può avere fino a 3 pacchetti prezzo (Base/Completo/Premium)."),
             Step(icon: "megaphone", title: "Richieste dei clienti",
-                 text: "Tocca il megafono per sfogliare cosa cercano i clienti (le urgenti sono in cima). Rispondi in chat a quelle adatte a te."),
+                 text: "Tocca il megafono per sfogliare cosa cercano i clienti (in cima le richieste in evidenza, poi le urgenti). Rispondi in chat a quelle adatte a te."),
             Step(icon: "arrow.left.arrow.right", title: "Trattative",
                  text: "Quando un cliente accetta o propone un prezzo, rispondi qui: accetta, rifiuta o controproponi. Ad accordo chiuso trovi il riepilogo condivisibile e lo stato dell'acconto."),
             Step(icon: "person.crop.circle", title: "Profilo curato = più clienti",

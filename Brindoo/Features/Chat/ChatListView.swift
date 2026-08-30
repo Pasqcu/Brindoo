@@ -358,7 +358,7 @@ struct ChatListRow: View {
                         .foregroundStyle(Color.brindooTextPrimary)
                         .lineLimit(1)
 
-                    if otherUser.isPro {
+                    if otherUser.showsProBadge {
                         Image(systemName: BrindooIcon.badge)
                             .font(.system(size: 13))
                             .foregroundStyle(Color.brindooCoral)

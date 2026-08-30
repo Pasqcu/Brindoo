@@ -10,11 +10,7 @@ import SwiftUI
 
 struct OrganizerStatsView: View {
 
-    @Environment(SessionStore.self) private var session
-
     @State private var state: LoadState<AnalyticsService.OrganizerStats> = .loading
-
-    private var isPro: Bool { session.currentProfile?.isPro ?? false }
 
     var body: some View {
         ScrollView {

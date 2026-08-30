@@ -30,7 +30,7 @@ struct CompareOrganizersView: View {
                                 .font(BrindooFont.bodySmall.weight(.semibold))
                                 .multilineTextAlignment(.center)
                                 .lineLimit(2)
-                            if profile.isPro {
+                            if profile.showsProBadge {
                                 BrindooBadge("Pro", style: .pro, icon: BrindooIcon.crown)
                             }
                         }

@@ -46,8 +46,12 @@ final class OrganizerService {
             }
         }
 
+        // La vista aggiunge boost_active/pro_active calcolati adesso: sono
+        // colonne vere, quindi il database puo' ordinarci sopra prima di
+        // tagliare la pagina. Tutte le altre colonne restano quelle di
+        // `profiles`, percio' i filtri qui sotto non cambiano.
         var query = client
-            .from("profiles")
+            .from("profiles_ranked")
             .select()
             .eq("role", value: UserRole.organizer.rawValue)
             .not("full_name", operator: .is, value: "null")
@@ -84,10 +88,12 @@ final class OrganizerService {
             query = query.ilike("full_name", pattern: "%\(searchText)%")
         }
 
-        // Ordinamento: Boost > Pro > updated_at
+        // Ordinamento: Boost attivo > Pro attivo > updated_at.
+        // Attivo vuol dire "adesso": un abbonamento scaduto torna in fila con
+        // tutti gli altri, senza aspettare il lavoro orario del database.
         var profiles: [Profile] = try await query
-            .order("boost_expires_at", ascending: false, nullsFirst: false)
-            .order("is_pro", ascending: false)
+            .order("boost_active", ascending: false)
+            .order("pro_active", ascending: false)
             .order("updated_at", ascending: false)
             .range(from: offset, to: offset + limit - 1)
             .execute()

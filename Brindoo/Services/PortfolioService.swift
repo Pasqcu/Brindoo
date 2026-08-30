@@ -51,8 +51,10 @@ final class PortfolioService {
     // MARK: - Aggiungi foto
 
     /// Limite massimo di foto: 5 per il piano free, 50 per Pro.
-    static let maxPhotosFree = 5
-    static let maxPhotosPro  = 50
+    // `nonisolated`: li legge anche BrindooLimitError, che traduce il rifiuto
+    // del database e non gira sul main actor.
+    nonisolated static let maxPhotosFree = 5
+    nonisolated static let maxPhotosPro  = 50
 
     /// Carica una foto sullo Storage e crea il record in DB.
     @discardableResult
@@ -90,7 +92,7 @@ final class PortfolioService {
             // Rollback: cancella la foto dallo Storage
             BrindooLog.error("Errore inserimento DB, rollback dello Storage")
             try? await StorageService.shared.deletePortfolioImage(storagePath: storagePath)
-            throw error
+            throw BrindooLimitError.mapping(error)
         }
     }
 
@@ -102,10 +104,15 @@ final class PortfolioService {
 
     /// Stesso tetto foto+video insieme: il limite è del portfolio, non del formato.
     private func ensureCapacity(userId: UUID) async throws {
-        let profile = try? await ProfileService.shared.fetchProfile(userID: userId)
-        let isPro = profile?.isPro ?? false
-        let cap = isPro ? Self.maxPhotosPro : Self.maxPhotosFree
+        // Prima si conta, poi semmai si guarda l'abbonamento: sotto le 5 foto
+        // il tetto e' lo stesso per tutti, e il profilo non serve caricarlo.
         let current = try await fetchPortfolio(organizerId: userId).count
+        guard current >= Self.maxPhotosFree else { return }
+
+        // Se il profilo non arriva (rete ballerina) non si inventa un rifiuto:
+        // decide il database, che il tetto ce l'ha uguale.
+        guard let profile = try? await ProfileService.shared.fetchProfile(userID: userId) else { return }
+        let cap = profile.isPro ? Self.maxPhotosPro : Self.maxPhotosFree
         if current >= cap {
             throw BrindooLimitError.maxPortfolioReached(max: cap)
         }
@@ -155,7 +162,7 @@ final class PortfolioService {
             BrindooLog.error("Errore inserimento DB, rollback dello Storage")
             try? await StorageService.shared.deletePortfolioImage(storagePath: storagePath)
             try? await StorageService.shared.deletePortfolioImage(storagePath: storagePath + ".jpg")
-            throw error
+            throw BrindooLimitError.mapping(error)
         }
     }
 

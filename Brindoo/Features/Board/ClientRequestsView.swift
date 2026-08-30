@@ -25,8 +25,24 @@ struct ClientRequestsView: View {
     @State private var chatPartner: Profile?
     @State private var contactingId: UUID?
 
+    // Limite di richieste aperte (piano gratuito)
+    @State private var showLimitPaywall: Bool = false
+    @State private var limitMessage: String = ""
+    @State private var showPaywallSheet: Bool = false
+    /// Errori che non c'entrano con l'abbonamento: niente invito a Pro.
+    @State private var actionError: String?
+
     private var isClient: Bool {
         session.currentProfile?.role == .client
+    }
+
+    /// Il posto in cima e' un vantaggio Pro del cliente. Lo vede il
+    /// professionista che sfoglia, ma anche il cliente sulle proprie
+    /// richieste: se lo paga, deve accorgersi che c'e'.
+    private func isFeatured(_ request: ClientRequest) -> Bool {
+        guard request.status == .open else { return false }
+        let author = isClient ? session.currentProfile : clientProfiles[request.clientId]
+        return author?.isPro == true
     }
 
     var body: some View {
@@ -70,6 +86,26 @@ struct ClientRequestsView: View {
             if let partner = chatPartner {
                 ChatView(conversation: conv, otherUser: partner)
             }
+        }
+        .alert("Limite raggiunto", isPresented: $showLimitPaywall) {
+            Button("Annulla", role: .cancel) {}
+            Button("Scopri Pro") {
+                showLimitPaywall = false
+                showPaywallSheet = true
+            }
+        } message: {
+            Text(limitMessage)
+        }
+        .sheet(isPresented: $showPaywallSheet) {
+            PaywallView()
+        }
+        .alert(
+            "Non riuscito",
+            isPresented: Binding(get: { actionError != nil }, set: { if !$0 { actionError = nil } })
+        ) {
+            Button("Ok") { actionError = nil }
+        } message: {
+            Text(actionError ?? "")
         }
         .task { await load() }
         .refreshable { await load() }
@@ -130,6 +166,7 @@ struct ClientRequestsView: View {
                         request: request,
                         category: categories.first { $0.id == request.categoryId },
                         clientProfile: isClient ? nil : clientProfiles[request.clientId],
+                        featured: isFeatured(request),
                         isContacting: contactingId == request.id,
                         onContact: isClient ? nil : { Task { await contact(request) } }
                     )
@@ -168,12 +205,9 @@ struct ClientRequestsView: View {
             if isClient {
                 requests = try await ClientRequestService.shared.fetchMyRequests()
             } else {
-                // Le richieste urgenti risalgono in cima, a parità vince la più recente.
+                // Ordine gia' deciso dal database (Pro > urgenti > recenti):
+                // riordinare qui rimescolerebbe solo le 100 righe scaricate.
                 requests = try await ClientRequestService.shared.fetchOpenRequests()
-                    .sorted {
-                        if $0.isUrgent != $1.isUrgent { return $0.isUrgent }
-                        return $0.createdAt > $1.createdAt
-                    }
                 await loadClientProfiles()
             }
         } catch {
@@ -211,21 +245,35 @@ struct ClientRequestsView: View {
             try await ClientRequestService.shared.close(requestId: request.id)
             BrindooHaptics.notify(.success)
             await load()
-        } catch { BrindooLog.error("\(error)") }
+        } catch {
+            actionError = "Impossibile chiudere la richiesta. Riprova."
+            BrindooLog.error("\(error)")
+        }
     }
 
     private func reopen(_ request: ClientRequest) async {
         do {
             try await ClientRequestService.shared.reopen(requestId: request.id)
             await load()
-        } catch { BrindooLog.error("\(error)") }
+        } catch let limitError as BrindooLimitError {
+            limitMessage = limitError.errorDescription ?? "Limite raggiunto."
+            showLimitPaywall = true
+        } catch {
+            // Anche il fallimento generico deve dire qualcosa: prima il tocco
+            // sulla riapertura non lasciava alcuna traccia a schermo.
+            actionError = "Impossibile riaprire la richiesta. Riprova."
+            BrindooLog.error("\(error)")
+        }
     }
 
     private func delete(_ request: ClientRequest) async {
         do {
             try await ClientRequestService.shared.delete(requestId: request.id)
             requests.removeAll { $0.id == request.id }
-        } catch { BrindooLog.error("\(error)") }
+        } catch {
+            actionError = "Impossibile eliminare la richiesta. Riprova."
+            BrindooLog.error("\(error)")
+        }
     }
 }
 
@@ -236,6 +284,8 @@ struct ClientRequestCard: View {
     let category: ServiceCategory?
     /// Profilo del cliente (mostrato solo lato professionista).
     let clientProfile: Profile?
+    /// La richiesta occupa il posto in cima pagato con Pro.
+    var featured: Bool = false
     var isContacting: Bool = false
     /// Presente solo lato professionista.
     var onContact: (() -> Void)?
@@ -248,10 +298,16 @@ struct ClientRequestCard: View {
                     .foregroundStyle(Color.brindooTextPrimary)
                     .lineLimit(2)
                     .frame(maxWidth: .infinity, alignment: .leading)
-                if request.isUrgent && request.status == .open {
-                    urgentPill
-                }
                 statusPill
+            }
+
+            // Le etichette stanno su una riga propria: accanto al titolo, su
+            // schermo piccolo o con testo grande, lo schiacciavano.
+            if featured || showsUrgent {
+                HStack(spacing: BrindooSpacing.xs) {
+                    if featured { featuredPill }
+                    if showsUrgent { urgentPill }
+                }
             }
 
             if let category {
@@ -313,6 +369,22 @@ struct ClientRequestCard: View {
             RoundedRectangle(cornerRadius: BrindooRadius.md)
                 .strokeBorder(Color.brindooBorder, lineWidth: 1)
         )
+    }
+
+    private var showsUrgent: Bool {
+        request.isUrgent && request.status == .open
+    }
+
+    private var featuredPill: some View {
+        HStack(spacing: 3) {
+            Image(systemName: "star.bubble.fill").font(.system(size: 9))
+            Text("In evidenza").font(BrindooFont.scaled(11, weight: .semibold, relativeTo: .caption1))
+        }
+        .padding(.horizontal, 8)
+        .padding(.vertical, 4)
+        .foregroundStyle(Color.brindooCoral)
+        .background(Color.brindooCoral.opacity(0.12))
+        .clipShape(Capsule())
     }
 
     private var urgentPill: some View {

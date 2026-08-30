@@ -19,7 +19,7 @@ struct OrganizerTitleSection: View {
             HStack(spacing: BrindooSpacing.xs) {
                 Text(organizer.displayName)
                     .font(BrindooFont.titleLarge)
-                if organizer.isPro {
+                if organizer.showsProBadge {
                     Image(systemName: BrindooIcon.badge)
                         .foregroundStyle(Color.brindooCoral)
                 }

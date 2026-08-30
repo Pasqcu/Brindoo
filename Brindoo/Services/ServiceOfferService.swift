@@ -94,11 +94,12 @@ final class ServiceOfferService {
         struct Row: Decodable {
             let id: UUID
             let is_pro: Bool?
+            let pro_expires_at: Date?
             let boost_expires_at: Date?
         }
         let rows: [Row] = try await client
             .from("profiles")
-            .select("id, is_pro, boost_expires_at")
+            .select("id, is_pro, pro_expires_at, boost_expires_at")
             .in("id", values: ids.map { $0.uuidString })
             .execute()
             .value
@@ -107,7 +108,10 @@ final class ServiceOfferService {
         var out: [UUID: OrganizerRank] = [:]
         for r in rows {
             let boosted = (r.boost_expires_at ?? .distantPast) > now
-            out[r.id] = OrganizerRank(isBoosted: boosted, isPro: r.is_pro ?? false)
+            // Come per il boost, comanda la data: il flag da solo resterebbe
+            // acceso su un abbonamento scaduto.
+            let pro = (r.is_pro ?? false) && (r.pro_expires_at ?? .distantPast) > now
+            out[r.id] = OrganizerRank(isBoosted: boosted, isPro: pro)
         }
         return out
     }
@@ -273,19 +277,20 @@ final class ServiceOfferService {
         // Limite free: 1 offerta attiva. Se l'organizzatore non è Pro e ne ha già
         // almeno una "active", solleva l'errore tipizzato `BrindooLimitError.maxOffersReached`
         // così la UI può mostrare la paywall.
-        let profile = try await ProfileService.shared.fetchProfile(userID: userId)
-        let isPro = profile?.isPro ?? false
-        if !isPro {
-            struct C: Decodable { let id: UUID }
-            let active: [C] = try await client
-                .from("service_offers")
-                .select("id")
-                .eq("organizer_id", value: userId)
-                .eq("status", value: "active")
-                .limit(1)
-                .execute()
-                .value
-            if !active.isEmpty {
+        // Prima si conta, poi semmai si guarda l'abbonamento: chi non ha ancora
+        // un'offerta attiva pubblica senza il viaggio in piu' verso il profilo.
+        struct C: Decodable { let id: UUID }
+        let active: [C] = try await client
+            .from("service_offers")
+            .select("id")
+            .eq("organizer_id", value: userId)
+            .eq("status", value: "active")
+            .limit(1)
+            .execute()
+            .value
+        if !active.isEmpty {
+            let profile = try await ProfileService.shared.fetchProfile(userID: userId)
+            if profile?.isPro != true {
                 throw BrindooLimitError.maxOffersReached
             }
         }
@@ -310,13 +315,20 @@ final class ServiceOfferService {
             image_url: imageUrl
         )
 
-        let created: ServiceOffer = try await client
-            .from("service_offers")
-            .insert(payload)
-            .select()
-            .single()
-            .execute()
-            .value
+        let created: ServiceOffer
+        do {
+            // Lo stesso tetto vive in un trigger del database: se a rifiutare e'
+            // lui, la view deve vedere l'errore tipizzato, non uno generico.
+            created = try await client
+                .from("service_offers")
+                .insert(payload)
+                .select()
+                .single()
+                .execute()
+                .value
+        } catch {
+            throw BrindooLimitError.mapping(error)
+        }
 
         if !categoryIds.isEmpty {
             struct Join: Encodable {
@@ -337,11 +349,16 @@ final class ServiceOfferService {
 
     func updateStatus(offerId: UUID, status: ServiceOfferStatus) async throws {
         struct U: Encodable { let status: String }
-        try await client
-            .from("service_offers")
-            .update(U(status: status.rawValue))
-            .eq("id", value: offerId)
-            .execute()
+        do {
+            // Riattivare e' pubblicare: il trigger del limite scatta anche qui.
+            try await client
+                .from("service_offers")
+                .update(U(status: status.rawValue))
+                .eq("id", value: offerId)
+                .execute()
+        } catch {
+            throw BrindooLimitError.mapping(error)
+        }
     }
 
     // MARK: - Delete

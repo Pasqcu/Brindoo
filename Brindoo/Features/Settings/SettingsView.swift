@@ -49,8 +49,12 @@ struct SettingsView: View {
     /// aggiornata al toggle. Il computed diretto non farebbe ridisegnare la riga.
     @State private var goldIconActive: Bool = false
 
+    private var role: UserRole {
+        session.currentProfile?.role ?? .client
+    }
+
     private var isOrganizer: Bool {
-        session.currentProfile?.role == .organizer
+        role == .organizer
     }
 
     private var isPro: Bool {
@@ -87,7 +91,9 @@ struct SettingsView: View {
                                     iconStyle: .gradient([Color.brindooCoral, .orange]),
                                     title: "Diventa Pro",
                                     badgeText: isPro ? "ATTIVO" : nil,
-                                    subtitle: isPro ? "Gestisci abbonamento" : "Sblocca tutte le funzionalità"
+                                    subtitle: isPro
+                                        ? "Gestisci abbonamento"
+                                        : ProBenefits.shortPitch(for: role)
                                 )
                             }
                             .buttonStyle(.plain)

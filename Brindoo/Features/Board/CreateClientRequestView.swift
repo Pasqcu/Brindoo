@@ -31,6 +31,10 @@ struct CreateClientRequestView: View {
     @State private var generalError: String?
     @State private var isSaving: Bool = false
 
+    @State private var showLimitPaywall: Bool = false
+    @State private var limitMessage: String = ""
+    @State private var showPaywallSheet: Bool = false
+
     var body: some View {
         NavigationStack {
             ScrollView {
@@ -192,6 +196,18 @@ struct CreateClientRequestView: View {
             .task {
                 allCategories = (try? await CategoryService.shared.fetchCategories()) ?? []
             }
+            .alert("Limite raggiunto", isPresented: $showLimitPaywall) {
+                Button("Annulla", role: .cancel) {}
+                Button("Scopri Pro") {
+                    showLimitPaywall = false
+                    showPaywallSheet = true
+                }
+            } message: {
+                Text(limitMessage)
+            }
+            .sheet(isPresented: $showPaywallSheet) {
+                PaywallView()
+            }
         }
     }
 
@@ -240,6 +256,9 @@ struct CreateClientRequestView: View {
             )
             BrindooHaptics.notify(.success)
             dismiss()
+        } catch let limitError as BrindooLimitError {
+            limitMessage = limitError.errorDescription ?? "Limite raggiunto."
+            showLimitPaywall = true
         } catch {
             generalError = "Impossibile pubblicare. Riprova più tardi."
             BrindooLog.error("Creazione richiesta: \(error)")

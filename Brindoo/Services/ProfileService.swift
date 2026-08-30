@@ -306,31 +306,10 @@ final class ProfileService {
             .execute()
     }
 
-    /// Aggiornamento stato Pro
-    func updateProStatus(isPro: Bool, expiresAt: Date?) async throws {
-        guard let userID = SupabaseManager.shared.currentUserID else { return }
-        struct Payload: Encodable {
-            let is_pro: Bool
-            let pro_expires_at: String?
-        }
-        let expStr = expiresAt.map { BrindooFormat.iso($0) }
-        try await client
-            .from("profiles")
-            .update(Payload(is_pro: isPro, pro_expires_at: expStr))
-            .eq("id", value: userID)
-            .execute()
-    }
-
-    /// Aggiornamento stato Boost
-    func updateBoostStatus(expiresAt: Date) async throws {
-        guard let userID = SupabaseManager.shared.currentUserID else { return }
-        struct Payload: Encodable { let boost_expires_at: String }
-        try await client
-            .from("profiles")
-            .update(Payload(boost_expires_at: BrindooFormat.iso(expiresAt)))
-            .eq("id", value: userID)
-            .execute()
-    }
+    // Gli entitlement (`is_pro`, `pro_expires_at`, `boost_expires_at`) non si
+    // scrivono più da qui: li aggiorna solo la Edge Function
+    // `validate-iap-receipt` con service_role, e un trigger del database
+    // respinge qualsiasi altro scrittore.
 
     // MARK: - Vacation mode
 

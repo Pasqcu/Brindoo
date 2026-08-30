@@ -66,7 +66,10 @@ struct Profile: Identifiable, Codable, Hashable, Equatable {
     let coverageAreas: [String]
     let bio: String?
     let avatarUrl: String?
-    let isPro: Bool
+    /// Flag `is_pro` come arriva dal server: cache comoda per le query, non
+    /// fonte di verita'. Serve solo a non perderlo nel salvataggio locale;
+    /// per sapere se l'abbonamento vale usa `isPro`, che guarda la scadenza.
+    private let isProFlag: Bool
     let proExpiresAt: Date?
     let boostExpiresAt: Date?
     let readReceiptsEnabled: Bool
@@ -99,7 +102,7 @@ struct Profile: Identifiable, Codable, Hashable, Equatable {
         case coverageAreas = "coverage_areas"
         case bio
         case avatarUrl = "avatar_url"
-        case isPro = "is_pro"
+        case isProFlag = "is_pro"
         case proExpiresAt = "pro_expires_at"
         case boostExpiresAt = "boost_expires_at"
         case readReceiptsEnabled = "read_receipts_enabled"
@@ -128,7 +131,7 @@ struct Profile: Identifiable, Codable, Hashable, Equatable {
         coverageAreas = try c.decodeIfPresent([String].self, forKey: .coverageAreas) ?? []
         bio = try c.decodeIfPresent(String.self, forKey: .bio)
         avatarUrl = try c.decodeIfPresent(String.self, forKey: .avatarUrl)
-        isPro = try c.decodeIfPresent(Bool.self, forKey: .isPro) ?? false
+        isProFlag = try c.decodeIfPresent(Bool.self, forKey: .isProFlag) ?? false
         proExpiresAt = try c.decodeIfPresent(Date.self, forKey: .proExpiresAt)
         boostExpiresAt = try c.decodeIfPresent(Date.self, forKey: .boostExpiresAt)
         readReceiptsEnabled = try c.decodeIfPresent(Bool.self, forKey: .readReceiptsEnabled) ?? true
@@ -168,7 +171,7 @@ struct Profile: Identifiable, Codable, Hashable, Equatable {
         try c.encode(coverageAreas, forKey: .coverageAreas)
         try c.encodeIfPresent(bio, forKey: .bio)
         try c.encodeIfPresent(avatarUrl, forKey: .avatarUrl)
-        try c.encode(isPro, forKey: .isPro)
+        try c.encode(isProFlag, forKey: .isProFlag)
         try c.encodeIfPresent(proExpiresAt, forKey: .proExpiresAt)
         try c.encodeIfPresent(boostExpiresAt, forKey: .boostExpiresAt)
         try c.encode(readReceiptsEnabled, forKey: .readReceiptsEnabled)
@@ -208,6 +211,25 @@ struct Profile: Identifiable, Codable, Hashable, Equatable {
     /// Etichetta delle aree di copertura per le card della bacheca.
     var coverageAreasDisplay: String {
         LazioArea.displayLabel(forSlugs: coverageAreas)
+    }
+
+    /// True se l'abbonamento Pro è attivo adesso.
+    ///
+    /// Comanda la data, come per il boost, e come fa il database in
+    /// `brindoo_is_pro`. Il flag `is_pro` non decade da solo — quando
+    /// l'abbonamento scade nessuno riscrive la riga — quindi non si guarda:
+    /// `pro_expires_at` e' l'unica colonna che solo il server puo' scrivere.
+    var isPro: Bool {
+        guard let proExpiresAt else { return false }
+        return proExpiresAt > Date()
+    }
+
+    /// True quando ha senso mostrare il sigillo Pro accanto al nome.
+    ///
+    /// Il badge dice "professionista di fiducia": su un cliente abbonato non
+    /// comunica niente, quindi non si mostra.
+    var showsProBadge: Bool {
+        isPro && role == .organizer
     }
 
     /// True se il boost è attualmente attivo

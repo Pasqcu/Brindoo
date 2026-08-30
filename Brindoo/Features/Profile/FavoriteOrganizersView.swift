@@ -161,7 +161,7 @@ struct FavoriteOrganizersView: View {
                 HStack(spacing: 4) {
                     Text(profile.displayName)
                         .font(BrindooFont.titleSmall)
-                    if profile.isPro == true {
+                    if profile.showsProBadge {
                         BrindooBadge("Pro", style: .pro, icon: BrindooIcon.crown)
                     }
                 }

@@ -91,7 +91,7 @@ struct OrganizerWithOffersCard: View {
                         Text(organizer.displayName)
                             .font(BrindooFont.titleSmall)
                             .lineLimit(1)
-                        if organizer.isPro {
+                        if organizer.showsProBadge {
                             ProBadge()
                         }
                         if organizer.identityVerified {
@@ -283,7 +283,7 @@ struct FeaturedOrganizerCard: View {
                     Text(organizer.displayName)
                         .font(BrindooFont.bodyMedium.weight(.semibold))
                         .lineLimit(1)
-                    if organizer.isPro { ProBadge() }
+                    if organizer.showsProBadge { ProBadge() }
                     if organizer.identityVerified { VerifiedCheckIcon() }
                 }
                 HStack(spacing: BrindooSpacing.xs) {

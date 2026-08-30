@@ -67,7 +67,7 @@ struct OfferHeaderSection: View {
                             HStack(spacing: 4) {
                                 Text(profile.displayName)
                                     .font(BrindooFont.bodyMedium.weight(.medium))
-                                if profile.isPro {
+                                if profile.showsProBadge {
                                     Image(systemName: BrindooIcon.badge)
                                         .font(.system(size: 11))
                                         .foregroundStyle(Color.brindooCoral)
