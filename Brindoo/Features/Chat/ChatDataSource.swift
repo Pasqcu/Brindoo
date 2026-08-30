@@ -16,7 +16,9 @@ import UIKit
 struct ChatDataSource {
 
     // Messaggi
-    var fetchMessages: (_ conversationId: UUID, _ visibleAfter: Date?) async throws -> [Message]
+    /// `before` = data del messaggio più vecchio già a schermo, per
+    /// risalire una pagina alla volta. `nil` = ultima pagina.
+    var fetchMessages: (_ conversationId: UUID, _ visibleAfter: Date?, _ before: Date?) async throws -> [Message]
     var sendMessage: (_ conversationId: UUID, _ content: String, _ repliedToId: UUID?) async throws -> Void
     var editMessage: (_ messageId: UUID, _ newContent: String) async throws -> Void
     var deleteMessage: (_ messageId: UUID) async throws -> Void
@@ -53,10 +55,11 @@ extension ChatDataSource {
     @MainActor
     static var live: ChatDataSource {
         ChatDataSource(
-            fetchMessages: { conversationId, visibleAfter in
+            fetchMessages: { conversationId, visibleAfter, before in
                 try await MessageService.shared.fetchMessages(
                     conversationId: conversationId,
-                    visibleAfter: visibleAfter
+                    visibleAfter: visibleAfter,
+                    before: before
                 )
             },
             sendMessage: { conversationId, content, repliedToId in
@@ -133,7 +136,7 @@ extension ChatDataSource {
     /// Prese mute: non chiedono nulla a nessuno. Base per i test.
     static var empty: ChatDataSource {
         ChatDataSource(
-            fetchMessages: { _, _ in [] },
+            fetchMessages: { _, _, _ in [] },
             sendMessage: { _, _, _ in },
             editMessage: { _, _ in },
             deleteMessage: { _ in },

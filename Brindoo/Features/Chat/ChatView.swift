@@ -231,7 +231,10 @@ struct ChatView: View {
             onEdit: { message in vm.startEditing(message) },
             onDelete: { message in messageToDelete = message },
             onReport: { message in messageToReport = message },
-            onRefresh: { await vm.load() }
+            onRefresh: { await vm.load() },
+            hasOlderMessages: vm.hasOlderMessages,
+            isLoadingOlder: vm.isLoadingOlder,
+            onLoadOlder: { await vm.loadOlderMessages() }
         )
     }
 

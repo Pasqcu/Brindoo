@@ -28,6 +28,9 @@ final class ChatViewModel {
     // MARK: - Stato dei dati
 
     private(set) var messages: [Message] = []
+    /// C'è altra storia sopra quella già a schermo.
+    private(set) var hasOlderMessages = false
+    private(set) var isLoadingOlder = false
     private(set) var isSending = false
     private(set) var isBlocked = false
     private(set) var otherIsTyping = false
@@ -83,12 +86,47 @@ final class ChatViewModel {
     func load() async {
         do {
             guard let userId = currentUserId else { return }
-            messages = try await data.fetchMessages(
+            let page = try await data.fetchMessages(
                 conversation.id,
-                conversation.visibleAfterDate(for: userId)
+                conversation.visibleAfterDate(for: userId),
+                nil
             )
+            messages = page
+            // Pagina piena = quasi certamente ce n'è ancora sopra.
+            hasOlderMessages = page.count >= MessageService.pageSize
         } catch {
             BrindooLog.error("chat load: \(error)")
+        }
+    }
+
+    /// Aggiunge in cima la pagina precedente. Il primo messaggio a schermo fa
+    /// da segnaposto: si chiede solo quello che sta prima di lui, così una
+    /// conversazione lunga non viene mai scaricata tutta insieme.
+    func loadOlderMessages() async {
+        guard !isLoadingOlder, hasOlderMessages,
+              let userId = currentUserId,
+              let oldest = messages.first else { return }
+
+        isLoadingOlder = true
+        defer { isLoadingOlder = false }
+
+        do {
+            let page = try await data.fetchMessages(
+                conversation.id,
+                conversation.visibleAfterDate(for: userId),
+                oldest.createdAt
+            )
+            guard !page.isEmpty else {
+                hasOlderMessages = false
+                return
+            }
+            // Il filtro è "prima di", quindi doppioni non dovrebbero
+            // arrivare: la difesa costa poco e vale per sempre.
+            let known = Set(messages.map(\.id))
+            messages.insert(contentsOf: page.filter { !known.contains($0.id) }, at: 0)
+            hasOlderMessages = page.count >= MessageService.pageSize
+        } catch {
+            BrindooLog.error("chat older: \(error)")
         }
     }
 

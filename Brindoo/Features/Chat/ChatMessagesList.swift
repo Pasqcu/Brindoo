@@ -24,10 +24,20 @@ struct ChatMessagesList: View {
     let onReport: (Message) -> Void
     let onRefresh: () async -> Void
 
+    /// Storia più vecchia di quella a schermo: la chat apre sull'ultima
+    /// pagina e si risale a richiesta.
+    var hasOlderMessages: Bool = false
+    var isLoadingOlder: Bool = false
+    var onLoadOlder: () async -> Void = {}
+
     var body: some View {
         ScrollViewReader { proxy in
             ScrollView {
                 LazyVStack(spacing: BrindooSpacing.xs) {
+                    if hasOlderMessages {
+                        olderMessagesButton
+                    }
+
                     ForEach(messages) { message in
                         let isOwn = message.senderId == currentUserId
                         if message.messageType == .system {
@@ -54,10 +64,12 @@ struct ChatMessagesList: View {
                 .padding(.horizontal, BrindooSpacing.sm)
                 .padding(.vertical, BrindooSpacing.sm)
             }
-            .onChange(of: messages.count) { _, _ in
-                if let last = messages.last {
-                    withAnimation { proxy.scrollTo(last.id, anchor: .bottom) }
-                }
+            // Si segue l'ultimo messaggio, non il conteggio: caricando la
+            // storia vecchia il numero cresce ma in fondo non è arrivato
+            // niente, e saltare giù butterebbe via il punto di lettura.
+            .onChange(of: messages.last?.id) { _, last in
+                guard let last else { return }
+                withAnimation { proxy.scrollTo(last, anchor: .bottom) }
             }
             .onAppear {
                 if let last = messages.last {
@@ -66,6 +78,26 @@ struct ChatMessagesList: View {
             }
             .refreshable { await onRefresh() }
         }
+    }
+
+    private var olderMessagesButton: some View {
+        Group {
+            if isLoadingOlder {
+                ProgressView()
+                    .tint(Color.brindooCoral)
+            } else {
+                Button {
+                    Task { await onLoadOlder() }
+                } label: {
+                    Text("Mostra messaggi precedenti")
+                        .font(BrindooFont.caption.weight(.semibold))
+                        .foregroundStyle(Color.brindooCoral)
+                }
+                .buttonStyle(.plain)
+            }
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, BrindooSpacing.sm)
     }
 
     private func repliedToMessage(for message: Message) -> Message? {

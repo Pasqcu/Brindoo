@@ -20,21 +20,45 @@ final class MessageService {
     // MARK: - Fetch
     
     /// Fetch messaggi della conversazione, applicando soft-delete date
-    func fetchMessages(conversationId: UUID, visibleAfter: Date? = nil) async throws -> [Message] {
+    /// Quanti messaggi si prendono per volta. Prima si scaricava l'intera
+    /// conversazione a ogni apertura: con poche decine di messaggi non si
+    /// nota, con qualche migliaio la chat impiega secondi ad aprirsi e
+    /// occupa memoria per roba che nessuno guarderà.
+    static let pageSize = 60
+
+    /// Ultimi messaggi della conversazione, dal più vecchio al più recente.
+    /// - Parameters:
+    ///   - visibleAfter: taglia via quelli precedenti alla pulizia della chat.
+    ///   - before: per risalire indietro, la data del più vecchio già a schermo.
+    func fetchMessages(
+        conversationId: UUID,
+        visibleAfter: Date? = nil,
+        before: Date? = nil,
+        limit: Int = MessageService.pageSize
+    ) async throws -> [Message] {
         var query = client
             .from("messages")
             .select()
             .eq("conversation_id", value: conversationId)
-        
+
         if let visibleAfter {
             let iso = BrindooFormat.iso(visibleAfter)
             query = query.gt("created_at", value: iso)
         }
-        
-        let result: [Message] = try await query
-            .order("created_at", ascending: true)
+
+        if let before {
+            query = query.lt("created_at", value: BrindooFormat.iso(before))
+        }
+
+        // Si chiede la coda della conversazione (i più recenti) e poi si
+        // rigira: il database non sa dare "gli ultimi N" in ordine crescente.
+        let page: [Message] = try await query
+            .order("created_at", ascending: false)
+            .limit(limit)
             .execute()
             .value
+
+        let result: [Message] = page.reversed()
         
         return result
     }
