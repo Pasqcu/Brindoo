@@ -293,6 +293,11 @@ struct PaywallView: View {
     private static let successToastSeconds: Double = 2
     private static let dismissAfterToastSeconds: Double = 0.3
 
+    /// Pagamento incassato da Apple ma abbonamento non ancora registrato da noi:
+    /// non è perso, viene ritentato da solo alla riapertura dell'app.
+    private static let pendingActivationMessage =
+        "Pagamento ricevuto. L'attivazione sta richiedendo più del previsto: riapri l'app tra qualche minuto e Brindoo Pro parte da solo. Se non succede, scrivici da Impostazioni → Assistenza."
+
     private func purchase(_ product: Product) async {
         isLoading = true
         errorMessage = nil
@@ -303,21 +308,27 @@ struct PaywallView: View {
         switch result {
         case .success:
             // Aspetta che il server abbia davvero registrato l'abbonamento,
-            // invece di scommettere su mezzo secondo.
-            if let profile = await ProfileService.shared.awaitProfile(where: { $0.isPro }) {
-                session.updateLocalProfile(profile)
+            // invece di scommettere su mezzo secondo. Se non arriva, niente
+            // coriandoli: chi ha pagato deve leggere com'è messo davvero.
+            guard let profile = await ProfileService.shared.awaitProfile(where: { $0.isPro }) else {
+                errorMessage = Self.pendingActivationMessage
+                return
             }
+            session.updateLocalProfile(profile)
 
             withAnimation { showSuccessToast = true }
             try? await Task.sleep(for: .seconds(Self.successToastSeconds))
             withAnimation { showSuccessToast = false }
             try? await Task.sleep(for: .seconds(Self.dismissAfterToastSeconds))
             dismiss()
-            
+
+        case .pendingActivation:
+            errorMessage = Self.pendingActivationMessage
+
         case .userCancelled:
             // Niente
             break
-            
+
         case .pending:
             errorMessage = "Acquisto in attesa di approvazione (es. parental controls)"
             

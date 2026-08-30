@@ -305,6 +305,11 @@ struct BoostView: View {
     private static let successToastSeconds: Double = 2
     private static let dismissAfterToastSeconds: Double = 0.3
 
+    /// Pagamento incassato da Apple ma diritto non ancora registrato da noi:
+    /// l'acquisto non è perso, viene ritentato da solo alla riapertura.
+    private static let pendingActivationMessage =
+        "Pagamento ricevuto. L'attivazione sta richiedendo più del previsto: riapri l'app tra qualche minuto e il Boost parte da solo. Se non succede, scrivici da Impostazioni → Assistenza."
+
     private func purchase(_ product: Product) async {
         isLoading = true
         errorMessage = nil
@@ -315,18 +320,25 @@ struct BoostView: View {
         switch result {
         case .success:
             // Il Boost è attivo quando il server l'ha scritto sul profilo.
-            if let profile = await ProfileService.shared.awaitProfile(where: { $0.isBoosted }) {
-                session.updateLocalProfile(profile)
+            // Se dopo l'attesa il profilo non risulta ancora in evidenza non
+            // festeggiamo: l'utente ha pagato e deve sapere com'è messo.
+            guard let profile = await ProfileService.shared.awaitProfile(where: { $0.isBoosted }) else {
+                errorMessage = Self.pendingActivationMessage
+                return
             }
+            session.updateLocalProfile(profile)
             withAnimation { showSuccessToast = true }
             try? await Task.sleep(for: .seconds(Self.successToastSeconds))
             withAnimation { showSuccessToast = false }
             try? await Task.sleep(for: .seconds(Self.dismissAfterToastSeconds))
             dismiss()
-            
+
+        case .pendingActivation:
+            errorMessage = Self.pendingActivationMessage
+
         case .userCancelled:
             break
-            
+
         case .pending:
             errorMessage = "Acquisto in attesa di approvazione"
             

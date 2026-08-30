@@ -86,11 +86,15 @@ final class PurchaseService {
     
     enum PurchaseResult {
         case success
+        /// Pagamento riuscito ma il server non ha ancora registrato il diritto.
+        /// La transazione resta aperta: StoreKit la riconsegna al prossimo avvio
+        /// finché la registrazione non riesce, quindi l'acquisto non si perde.
+        case pendingActivation
         case userCancelled
         case pending          // attesa autorizzazione (es. parental controls)
         case failed(Error)
     }
-    
+
     /// Avvia l'acquisto di un prodotto
     func purchase(_ product: Product) async -> PurchaseResult {
         do {
@@ -103,7 +107,14 @@ final class PurchaseService {
                 // serve anche la re-verifica server-side. Passiamo il JWS firmato
                 // alla Edge Function `validate-iap-receipt` che verifica la firma
                 // Apple e aggiorna gli entitlement con service_role.
-                await submitToServer(verification: verification)
+                //
+                // La transazione si chiude SOLO se il server l'ha registrata:
+                // chiuderla prima significava, con una rete ballerina, incassare
+                // un Boost e non consegnarlo mai (i consumabili chiusi non
+                // ricompaiono più in `currentEntitlements`).
+                guard await submitToServer(verification: verification) else {
+                    return .pendingActivation
+                }
                 await transaction.finish()
                 return .success
 
@@ -149,9 +160,19 @@ final class PurchaseService {
     /// e `boost_expires_at` direttamente: il trigger DB (vedi migration
     /// 20260515_reports_and_compliance.sql) li blocca per i client.
     func refreshEntitlements() async {
+        guard SupabaseManager.shared.currentUserID != nil else { return }
+
         for await result in Transaction.currentEntitlements {
-            guard SupabaseManager.shared.currentUserID != nil else { return }
-            await submitToServer(verification: result)
+            _ = await submitToServer(verification: result)
+        }
+
+        // Acquisti pagati e mai registrati sul server (rete caduta a metà):
+        // si riprova adesso e si chiudono solo quando il server li accetta.
+        for await result in Transaction.unfinished {
+            guard case .verified(let transaction) = result else { continue }
+            if await submitToServer(verification: result) {
+                await transaction.finish()
+            }
         }
     }
 
@@ -166,7 +187,10 @@ final class PurchaseService {
 
     /// Invia il JWS firmato Apple alla Edge Function `validate-iap-receipt`,
     /// che ne verifica la firma e aggiorna l'entitlement DB con service_role.
-    private func submitToServer(verification: VerificationResult<Transaction>) async {
+    /// - Returns: `true` se il server ha registrato il diritto. Chi chiama usa
+    ///   l'esito per decidere se chiudere la transazione StoreKit.
+    @discardableResult
+    private func submitToServer(verification: VerificationResult<Transaction>) async -> Bool {
         // Estraggo il JWS originale firmato da Apple.
         // `jwsRepresentation` è disponibile solo su VerificationResult<Transaction>
         // (e su altre specializzazioni concrete), non sul generico.
@@ -181,8 +205,10 @@ final class PurchaseService {
                     )
                 )
             BrindooLog.info("Entitlement validato server-side")
+            return true
         } catch {
             BrindooLog.error("Errore validazione server-side: \(error)")
+            return false
         }
     }
 
@@ -195,9 +221,12 @@ final class PurchaseService {
                 // Verifica client-side rapida (per sicurezza locale).
                 do {
                     let transaction = try await self.checkVerified(result)
-                    // Invia al server per la verifica autoritativa.
-                    await self.submitToServer(verification: result)
-                    await transaction.finish()
+                    // Invia al server per la verifica autoritativa. Se il server
+                    // non risponde, la transazione resta aperta e StoreKit la
+                    // ripropone: meglio riprovare che perdere un acquisto pagato.
+                    if await self.submitToServer(verification: result) {
+                        await transaction.finish()
+                    }
                 } catch {
                     BrindooLog.error("Transazione non verificata: \(error)")
                 }
