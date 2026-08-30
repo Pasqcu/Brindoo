@@ -71,7 +71,7 @@ final class SessionStore {
             let session = try await SupabaseManager.shared.auth.session
             self.applyUser(session.user)
             await loadProfileAndUpdateState()
-            BrindooLog.info("Sessione attiva trovata per: \(session.user.email ?? "nessuna email")")
+            BrindooLog.info("Sessione attiva trovata")
         } catch {
             self.clearUser()
             self.setAuthState(.signedOut)

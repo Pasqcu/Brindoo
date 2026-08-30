@@ -84,7 +84,7 @@ final class NotificationService {
     /// Chiamato da AppDelegate quando APNs restituisce il device token.
     func saveDeviceToken(_ token: Data) async {
         let tokenString = token.map { String(format: "%02x", $0) }.joined()
-        BrindooLog.info("Push token: \(tokenString)")
+        BrindooLog.info("Token push ricevuto (\(tokenString.count) caratteri)")
 
         guard let userId = SupabaseManager.shared.currentUserID else {
             // Non loggato: salviamo il token solo quando l'utente farà login

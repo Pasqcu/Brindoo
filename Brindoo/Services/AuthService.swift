@@ -186,7 +186,7 @@ final class AuthService {
                 password: password,
                 redirectTo: redirectURL
             )
-            BrindooLog.info("Registrazione completata per: \(trimmedEmail)")
+            BrindooLog.info("Registrazione completata")
         } catch {
             BrindooLog.error("Errore registrazione: \(error)")
             throw mapError(error)
@@ -210,7 +210,7 @@ final class AuthService {
                 email: trimmedEmail,
                 password: password
             )
-            BrindooLog.info("Login effettuato per: \(trimmedEmail)")
+            BrindooLog.info("Login effettuato")
         } catch {
             BrindooLog.error("Errore login: \(error)")
             throw mapError(error)
@@ -342,7 +342,7 @@ final class AuthService {
 
         do {
             _ = try await auth.update(user: UserAttributes(email: trimmed))
-            BrindooLog.info("Richiesta cambio email inviata a: \(trimmed)")
+            BrindooLog.info("Richiesta cambio email inviata")
         } catch {
             BrindooLog.error("Errore cambio email: \(error)")
             throw mapError(error)
@@ -363,7 +363,7 @@ final class AuthService {
                 trimmedEmail,
                 redirectTo: redirectURL
             )
-            BrindooLog.info("Email di reset password inviata a: \(trimmedEmail)")
+            BrindooLog.info("Email di reset password inviata")
         } catch {
             BrindooLog.error("Errore reset password: \(error)")
             throw mapError(error)
