@@ -27,6 +27,40 @@ struct PortfolioPagerView: View {
     @State private var currentItemID: PortfolioItem.ID?
     @State private var itemToReport: PortfolioItem?
 
+    /// Quanto la foto è stata trascinata verso il basso per chiudere.
+    @State private var dragDown: CGFloat = 0
+
+    /// Oltre questa distanza si chiude; sotto, la foto torna al suo posto.
+    private static let dismissDistance: CGFloat = 140
+
+    /// Da 0 (ferma) a 1 (sul punto di chiudersi): rimpicciolisce la foto e
+    /// smorza le scritte sopra, così il gesto si vede mentre lo si fa.
+    private var dragProgress: CGFloat {
+        min(dragDown / (Self.dismissDistance * 2), 1)
+    }
+
+    /// Trascinamento verso il basso per chiudere, come nelle Foto di iOS.
+    /// È `simultaneousGesture` perché sotto c'è uno scorrimento orizzontale:
+    /// i due non si escludono, e qui si guardano solo i movimenti in cui la
+    /// componente verticale supera quella orizzontale.
+    private var dismissDrag: some Gesture {
+        DragGesture(minimumDistance: 12)
+            .onChanged { value in
+                guard abs(value.translation.height) > abs(value.translation.width) else { return }
+                dragDown = max(0, value.translation.height)
+            }
+            .onEnded { value in
+                let lanciata = value.predictedEndTranslation.height > Self.dismissDistance * 2
+                if dragDown > Self.dismissDistance || (dragDown > 0 && lanciata) {
+                    dismiss()
+                } else {
+                    withAnimation(.spring(response: 0.3, dampingFraction: 0.85)) {
+                        dragDown = 0
+                    }
+                }
+            }
+    }
+
     init(items: [PortfolioItem], startIndex: Int, isOwner: Bool = false) {
         self.items = items
         self.startIndex = startIndex
@@ -78,6 +112,9 @@ struct PortfolioPagerView: View {
                 .scrollPosition(id: $currentItemID)
             }
             .ignoresSafeArea()
+            .offset(y: dragDown)
+            .scaleEffect(1 - dragProgress * 0.12)
+            .simultaneousGesture(dismissDrag)
 
             // Overlay: header con X + contatore
             VStack {
@@ -134,6 +171,8 @@ struct PortfolioPagerView: View {
                         .background(Color.black.opacity(0.5))
                 }
             }
+            // Mentre si trascina per chiudere, le scritte si tolgono di mezzo.
+            .opacity(1 - dragProgress)
         }
         .presentationBackground(.black)
         .sheet(item: $itemToReport) { item in
