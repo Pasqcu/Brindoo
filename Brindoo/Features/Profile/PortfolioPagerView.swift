@@ -27,37 +27,61 @@ struct PortfolioPagerView: View {
     @State private var currentItemID: PortfolioItem.ID?
     @State private var itemToReport: PortfolioItem?
 
-    /// Quanto la foto è stata trascinata verso il basso per chiudere.
-    @State private var dragDown: CGFloat = 0
+    /// Di quanto la foto è stata spostata dal dito mentre si chiude. Segue il
+    /// dito anche di lato: durante la chiusura la foto è un oggetto che si
+    /// sposta, non una pagina che scorre.
+    @State private var drag: CGSize = .zero
+
+    /// Asse deciso. Appena il gesto si rivela verticale lo scorrimento
+    /// orizzontale viene spento: senza questo, muovendo il dito di traverso
+    /// mentre si trascina giù, la pagina continuava a scorrere e spuntava la
+    /// foto vicina accanto a quella che si sta chiudendo.
+    @State private var isDismissing = false
 
     /// Oltre questa distanza si chiude; sotto, la foto torna al suo posto.
     private static let dismissDistance: CGFloat = 140
 
+    /// Stacco fra una foto e l'altra: si vede solo mentre si sfoglia, e serve
+    /// a non far sembrare due foto accostate una cosa sola.
+    private static let pageGap: CGFloat = 24
+
     /// Da 0 (ferma) a 1 (sul punto di chiudersi): rimpicciolisce la foto e
     /// smorza le scritte sopra, così il gesto si vede mentre lo si fa.
     private var dragProgress: CGFloat {
-        min(dragDown / (Self.dismissDistance * 2), 1)
+        min(max(drag.height, 0) / (Self.dismissDistance * 2), 1)
     }
 
     /// Trascinamento verso il basso per chiudere, come nelle Foto di iOS.
     /// È `simultaneousGesture` perché sotto c'è uno scorrimento orizzontale:
-    /// i due non si escludono, e qui si guardano solo i movimenti in cui la
-    /// componente verticale supera quella orizzontale.
+    /// i due non si escludono. L'asse si decide una volta sola, al primo
+    /// movimento utile, e non cambia più fino al rilascio: così un gesto
+    /// storto resta quello che era all'inizio invece di fare le due cose
+    /// insieme.
     private var dismissDrag: some Gesture {
-        DragGesture(minimumDistance: 12)
+        DragGesture(minimumDistance: 10)
             .onChanged { value in
-                guard abs(value.translation.height) > abs(value.translation.width) else { return }
-                dragDown = max(0, value.translation.height)
+                if !isDismissing {
+                    guard value.translation.height > 0,
+                          abs(value.translation.height) > abs(value.translation.width)
+                    else { return }
+                    isDismissing = true
+                }
+                drag = CGSize(
+                    width: value.translation.width,
+                    height: max(0, value.translation.height)
+                )
             }
             .onEnded { value in
+                guard isDismissing else { return }
                 let lanciata = value.predictedEndTranslation.height > Self.dismissDistance * 2
-                if dragDown > Self.dismissDistance || (dragDown > 0 && lanciata) {
+                if drag.height > Self.dismissDistance || (drag.height > 0 && lanciata) {
                     dismiss()
                 } else {
-                    withAnimation(.spring(response: 0.3, dampingFraction: 0.85)) {
-                        dragDown = 0
+                    withAnimation(.spring(response: 0.32, dampingFraction: 0.86)) {
+                        drag = .zero
                     }
                 }
+                isDismissing = false
             }
     }
 
@@ -91,7 +115,7 @@ struct PortfolioPagerView: View {
             // ritaglia ogni pagina alla larghezza dello schermo.
             GeometryReader { geo in
                 ScrollView(.horizontal) {
-                    LazyHStack(spacing: 0) {
+                    LazyHStack(spacing: Self.pageGap) {
                         ForEach(items) { item in
                             Group {
                                 if item.isVideo {
@@ -107,12 +131,17 @@ struct PortfolioPagerView: View {
                     }
                     .scrollTargetLayout()
                 }
-                .scrollTargetBehavior(.paging)
+                // `.viewAligned` invece di `.paging`: con lo stacco fra le
+                // foto, l'aggancio va fatto sul bordo della foto, non su
+                // multipli della larghezza dello schermo — altrimenti a ogni
+                // pagina il disallineamento cresce dello stacco.
+                .scrollTargetBehavior(.viewAligned)
                 .scrollIndicators(.hidden)
                 .scrollPosition(id: $currentItemID)
+                .scrollDisabled(isDismissing)
             }
             .ignoresSafeArea()
-            .offset(y: dragDown)
+            .offset(x: drag.width, y: drag.height)
             .scaleEffect(1 - dragProgress * 0.12)
             .simultaneousGesture(dismissDrag)
 
