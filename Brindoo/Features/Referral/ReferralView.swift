@@ -73,13 +73,23 @@ struct ReferralView: View {
         .task { await vm.load() }
         .refreshable { await vm.refresh() }
         .sheet(isPresented: $showShare) {
-            if let url = vm.code?.shareURL {
-                ShareSheet(items: [
-                    "Usa il mio codice \(vm.code?.displayCode ?? "") su Brindoo e ottieni 1 mese Pro gratis!",
-                    url
-                ])
-            }
+            ShareSheet(items: shareItems)
         }
+    }
+
+    /// Cosa esce dal tasto "Condividi". Il codice sta nel testo, così l'invito
+    /// funziona anche senza indirizzo web: finché il sito non c'è,
+    /// `shareURL` è `nil` e non spediamo un link che non apre niente.
+    private var shareItems: [Any] {
+        let code = vm.code?.displayCode ?? ""
+        var items: [Any] = [
+            "Usa il mio codice \(code) su Brindoo e ottieni 1 mese Pro gratis! "
+            + "Installa l'app, poi inseriscilo in Profilo → Invita amici."
+        ]
+        if let url = vm.code?.shareURL {
+            items.append(url)
+        }
+        return items
     }
 
     // MARK: - Hero

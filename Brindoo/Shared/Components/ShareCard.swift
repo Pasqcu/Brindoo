@@ -197,7 +197,10 @@ private struct ShareCardFooter: View {
             Text(text)
                 .font(.system(size: 13, weight: .semibold, design: .rounded))
             Spacer()
-            Text("brindoo.app")
+            // Finché il sito non è in piedi la cartolina non stampa un
+            // indirizzo che non porta da nessuna parte (vedi
+            // `BrindooLink.isWebsiteLive`).
+            Text(BrindooLink.isWebsiteLive ? "brindoo.app" : "Brindoo")
                 .font(.system(size: 13, weight: .bold, design: .rounded))
         }
         .foregroundStyle(.white)

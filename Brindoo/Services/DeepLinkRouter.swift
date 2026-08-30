@@ -24,12 +24,30 @@ nonisolated enum BrindooLink {
         case referral = "r"
     }
 
+    /// Il sito pubblico non esiste ancora: `brindoo.app` non è nemmeno
+    /// registrato, quindi un link condiviso oggi finisce su "impossibile
+    /// aprire la pagina". Finché resta `false` si condividono cartolina e
+    /// testo senza indirizzo. Quando il sito sarà in piedi (con il file
+    /// apple-app-site-association e il permesso "domini associati" nel
+    /// profilo dell'app) basta rimettere `true` qui e i link tornano.
+    static let isWebsiteLive = false
+
     static func url(_ kind: Kind, _ value: String) -> URL? {
         URL(string: "\(host)/\(kind.rawValue)/\(value)")
     }
 
     static func url(_ kind: Kind, _ id: UUID) -> URL? {
         url(kind, id.uuidString)
+    }
+
+    /// L'indirizzo da mettere in una condivisione: `nil` finché il sito non
+    /// c'è, così non spediamo in giro link morti.
+    static func shareURL(_ kind: Kind, _ value: String) -> URL? {
+        isWebsiteLive ? url(kind, value) : nil
+    }
+
+    static func shareURL(_ kind: Kind, _ id: UUID) -> URL? {
+        shareURL(kind, id.uuidString)
     }
 
     /// Riconosce un link condiviso e ne estrae tipo e valore.

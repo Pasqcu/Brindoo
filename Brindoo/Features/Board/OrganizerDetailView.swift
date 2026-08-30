@@ -314,7 +314,7 @@ struct OrganizerDetailView: View {
 
         shareItems = SharePayload(
             card: ShareCardRenderer.render(card),
-            link: BrindooLink.url(.profile, organizer.id)
+            link: BrindooLink.shareURL(.profile, organizer.id)
         )
     }
 

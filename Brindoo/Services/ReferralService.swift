@@ -27,7 +27,7 @@ struct ReferralCode: Codable, Identifiable, Equatable {
     }
 
     var shareURL: URL? {
-        BrindooLink.url(.referral, code)
+        BrindooLink.shareURL(.referral, code)
     }
 
     var displayCode: String {

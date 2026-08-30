@@ -305,7 +305,7 @@ struct OfferDetailView: View {
 
         shareItems = SharePayload(
             card: ShareCardRenderer.render(card),
-            link: BrindooLink.url(.offer, offer.id)
+            link: BrindooLink.shareURL(.offer, offer.id)
         )
     }
 
