@@ -222,7 +222,12 @@ struct PortfolioGalleryView: View {
                 // FIX #15: apri preview a partire dall'indice toccato
                 previewStartIndex = index
             } label: {
-                BrindooCachedImage(url: URL(string: item.thumbnailUrl)) { phase in
+                // La misura chiesta e' quella della cella: `maxPixelSize` e'
+                // in punti e il magazzino ci moltiplica la densita' dello
+                // schermo. Col valore di serie (1400) ogni riquadro da ~130
+                // punti si portava dietro una foto da 4200 pixel: memoria
+                // sprecata e scorrimento a scatti.
+                BrindooCachedImage(url: URL(string: item.thumbnailUrl), maxPixelSize: size) { phase in
                     switch phase {
                     case .empty:
                         ZStack {

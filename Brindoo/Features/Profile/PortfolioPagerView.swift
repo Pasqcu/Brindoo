@@ -22,33 +22,61 @@ struct PortfolioPagerView: View {
     var isOwner: Bool = false
 
     @Environment(\.dismiss) private var dismiss
-    @State private var currentIndex: Int
+    /// La pagina si segue per identità della foto, non per numero: è quello
+    /// che `scrollPosition` sa restituire, e non si sfasa se l'elenco cambia.
+    @State private var currentItemID: PortfolioItem.ID?
     @State private var itemToReport: PortfolioItem?
 
     init(items: [PortfolioItem], startIndex: Int, isOwner: Bool = false) {
         self.items = items
         self.startIndex = startIndex
         self.isOwner = isOwner
-        self._currentIndex = State(initialValue: startIndex)
+        self._currentItemID = State(initialValue: items[safe: startIndex]?.id)
+    }
+
+    private var currentItem: PortfolioItem? {
+        items.first { $0.id == currentItemID }
+    }
+
+    private var currentIndex: Int {
+        items.firstIndex { $0.id == currentItemID } ?? 0
     }
 
     var body: some View {
         ZStack {
             Color.black.ignoresSafeArea()
 
-            // Pager con swipe orizzontale
-            TabView(selection: $currentIndex) {
-                ForEach(Array(items.enumerated()), id: \.element.id) { index, item in
-                    if item.isVideo {
-                        PortfolioVideoPage(urlString: item.imageUrl)
-                            .tag(index)
-                    } else {
-                        photoView(item)
-                            .tag(index)
+            // Scorrimento orizzontale con aggancio a pagina.
+            //
+            // Prima qui c'era un `TabView` in stile `.page`: con le foto
+            // ridimensionate a proporzione (che lasciano margini neri) non si
+            // fermava mai esatto sul bordo, e restava a schermo una striscia
+            // della foto seguente — l'accavallamento che si vedeva sfogliando,
+            // riprodotto e misurato in un pager di prova. Lo scorrimento con
+            // `.scrollTargetBehavior(.paging)` si ferma al pixel giusto e
+            // ritaglia ogni pagina alla larghezza dello schermo.
+            GeometryReader { geo in
+                ScrollView(.horizontal) {
+                    LazyHStack(spacing: 0) {
+                        ForEach(items) { item in
+                            Group {
+                                if item.isVideo {
+                                    PortfolioVideoPage(urlString: item.imageUrl)
+                                } else {
+                                    photoView(item, maxSide: max(geo.size.width, geo.size.height))
+                                }
+                            }
+                            .frame(width: geo.size.width, height: geo.size.height)
+                            .clipped()
+                            .id(item.id)
+                        }
                     }
+                    .scrollTargetLayout()
                 }
+                .scrollTargetBehavior(.paging)
+                .scrollIndicators(.hidden)
+                .scrollPosition(id: $currentItemID)
             }
-            .tabViewStyle(.page(indexDisplayMode: .never))
             .ignoresSafeArea()
 
             // Overlay: header con X + contatore
@@ -64,7 +92,7 @@ struct PortfolioPagerView: View {
 
                     Spacer()
 
-                    if !isOwner, let current = items[safe: currentIndex] {
+                    if !isOwner, let current = currentItem {
                         Menu {
                             Button(role: .destructive) {
                                 itemToReport = current
@@ -97,7 +125,7 @@ struct PortfolioPagerView: View {
                 Spacer()
 
                 // Caption (se presente)
-                if let caption = items[safe: currentIndex]?.caption, !caption.isEmpty {
+                if let caption = currentItem?.caption, !caption.isEmpty {
                     Text(caption)
                         .font(BrindooFont.bodyLarge)
                         .foregroundStyle(.white)
@@ -117,9 +145,11 @@ struct PortfolioPagerView: View {
         }
     }
     
+    /// `maxSide` e' il lato lungo dello schermo in punti: piu' di cosi' non
+    /// si vede, e decodificare oltre costa solo memoria.
     @ViewBuilder
-    private func photoView(_ item: PortfolioItem) -> some View {
-        BrindooCachedImage(url: URL(string: item.imageUrl)) { phase in
+    private func photoView(_ item: PortfolioItem, maxSide: CGFloat) -> some View {
+        BrindooCachedImage(url: URL(string: item.imageUrl), maxPixelSize: maxSide) { phase in
             switch phase {
             case .empty:
                 ProgressView().tint(.white)
