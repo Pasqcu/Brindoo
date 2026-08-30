@@ -403,7 +403,14 @@ final class MessageService {
                 }
             },
             Task {
-                _ = try? await channel.subscribeWithError()
+                do {
+                    try await channel.subscribeWithError()
+                } catch {
+                    // Senza questa riga un aggancio fallito e' muto: la chat
+                    // smette di aggiornarsi da sola e l'unica traccia e' il
+                    // messaggio del socket, uguale a quello innocuo.
+                    BrindooLog.error("Realtime messaggi non agganciato: \(error)")
+                }
             }
         ]
 

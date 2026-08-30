@@ -54,7 +54,11 @@ final class TypingService {
         }
 
         Task {
-            try? await channel.subscribeWithError()
+            do {
+                try await channel.subscribeWithError()
+            } catch {
+                BrindooLog.error("Realtime «sta scrivendo» non agganciato: \(error)")
+            }
         }
 
         channels[conversationId] = ChannelState(channel: channel, lastSentAt: nil)

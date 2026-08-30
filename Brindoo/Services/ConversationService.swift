@@ -88,7 +88,11 @@ final class ConversationService {
             Task { for await _ in messagesStream { onChange() } }
         ]
 
-        try? await channel.subscribeWithError()
+        do {
+            try await channel.subscribeWithError()
+        } catch {
+            BrindooLog.error("Realtime lista chat non agganciato: \(error)")
+        }
         self.realtimeChannel = channel
     }
 
