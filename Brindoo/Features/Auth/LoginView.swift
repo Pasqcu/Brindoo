@@ -18,15 +18,7 @@ struct LoginView: View {
     @State private var showForgotPassword: Bool = false
     @State private var navigateToSignUp: Bool = false
 
-    /// Accettazione persistita. Se vuota significa che l'utente non l'ha ancora
-    /// accettata su questo dispositivo (es. dopo reinstallazione): mostriamo
-    /// comunque la checkbox prima di consentire Apple Sign In o login.
-    @AppStorage("brindoo.legal.acceptedTermsAt") private var acceptedTermsAt: String = ""
     @State private var legalDocument: LegalDocument?
-
-    private var hasAcceptedTerms: Bool {
-        !acceptedTermsAt.isEmpty
-    }
     
     var body: some View {
         ScrollView {
@@ -39,9 +31,7 @@ struct LoginView: View {
                     .frame(maxWidth: .infinity)
                     .padding(.top, BrindooSpacing.xs)
 
-                if !hasAcceptedTerms {
-                    consentCheckbox
-                }
+                legalNote
 
                 VStack(spacing: BrindooSpacing.xs) {
                     // Sign in with Apple
@@ -58,9 +48,6 @@ struct LoginView: View {
                         }
                     }
                 }
-                .disabled(!hasAcceptedTerms)
-                .opacity(hasAcceptedTerms ? 1 : 0.4)
-                .allowsHitTesting(hasAcceptedTerms)
 
                 HStack {
                     Rectangle().fill(Color.brindooBorder).frame(height: 1)
@@ -108,8 +95,7 @@ struct LoginView: View {
                         "Accedi",
                         style: .primary,
                         size: .large,
-                        isLoading: isLoading,
-                        isDisabled: !hasAcceptedTerms
+                        isLoading: isLoading
                     ) {
                         Task { await performLogin() }
                     }
@@ -160,36 +146,18 @@ struct LoginView: View {
     }
 
     @ViewBuilder
-    private var consentCheckbox: some View {
-        // I link ai documenti stanno fuori dal pulsante della spunta: dentro il suo
-        // label il tocco verrebbe intercettato e non si aprirebbero mai.
+    /// Nota legale, non un lucchetto. Chi accede ha già un account e i
+    /// Termini li ha già accettati: se nel frattempo sono cambiati, o se
+    /// la prova sul server manca, ci pensa `LegalConsentGate` a farli
+    /// rifirmare appena dentro. La spunta obbligatoria resta dov'è utile,
+    /// cioè sulla creazione dell'account.
+    private var legalNote: some View {
         VStack(alignment: .leading, spacing: BrindooSpacing.xs) {
-            Button {
-                withAnimation(BrindooAnimation.quickEase) {
-                    acceptedTermsAt = hasAcceptedTerms
-                        ? ""
-                        : BrindooFormat.isoNow
-                }
-            } label: {
-                HStack(alignment: .top, spacing: BrindooSpacing.sm) {
-                    Image(systemName: hasAcceptedTerms ? "checkmark.square.fill" : "square")
-                        .font(.system(size: 20))
-                        .foregroundStyle(
-                            hasAcceptedTerms ? Color.brindooCoral : Color.brindooBorder
-                        )
-
-                    Text("Confermo di avere almeno 18 anni e di accettare i Termini e la Privacy Policy di Brindoo.")
-                        .font(BrindooFont.caption)
-                        .foregroundStyle(Color.brindooTextPrimary)
-                        .multilineTextAlignment(.leading)
-                        .fixedSize(horizontal: false, vertical: true)
-
-                    Spacer(minLength: 0)
-                }
-                .contentShape(Rectangle())
-            }
-            .buttonStyle(.plain)
-            .accessibilityAddTraits(hasAcceptedTerms ? [.isSelected] : [])
+            Text("Accedendo confermi di accettare i Termini di Servizio e la Privacy Policy di Brindoo.")
+                .font(BrindooFont.caption)
+                .foregroundStyle(Color.brindooTextSecondary)
+                .multilineTextAlignment(.leading)
+                .fixedSize(horizontal: false, vertical: true)
 
             HStack(spacing: BrindooSpacing.xs) {
                 Button("Termini") { legalDocument = .terms }
@@ -201,13 +169,12 @@ struct LoginView: View {
                     .foregroundStyle(Color.brindooCoral)
             }
             .buttonStyle(.plain)
-            .padding(.leading, 20 + BrindooSpacing.sm)
         }
         .padding(BrindooSpacing.sm)
         .frame(maxWidth: .infinity, alignment: .leading)
         .brindooSurfaceBackground()
     }
-    
+
     private func performLogin() async {
         emailError = nil
         passwordError = nil

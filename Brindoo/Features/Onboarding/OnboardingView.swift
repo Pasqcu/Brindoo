@@ -142,8 +142,14 @@ struct OnboardingView: View {
                                     .font(BrindooFont.bodyMedium.weight(.semibold))
                                     .foregroundStyle(Color.brindooCoral)
                             }
-                            .disabled(!isLastSlide || !acceptedTermsAndAge)
-                            .opacity(acceptedTermsAndAge ? 1 : 0.4)
+                            // Chi ha già un account i Termini li ha già
+                            // accettati: tenerlo fuori finché non rispunta la
+                            // casella è solo un ostacolo, per giunta sulla
+                            // strada di chi vuole rientrare. La spunta resta
+                            // obbligatoria per creare l'account, e se i
+                            // Termini cambiano ci pensa LegalConsentGate a
+                            // farli rifirmare dentro l'app.
+                            .disabled(!isLastSlide)
                         }
                         .opacity(isLastSlide ? 1 : 0)
                         .allowsHitTesting(isLastSlide)
