@@ -33,9 +33,17 @@ const APNS_BUNDLE_ID = Deno.env.get("APNS_BUNDLE_ID")!;
 const APNS_PRIVATE_KEY = Deno.env.get("APNS_PRIVATE_KEY")!;
 const APNS_USE_SANDBOX = Deno.env.get("APNS_USE_SANDBOX") === "true";
 
-const APNS_HOST = APNS_USE_SANDBOX
+// Il token dice lui a quale ambiente appartiene: le build da Xcode usano
+// la sandbox, TestFlight e App Store la produzione. Si prova prima
+// l'ambiente indicato dal segreto e, se APNs risponde BadDeviceToken,
+// l'altro. Prima un segreto sbagliato faceva scartare (e cancellare)
+// tutti i token dell'altro ambiente.
+const APNS_PRIMARY_HOST = APNS_USE_SANDBOX
   ? "api.sandbox.push.apple.com"
   : "api.push.apple.com";
+const APNS_FALLBACK_HOST = APNS_USE_SANDBOX
+  ? "api.push.apple.com"
+  : "api.sandbox.push.apple.com";
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
@@ -149,9 +157,22 @@ async function sendToApns(
   notification: NotificationRow,
   badge: number,
 ): Promise<ApnsResult> {
+  const first = await sendToApnsHost(APNS_PRIMARY_HOST, deviceToken, notification, badge);
+  if (first.success || first.reason !== "BadDeviceToken") return first;
+  const second = await sendToApnsHost(APNS_FALLBACK_HOST, deviceToken, notification, badge);
+  // Il token si butta solo se nessuno dei due ambienti lo riconosce.
+  return second.success ? second : { ...second, shouldRemoveToken: first.shouldRemoveToken && second.shouldRemoveToken };
+}
+
+async function sendToApnsHost(
+  host: string,
+  deviceToken: string,
+  notification: NotificationRow,
+  badge: number,
+): Promise<ApnsResult> {
   const jwt = await getApnsJwt();
 
-  const url = `https://${APNS_HOST}/3/device/${deviceToken}`;
+  const url = `https://${host}/3/device/${deviceToken}`;
 
   const aps = {
     alert: {

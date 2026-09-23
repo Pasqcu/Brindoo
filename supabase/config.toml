@@ -434,3 +434,16 @@ enabled = true
 verify_jwt = true
 import_map = "./functions/notify-moderators/deno.json"
 entrypoint = "./functions/notify-moderators/index.ts"
+
+[functions.appstore-notifications]
+enabled = true
+# Chiamata da Apple senza JWT: l'autenticita' la da' la firma del payload.
+verify_jwt = false
+import_map = "./functions/appstore-notifications/deno.json"
+entrypoint = "./functions/appstore-notifications/index.ts"
+
+[functions.delete-account]
+enabled = true
+verify_jwt = true
+import_map = "./functions/delete-account/deno.json"
+entrypoint = "./functions/delete-account/index.ts"
