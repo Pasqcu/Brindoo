@@ -18,6 +18,11 @@ struct PaywallView: View {
     @State private var isLoading: Bool = false
     @State private var errorMessage: String?
     @State private var showSuccessToast: Bool = false
+    /// Esito del ripristino, quando è andato bene o non c'era nulla.
+    @State private var infoMessage: String?
+    /// Stato dell'abbonamento Apple (rinnovo automatico, scadenza).
+    @State private var subscriptionState: PurchaseService.SubscriptionState?
+    @State private var showManageSubscriptions: Bool = false
     
     var body: some View {
         NavigationStack {
@@ -63,6 +68,14 @@ struct PaywallView: View {
                     if isCurrentlyPro {
                         currentStatusCard
                     }
+
+                    if purchaseService.subscriptionOwnedByOtherAccount && !isCurrentlyPro {
+                        BrindooBanner(
+                            style: .info,
+                            title: "Abbonamento su un altro account",
+                            message: "Questo ID Apple ha già Brindoo Pro, collegato a un altro account Brindoo. Per usarlo accedi con quell'account."
+                        )
+                    }
                     
                     // Prodotto / bottone
                     if let product = purchaseService.product(for: BrindooProduct.proMonthly) {
@@ -82,6 +95,10 @@ struct PaywallView: View {
                     
                     if let errorMessage {
                         BrindooInlineError(errorMessage)
+                    }
+
+                    if let infoMessage {
+                        BrindooBanner(style: .success, title: infoMessage)
                     }
                 }
                 .padding(.horizontal, BrindooSpacing.lg)
@@ -115,7 +132,9 @@ struct PaywallView: View {
             }
             .task {
                 await purchaseService.loadProducts()
+                subscriptionState = await purchaseService.proSubscriptionState()
             }
+            .manageSubscriptionsSheet(isPresented: $showManageSubscriptions)
             .overlay {
                 if showSuccessToast {
                     successToast
@@ -163,7 +182,7 @@ struct PaywallView: View {
             VStack(alignment: .leading, spacing: 2) {
                 Text("Sei già Pro!")
                     .font(BrindooFont.titleSmall)
-                Text("La sottoscrizione si rinnova automaticamente")
+                Text(statusDetail)
                     .font(BrindooFont.caption)
                     .foregroundStyle(Color.brindooTextSecondary)
             }
@@ -174,6 +193,25 @@ struct PaywallView: View {
         .frame(maxWidth: .infinity)
         .background(Color.brindooSuccess.opacity(0.1))
         .clipShape(RoundedRectangle(cornerRadius: BrindooRadius.md))
+    }
+
+    /// Da dove viene il Pro e cosa succede dopo: rinnovo automatico,
+    /// rinnovo disattivato o mese regalato. Prima diceva sempre "si rinnova".
+    private var statusDetail: String {
+        if let state = subscriptionState {
+            let date = state.expiresAt.map { BrindooFormat.italianDate(from: $0) }
+            if state.willAutoRenew {
+                return date.map { "Si rinnova automaticamente il \($0)" } ?? "Si rinnova automaticamente"
+            }
+            return date.map { "Rinnovo disattivato: resti Pro fino al \($0)" } ?? "Rinnovo disattivato"
+        }
+        if let until = session.currentProfile?.proExpiresAt {
+            let date = BrindooFormat.italianDate(from: until)
+            return hasOnlyGiftedPro
+                ? "Mese regalato con il codice invito: Pro fino al \(date)"
+                : "Pro fino al \(date)"
+        }
+        return "Pro attivo"
     }
     
     // MARK: - Card prodotto
@@ -195,14 +233,31 @@ struct PaywallView: View {
                     .foregroundStyle(Color.brindooTextSecondary)
             }
             
-            BrindooButton(
-                isCurrentlyPro ? "Già attivo" : "Iscriviti a Pro",
-                style: .primary,
-                size: .large,
-                isLoading: isLoading,
-                isDisabled: isCurrentlyPro
-            ) {
-                Task { await purchase(product) }
+            if hasActiveSubscription {
+                BrindooButton(
+                    "Gestisci abbonamento",
+                    style: .secondary,
+                    size: .large,
+                    icon: "gearshape"
+                ) {
+                    showManageSubscriptions = true
+                }
+            } else {
+                if hasOnlyGiftedPro, let until = session.currentProfile?.bonusProExpiresAt {
+                    Text("Hai Pro in regalo fino al \(BrindooFormat.italianDate(from: until)). Se ti abboni ora i due periodi si sovrappongono: puoi farlo anche alla scadenza.")
+                        .font(BrindooFont.caption)
+                        .foregroundStyle(Color.brindooTextSecondary)
+                        .multilineTextAlignment(.center)
+                }
+                BrindooButton(
+                    "Iscriviti a Pro",
+                    style: .primary,
+                    size: .large,
+                    isLoading: isLoading,
+                    isDisabled: purchaseService.subscriptionOwnedByOtherAccount
+                ) {
+                    Task { await purchase(product) }
+                }
             }
         }
         .padding(BrindooSpacing.lg)
@@ -280,6 +335,16 @@ struct PaywallView: View {
         session.currentProfile?.isPro == true
     }
 
+    /// Pro solo grazie al codice invito, senza abbonamento pagato.
+    private var hasOnlyGiftedPro: Bool {
+        session.currentProfile?.hasOnlyGiftedPro == true
+    }
+
+    /// C'è un abbonamento Apple da gestire (per questo account o per l'ID Apple).
+    private var hasActiveSubscription: Bool {
+        subscriptionState != nil || session.currentProfile?.hasPaidPro == true
+    }
+
     /// Il profilo può non essere ancora caricato: in quel caso si mostra la
     /// lista cliente, che è il ruolo di partenza di chiunque si iscriva.
     private var role: UserRole {
@@ -340,14 +405,28 @@ struct PaywallView: View {
     private func restore() async {
         isLoading = true
         errorMessage = nil
+        infoMessage = nil
         defer { isLoading = false }
         
-        await purchaseService.restorePurchases()
+        let outcome = await purchaseService.restorePurchases()
+        subscriptionState = await purchaseService.proSubscriptionState()
         
         // Ricarica profilo
         if let userId = session.userID,
            let profile = try? await ProfileService.shared.fetchProfile(userID: userId) {
             session.updateLocalProfile(profile)
+        }
+
+        // Prima il tocco non diceva nulla, né in caso di successo né di errore.
+        switch outcome {
+        case .restored:
+            infoMessage = "Abbonamento ripristinato"
+        case .ownedByOtherAccount:
+            errorMessage = "L'abbonamento di questo ID Apple è collegato a un altro account Brindoo."
+        case .nothingToRestore:
+            infoMessage = "Nessun abbonamento attivo da ripristinare su questo ID Apple"
+        case .failed:
+            errorMessage = "Ripristino non riuscito. Controlla la connessione e riprova."
         }
     }
 }

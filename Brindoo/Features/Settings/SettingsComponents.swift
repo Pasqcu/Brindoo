@@ -34,6 +34,9 @@ struct SettingsRow: View {
     let title: String
     var subtitle: String? = nil
     var titleColor: Color = .brindooTextPrimary
+    /// Falso per le righe di sola lettura (email, versione): la freccia
+    /// promette un tocco che non porta da nessuna parte.
+    var showsChevron: Bool = true
 
     var body: some View {
         HStack(spacing: BrindooSpacing.sm) {
@@ -55,9 +58,11 @@ struct SettingsRow: View {
                 }
             }
             Spacer()
-            Image(systemName: BrindooIcon.forward)
-                .font(.system(size: 12))
-                .foregroundStyle(Color.brindooTextSecondary)
+            if showsChevron {
+                Image(systemName: BrindooIcon.forward)
+                    .font(.system(size: 12))
+                    .foregroundStyle(Color.brindooTextSecondary)
+            }
         }
         .padding(.horizontal, BrindooSpacing.md)
         .padding(.vertical, BrindooSpacing.sm)
@@ -181,6 +186,21 @@ struct SettingsVacationCard: View {
     /// Chiamata dal bottone "Passa a Pro" (utenti non Pro).
     var onUpgradeTap: () -> Void
 
+    /// Il ritorno più vicino è domani: tornare oggi vuol dire non partire.
+    private static var firstReturnDay: Date {
+        BrindooFormat.dayCalendar.date(byAdding: .day, value: 1, to: BrindooFormat.startOfDay())
+            ?? Date()
+    }
+
+    private var subtitle: String {
+        if isPro {
+            return "Offerte nascoste e nuove proposte in pausa fino al ritorno"
+        }
+        return vacationOn
+            ? "Pro scaduto: puoi solo disattivarla"
+            : "Disponibile con Brindoo Pro"
+    }
+
     var body: some View {
         VStack(alignment: .leading, spacing: BrindooSpacing.sm) {
             // Riga principale con toggle (o lock se non Pro)
@@ -204,22 +224,19 @@ struct SettingsVacationCard: View {
                                 .foregroundStyle(Color.brindooTextSecondary)
                         }
                     }
-                    Text(isPro
-                        ? "Le tue offerte saranno nascoste ai clienti"
-                        : "Disponibile con Brindoo Pro")
+                    Text(subtitle)
                         .font(BrindooFont.caption)
                         .foregroundStyle(Color.brindooTextSecondary)
                 }
                 Spacer()
 
-                if isPro {
+                // A Pro scaduto la vacanza si può sempre spegnere: prima
+                // spariva l'interruttore e si restava "non disponibili".
+                if isPro || vacationOn {
                     Toggle("", isOn: $vacationOn)
                         .labelsHidden()
                         .tint(Color.brindooCoral)
                         .disabled(saving)
-                        .onChange(of: vacationOn) { _, on in
-                            onChange(on)
-                        }
                 } else {
                     Button {
                         onUpgradeTap()
@@ -240,25 +257,37 @@ struct SettingsVacationCard: View {
 
             // DatePicker per la data di ritorno (visibile solo se attiva)
             if isPro && vacationOn {
-                HStack {
-                    Text("Torno il")
-                        .font(BrindooFont.bodyMedium)
-                    Spacer()
-                    DatePicker(
-                        "",
-                        selection: $vacationUntil,
-                        in: Date()...,
-                        displayedComponents: .date
-                    )
-                    .labelsHidden()
-                    .environment(\.locale, Locale(identifier: "it_IT"))
-                    .onChange(of: vacationUntil) { _, _ in
-                        onChange(true)
+                VStack(alignment: .leading, spacing: BrindooSpacing.xs) {
+                    HStack {
+                        Text("Torno disponibile dal")
+                            .font(BrindooFont.bodyMedium)
+                        Spacer()
+                        DatePicker(
+                            "",
+                            selection: $vacationUntil,
+                            in: Self.firstReturnDay...,
+                            displayedComponents: .date
+                        )
+                        .labelsHidden()
+                        .environment(\.locale, Locale(identifier: "it_IT"))
+                        .environment(\.timeZone, BrindooFormat.dayTimeZone)
+                        .onChange(of: vacationUntil) { _, _ in
+                            onChange(true)
+                        }
                     }
+                    Text("Da questo giorno i clienti possono di nuovo prenotarti: non fa parte della vacanza.")
+                        .font(BrindooFont.caption)
+                        .foregroundStyle(Color.brindooTextSecondary)
                 }
                 .padding(BrindooSpacing.md)
                 .brindooSurfaceBackground()
             }
+        }
+        // Sul contenitore, non sull'interruttore: a Pro scaduto, spegnendo,
+        // l'interruttore sparisce nello stesso istante e il salvataggio non
+        // partiva (l'app diceva "spenta", il server restava in vacanza).
+        .onChange(of: vacationOn) { _, on in
+            onChange(on)
         }
     }
 }

@@ -57,7 +57,25 @@ final class AvailabilityService {
     func fetchUnavailableDays(organizerId: UUID) async throws -> Set<String> {
         async let marked = fetchMarkedUnavailableDays(organizerId: organizerId)
         async let booked = fetchBookedDays(organizerId: organizerId)
-        return try await marked.union(booked)
+        async let vacation = fetchVacationDays(organizerId: organizerId)
+        return try await marked.union(booked).union(vacation)
+    }
+
+    /// Giorni di vacanza, da oggi a quello prima del ritorno: nel calendario
+    /// pubblico risultano occupati come gli altri. Prima il profilo diceva
+    /// "in vacanza" e il calendario mostrava quei giorni liberi.
+    private func fetchVacationDays(organizerId: UUID) async -> Set<String> {
+        guard let profile = try? await ProfileService.shared.fetchProfile(userID: organizerId),
+              let back = profile.vacationUntil else { return [] }
+        var days: Set<String> = []
+        var day = BrindooFormat.startOfDay()
+        let end = BrindooFormat.startOfDay(back)
+        while day < end, days.count < 366 {
+            days.insert(BrindooFormat.dayString(from: day))
+            guard let next = BrindooFormat.dayCalendar.date(byAdding: .day, value: 1, to: day) else { break }
+            day = next
+        }
+        return days
     }
 
     /// ID degli organizzatori occupati nel giorno dato, per qualunque
@@ -121,6 +139,57 @@ final class AvailabilityService {
         try await client
             .from("organizer_unavailable_dates")
             .insert(payload)
+            .execute()
+    }
+
+    // MARK: - Eventi saltati per account eliminati
+
+    /// Un cliente con un evento confermato ha eliminato l'account: l'evento
+    /// è sparito dall'agenda e il giorno è tornato libero. Resta un avviso
+    /// finché il professionista non decide cosa farne.
+    struct CancellationNotice: Identifiable, Decodable, Hashable {
+        let id: UUID
+        let eventDate: String
+        let offerTitle: String?
+        let counterpartName: String?
+
+        enum CodingKeys: String, CodingKey {
+            case id
+            case eventDate = "event_date"
+            case offerTitle = "offer_title"
+            case counterpartName = "counterpart_name"
+        }
+
+        var day: Date? { BrindooFormat.day(from: eventDate) }
+    }
+
+    func fetchMyCancellationNotices() async throws -> [CancellationNotice] {
+        guard let userId = SupabaseManager.shared.currentUserID else { return [] }
+        return try await client
+            .from("booking_cancellation_notices")
+            .select("id, event_date, offer_title, counterpart_name")
+            .eq("recipient_id", value: userId)
+            .gte("event_date", value: BrindooFormat.todayString)
+            .order("event_date", ascending: true)
+            .execute()
+            .value
+    }
+
+    /// Chiude l'avviso: il giorno resta libero, oppure torna occupato a mano.
+    func resolveCancellationNotice(_ notice: CancellationNotice, keepBusy: Bool) async throws {
+        guard let userId = SupabaseManager.shared.currentUserID else { return }
+        if keepBusy {
+            struct Insert: Encodable { let organizer_id: UUID; let day: String }
+            try await client
+                .from("organizer_unavailable_dates")
+                .upsert(Insert(organizer_id: userId, day: notice.eventDate),
+                        onConflict: "organizer_id,day", ignoreDuplicates: true)
+                .execute()
+        }
+        try await client
+            .from("booking_cancellation_notices")
+            .delete()
+            .eq("id", value: notice.id)
             .execute()
     }
 }

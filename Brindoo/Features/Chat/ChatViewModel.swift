@@ -33,6 +33,8 @@ final class ChatViewModel {
     private(set) var isLoadingOlder = false
     private(set) var isSending = false
     private(set) var isBlocked = false
+    /// Il blocco è mio (posso toglierlo) o dell'altro (posso solo leggere).
+    private(set) var blockedByMe = false
     private(set) var otherIsTyping = false
     private(set) var linkedProposal: OfferProposal?
     var sendErrorMessage: String?
@@ -138,6 +140,7 @@ final class ChatViewModel {
 
     func checkBlocked() {
         isBlocked = data.isBlockingOrBlocked(otherUser.id)
+        blockedByMe = data.haveIBlocked(otherUser.id)
     }
 
     func loadLinkedProposal() async {
@@ -320,6 +323,7 @@ final class ChatViewModel {
             try await data.block(otherUser.id)
             try await data.softDeleteConversation(conversation)
             isBlocked = true
+            blockedByMe = true
             return true
         } catch {
             BrindooLog.error("chat blockUser: \(error)")
@@ -330,7 +334,7 @@ final class ChatViewModel {
     func unblock() async {
         do {
             try await data.unblock(otherUser.id)
-            isBlocked = false
+            checkBlocked()
         } catch {
             BrindooLog.error("chat unblock: \(error)")
         }

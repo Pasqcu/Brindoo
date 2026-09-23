@@ -116,21 +116,14 @@ final class ReviewService {
     ///
     /// L'accordo da solo non basta: una recensione scritta prima della festa
     /// non dice nulla sul lavoro e il professionista la sente ingiusta.
+    /// La regola vive nel database (`brindoo_can_review`), la stessa che la
+    /// policy di inserimento applica: un evento annullato non conta, anche se
+    /// la sua data è passata.
     func hasCompletedDeal(withOrganizer organizerId: UUID) async throws -> Bool {
-        guard let userId = SupabaseManager.shared.currentUserID else { return false }
-        let today = BrindooFormat.todayString
-        struct Row: Decodable { let id: UUID }
-        let rows: [Row] = try await client
-            .from("offer_proposals")
-            .select("id")
-            .eq("client_id", value: userId)
-            .eq("organizer_id", value: organizerId)
-            .eq("status", value: OfferProposalStatus.accepted.rawValue)
-            .or("booking_status.eq.\(BookingStatus.completed.rawValue),event_date.lt.\(today)")
-            .limit(1)
+        try await client
+            .rpc("brindoo_can_review", params: ["p_organizer": organizerId])
             .execute()
             .value
-        return !rows.isEmpty
     }
 
     // MARK: - Crea recensione
@@ -242,21 +235,19 @@ final class ReviewService {
 
     // MARK: - Risposta dell'organizzatore
 
-    /// L'organizzatore risponde a una recensione ricevuta.
+    /// Il professionista risponde a una recensione ricevuta.
+    ///
+    /// Passa dalla funzione `brindoo_reply_to_review`: la tabella lascia
+    /// modificare le recensioni solo a chi le ha scritte, e la risposta la
+    /// scrive solo il professionista recensito.
     @discardableResult
     func replyToReview(reviewId: UUID, reply: String) async throws -> Review {
-        let trimmed = reply.trimmingCharacters(in: .whitespacesAndNewlines)
-        struct U: Encodable { let reply: String?; let reply_at: String? }
-        let payload = U(
-            reply: trimmed.isEmpty ? nil : trimmed,
-            reply_at: trimmed.isEmpty ? nil : BrindooFormat.isoNow
-        )
+        struct Params: Encodable {
+            let p_review_id: UUID
+            let p_reply: String
+        }
         return try await client
-            .from("reviews")
-            .update(payload)
-            .eq("id", value: reviewId)
-            .select()
-            .single()
+            .rpc("brindoo_reply_to_review", params: Params(p_review_id: reviewId, p_reply: reply))
             .execute()
             .value
     }

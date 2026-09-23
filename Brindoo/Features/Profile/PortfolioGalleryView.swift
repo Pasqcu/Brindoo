@@ -138,7 +138,7 @@ struct PortfolioGalleryView: View {
             
             Text(isOwner
                  ? "Mostra ai clienti i tuoi lavori. Le foto fanno la differenza."
-                 : "Questo organizzatore non ha ancora pubblicato foto")
+                 : "Questo professionista non ha ancora pubblicato foto")
                 .font(BrindooFont.bodyMedium)
                 .foregroundStyle(Color.brindooTextSecondary)
                 .multilineTextAlignment(.center)

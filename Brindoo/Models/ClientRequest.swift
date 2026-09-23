@@ -57,6 +57,13 @@ struct ClientRequest: Identifiable, Codable, Hashable, Equatable {
 
     var isUrgent: Bool { urgent ?? false }
 
+    /// La data dell'evento è passata: la richiesta si chiude da sola
+    /// (lavoro notturno sul database) e non si può riaprire.
+    var isExpired: Bool {
+        guard let eventDate, !eventDate.isEmpty else { return false }
+        return BrindooFormat.isPastDay(eventDate)
+    }
+
     /// "20 settembre 2026" — data dell'evento leggibile, se presente.
     var eventDateDisplay: String? {
         guard let eventDate else { return nil }

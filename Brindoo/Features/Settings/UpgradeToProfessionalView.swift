@@ -77,6 +77,9 @@ struct UpgradeToProfessionalView: View {
                 Text("Dopo la conferma dovrai completare il profilo Professionista. Potrai ancora annullare l'operazione da lì se cambi idea.")
             }
             // Animazione celebrativa post-upgrade
+            // Chiuso il foglio (completato, annullato o scartato), il pannello
+            // della dichiarazione può comparire da MainTabView.
+            .onDisappear { session.isChangingRole = false }
             .fullScreenCover(isPresented: $showCelebration) {
                 UpgradeCelebrationView {
                     showCelebration = false
@@ -198,12 +201,15 @@ struct UpgradeToProfessionalView: View {
         defer { isLoading = false }
 
         do {
+            // Prima il percorso, poi (a fogli chiusi) la dichiarazione.
+            session.isChangingRole = true
             let updatedProfile = try await ProfileService.shared.setRole(.organizer)
             session.updateLocalProfile(updatedProfile)
             ProfessionalOnboardingHint.markPendingCompletion()
             // Lancia animazione celebrativa → poi sheet di setup obbligatorio
             showCelebration = true
         } catch {
+            session.isChangingRole = false
             generalError = "Impossibile completare il passaggio. Riprova."
             BrindooLog.error("Upgrade: \(error)")
         }

@@ -22,6 +22,9 @@ struct AvailabilityView: View {
     @State private var isImporting: Bool = false
     @State private var importedCount: Int?
     @State private var error: String?
+    /// Eventi saltati perché il cliente ha eliminato l'account.
+    @State private var notices: [AvailabilityService.CancellationNotice] = []
+    @State private var noticeToResolve: AvailabilityService.CancellationNotice?
 
     private let calendar = BrindooFormat.dayCalendar
 
@@ -42,6 +45,10 @@ struct AvailabilityView: View {
                     .background(Color.brindooCoral.opacity(0.08))
                     .clipShape(RoundedRectangle(cornerRadius: BrindooRadius.md))
 
+                    if !notices.isEmpty {
+                        noticesSection
+                    }
+
                     if isLoading {
                         ProgressView().tint(.brindooCoral)
                             .frame(maxWidth: .infinity)
@@ -53,7 +60,9 @@ struct AvailabilityView: View {
                             .padding(BrindooSpacing.sm)
                             .brindooSurfaceBackground()
 
-                        Text("\(selected.count) giorni segnati come non disponibili")
+                        Text(selected.count == 1
+                             ? "1 giorno segnato come non disponibile"
+                             : "\(selected.count) giorni segnati come non disponibili")
                             .font(BrindooFont.caption)
                             .foregroundStyle(Color.brindooTextSecondary)
 
@@ -105,6 +114,88 @@ struct AvailabilityView: View {
         }
     }
 
+    /// Date da controllare, in rosso: tocca per decidere.
+    @ViewBuilder
+    private var noticesSection: some View {
+        VStack(alignment: .leading, spacing: BrindooSpacing.sm) {
+            HStack(spacing: BrindooSpacing.xs) {
+                Image(systemName: BrindooIcon.warning)
+                Text("Eventi annullati: date da controllare")
+                    .font(BrindooFont.titleSmall)
+            }
+            .foregroundStyle(Color.brindooError)
+
+            ForEach(notices) { notice in
+                Button { noticeToResolve = notice } label: {
+                    HStack(alignment: .top, spacing: BrindooSpacing.sm) {
+                        Text(noticeDayText(notice))
+                            .font(BrindooFont.bodyMedium.weight(.semibold))
+                            .foregroundStyle(Color.brindooError)
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text("\(notice.counterpartName ?? "Il cliente") ha eliminato l'account")
+                                .font(BrindooFont.bodySmall)
+                                .foregroundStyle(Color.brindooTextPrimary)
+                            if let title = notice.offerTitle {
+                                Text("«\(title)» non è più in agenda")
+                                    .font(BrindooFont.caption)
+                                    .foregroundStyle(Color.brindooTextSecondary)
+                            }
+                        }
+                        Spacer()
+                        Image(systemName: "chevron.right")
+                            .font(.system(size: 12, weight: .semibold))
+                            .foregroundStyle(Color.brindooTextTertiary)
+                    }
+                    .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+            }
+        }
+        .padding(BrindooSpacing.md)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(Color.brindooError.opacity(0.08))
+        .overlay(
+            RoundedRectangle(cornerRadius: BrindooRadius.md)
+                .strokeBorder(Color.brindooError.opacity(0.4), lineWidth: 1)
+        )
+        .clipShape(RoundedRectangle(cornerRadius: BrindooRadius.md))
+        // Agganciato all'elenco: il riquadro di scelta si apre vicino alle date.
+        .confirmationDialog(
+            "Vuoi liberare questa data?",
+            isPresented: Binding(
+                get: { noticeToResolve != nil },
+                set: { if !$0 { noticeToResolve = nil } }
+            ),
+            titleVisibility: .visible,
+            presenting: noticeToResolve
+        ) { notice in
+            Button("Libera la data") { Task { await resolve(notice, keepBusy: false) } }
+            Button("Tienila occupata") { Task { await resolve(notice, keepBusy: true) } }
+            Button("Decido dopo", role: .cancel) {}
+        } message: { notice in
+            Text("L'evento del \(noticeDayText(notice)) è stato annullato. Se la liberi, i clienti potranno prenotarti quel giorno.")
+        }
+    }
+
+    private func noticeDayText(_ notice: AvailabilityService.CancellationNotice) -> String {
+        notice.day.map { BrindooFormat.italianDate(from: $0) } ?? notice.eventDate
+    }
+
+    private func resolve(_ notice: AvailabilityService.CancellationNotice, keepBusy: Bool) async {
+        noticeToResolve = nil
+        do {
+            try await AvailabilityService.shared.resolveCancellationNotice(notice, keepBusy: keepBusy)
+            notices.removeAll { $0.id == notice.id }
+            if keepBusy, let day = notice.day {
+                selected.insert(calendar.dateComponents([.year, .month, .day], from: day))
+            }
+            BrindooHaptics.notify(.success)
+        } catch {
+            self.error = "Impossibile aggiornare la data. Riprova."
+            BrindooLog.error("\(error)")
+        }
+    }
+
     /// Elenco di sola lettura: questi giorni non si tolgono da qui, si
     /// liberano annullando o spostando l'evento.
     @ViewBuilder
@@ -138,6 +229,7 @@ struct AvailabilityView: View {
         isLoading = true
         defer { isLoading = false }
         do {
+            notices = (try? await AvailabilityService.shared.fetchMyCancellationNotices()) ?? []
             let dates = try await AvailabilityService.shared.fetchMyUnavailableDays()
             selected = Set(dates.map { calendar.dateComponents([.year, .month, .day], from: $0) })
             let today = calendar.startOfDay(for: Date())

@@ -165,7 +165,9 @@ final class OfferDetailViewModel {
             await loadData()
             return result
         } catch {
-            actionError = failureMessage
+            // Le regole del database (turno, data occupata, blocco, vacanza)
+            // hanno una frase loro; il resto resta il messaggio generico.
+            actionError = BrindooErrorText.serverRule(error) ?? failureMessage
             BrindooLog.error("\(error)")
             return nil
         }
@@ -196,6 +198,13 @@ final class OfferDetailViewModel {
         return (conv, partner)
     }
 
+    /// Vero se il professionista ha segnato a mano quel giorno come non disponibile.
+    func isMarkedUnavailable(_ day: String) async -> Bool {
+        let marked = (try? await AvailabilityService.shared
+            .fetchMarkedUnavailableDays(organizerId: offer.organizerId)) ?? []
+        return marked.contains(day)
+    }
+
     func rejectProposal(_ proposal: OfferProposal) async {
         await perform(onFailure: "Impossibile rifiutare.") {
             try await OfferProposalService.shared.reject(proposal: proposal)
@@ -222,6 +231,7 @@ final class OfferDetailViewModel {
             await loadData()
             return true
         } catch {
+            actionError = BrindooErrorText.serverRule(error)
             BrindooLog.error("\(error)")
             return false
         }
@@ -233,14 +243,15 @@ final class OfferDetailViewModel {
         defer { isActing = false }
         actionError = nil
         do {
-            try await OfferProposalService.shared.updateBookingStatus(proposalId: proposal.id, booking: status)
-            if status == .cancelled {
-                LocalReminderService.cancelReminder(proposalId: proposal.id)
-            }
+            try await OfferProposalService.shared.updateBookingStatus(
+                proposal: proposal,
+                booking: status,
+                offerTitle: offer.title
+            )
             await loadData()
             return true
         } catch {
-            actionError = "Impossibile aggiornare l'appuntamento."
+            actionError = BrindooErrorText.serverRule(error) ?? "Impossibile aggiornare l'appuntamento."
             BrindooLog.error("\(error)")
             return false
         }

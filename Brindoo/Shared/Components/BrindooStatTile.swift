@@ -45,7 +45,12 @@ struct BrindooStatTile: View {
                 Text(label)
                     .font(BrindooFont.bodySmall)
                     .foregroundStyle(Color.brindooTextSecondary)
+                    // Due righe sempre riservate: in una fila di riquadri,
+                    // un'etichetta che va a capo non rende uno più alto
+                    // e spostato rispetto agli altri.
+                    .lineLimit(2, reservesSpace: true)
             }
+            .frame(maxWidth: .infinity, alignment: .leading)
         }
     }
 }

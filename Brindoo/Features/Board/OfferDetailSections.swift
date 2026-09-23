@@ -119,17 +119,25 @@ struct BookingActionButtons: View {
     let onMoveDate: () -> Void
     let onAddToCalendar: (() -> Void)?
 
+    /// Scelta in attesa di conferma: sono mosse che non si possono disfare.
+    @State private var pendingMark: BookingStatus?
+
     var body: some View {
         if proposal.effectiveBooking == .confirmed {
             VStack(spacing: BrindooSpacing.xs) {
                 HStack(spacing: BrindooSpacing.sm) {
-                    Button { onMark(.completed) } label: {
-                        Label("Segna svolto", systemImage: "checkmark.seal")
-                            .brindooCompactAction(tint: .brindooSuccess)
+                    // "Svolto" solo dal giorno dell'evento: prima si poteva
+                    // segnare subito e lasciare una recensione "verificata"
+                    // su una festa non ancora fatta.
+                    if proposal.canMarkCompleted {
+                        Button { pendingMark = .completed } label: {
+                            Label("Segna svolto", systemImage: "checkmark.seal")
+                                .brindooCompactAction(tint: .brindooSuccess)
+                        }
+                        .buttonStyle(.plain)
                     }
-                    .buttonStyle(.plain)
 
-                    Button { onMark(.cancelled) } label: {
+                    Button { pendingMark = .cancelled } label: {
                         Label("Annulla", systemImage: "calendar.badge.minus")
                             .brindooCompactAction(tint: .brindooError)
                     }
@@ -153,7 +161,31 @@ struct BookingActionButtons: View {
                     }
                 }
             }
+            .confirmationDialog(
+                pendingMark == .cancelled ? "Annullare l'evento?" : "Segnare l'evento come svolto?",
+                isPresented: Binding(
+                    get: { pendingMark != nil },
+                    set: { if !$0 { pendingMark = nil } }
+                ),
+                titleVisibility: .visible
+            ) {
+                if pendingMark == .cancelled {
+                    Button("Annulla l'evento", role: .destructive) { confirmMark(.cancelled) }
+                } else {
+                    Button("Sì, è stato svolto") { confirmMark(.completed) }
+                }
+                Button("Indietro", role: .cancel) { pendingMark = nil }
+            } message: {
+                Text(pendingMark == .cancelled
+                     ? "L'altra parte riceverà un avviso e un messaggio in chat. Non si può tornare indietro."
+                     : "Non si può tornare indietro. Il cliente potrà lasciare una recensione.")
+            }
         }
+    }
+
+    private func confirmMark(_ status: BookingStatus) {
+        pendingMark = nil
+        onMark(status)
     }
 }
 

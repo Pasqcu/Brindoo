@@ -42,7 +42,11 @@ enum VoiceMessage {
         }
         let local = dir.appendingPathComponent(remote.lastPathComponent)
         if fm.fileExists(atPath: local.path) { return local }
-        let (data, _) = try await URLSession.shared.data(from: remote)
+        let request = await PrivateChatMedia.request(for: remote)
+        let (data, response) = try await URLSession.shared.data(for: request)
+        if let http = response as? HTTPURLResponse, !(200..<300).contains(http.statusCode) {
+            throw URLError(.fileDoesNotExist)
+        }
         try data.write(to: local, options: .atomic)
         return local
     }

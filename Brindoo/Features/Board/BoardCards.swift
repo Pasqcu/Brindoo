@@ -118,7 +118,16 @@ struct OrganizerWithOffersCard: View {
                         .foregroundStyle(Color.brindooTextSecondary)
                     }
 
-                    if let speed = organizer.responseSpeed {
+                    // In vacanza le offerte non si vedono: la card dice perché.
+                    if organizer.isOnVacation {
+                        HStack(spacing: 4) {
+                            Image(systemName: "beach.umbrella.fill")
+                                .font(.system(size: 10))
+                            Text(organizer.vacationUntilDisplay.map { "In vacanza · torna dal \($0)" } ?? "In vacanza")
+                                .font(BrindooFont.caption.weight(.medium))
+                        }
+                        .foregroundStyle(Color.brindooWarning)
+                    } else if let speed = organizer.responseSpeed {
                         HStack(spacing: 4) {
                             Image(systemName: speed.iconName)
                                 .font(.system(size: 10))

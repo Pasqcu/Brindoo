@@ -92,7 +92,7 @@ struct MainTabView: View {
         }
         .fullScreenCover(isPresented: Binding(
             get: {
-                guard let p = session.currentProfile else { return false }
+                guard let p = session.currentProfile, !session.isChangingRole else { return false }
                 return !p.needsTermsAcceptance && p.needsProfessionalDeclaration
             },
             set: { _ in }
@@ -110,6 +110,9 @@ struct MainTabView: View {
             // si riallineano subito alla realtà.
             if newPhase == .active {
                 Task { await refreshBadges() }
+                // Un blocco messo dall'altra parte mentre l'app era chiusa
+                // deve valere subito, non al prossimo login.
+                Task { await BlockService.shared.loadBlocks() }
                 // Cose scritte senza linea: si riprova appena l'app torna viva.
                 Task { await OfflineOutboxService.shared.flush() }
                 // Ricerche salvate con avviso: controllo silenzioso delle
@@ -118,6 +121,13 @@ struct MainTabView: View {
                     Task { await SavedSearchService.shared.checkForNewResults() }
                 }
             }
+        }
+        .task(id: session.currentProfile?.isPro) {
+            // Pro finito: l'icona dorata torna la classica. Prima restava
+            // d'oro e il tocco in Impostazioni apriva la paywall.
+            guard let p = session.currentProfile, !p.isPro,
+                  UIApplication.shared.alternateIconName == "AppIconPro" else { return }
+            try? await UIApplication.shared.setAlternateIconName(nil)
         }
         .task(id: session.currentProfile?.id) {
             // Aggiorna (al massimo una volta al giorno) la velocità di risposta
@@ -154,13 +164,31 @@ struct MainTabView: View {
         }
     }
 
+    /// Promemoria degli eventi allineati agli accordi, su tutti e due i telefoni.
+    private func syncReminders(_ proposals: [OfferProposal], me: UUID) async {
+        let accepted = proposals.filter { $0.status == .accepted }
+        guard !accepted.isEmpty else {
+            await LocalReminderService.sync(with: [], offerTitles: [:], me: me)
+            return
+        }
+        let ids = Array(Set(accepted.map(\.offerId)))
+        let offers = (try? await ServiceOfferService.shared.fetchOffers(ids: ids)) ?? []
+        let titles = Dictionary(offers.map { ($0.id, $0.title) }, uniquingKeysWith: { a, _ in a })
+        await LocalReminderService.sync(with: accepted, offerTitles: titles, me: me)
+    }
+
     private func refreshBadges() async {
         async let propsTask = OfferProposalService.shared.fetchMyOngoingProposals()
         async let unreadTask = ConversationService.shared.fetchUnreadCounts()
 
-        let proposals = (try? await propsTask) ?? []
+        let loaded = try? await propsTask
+        let proposals = loaded ?? []
         if let me = session.userID {
             pendingNegotiations = proposals.filter { $0.awaitingAction(by: me) }.count
+            // Solo con la lista vera: senza linea non si cancella nulla.
+            if let loaded {
+                await syncReminders(loaded, me: me)
+            }
         }
 
         let counts = (try? await unreadTask) ?? [:]

@@ -148,7 +148,7 @@ struct OfferProposal: Identifiable, Codable, Hashable, Equatable {
 
     /// Stato effettivo dell'appuntamento (default: confermato se accettata).
     var effectiveBooking: BookingStatus {
-        bookingStatus ?? (status == .accepted ? .confirmed : .confirmed)
+        bookingStatus ?? .confirmed
     }
 
     /// Descrizione dell'impegno ancora aperto con questa persona, se c'è.
@@ -167,6 +167,25 @@ struct OfferProposal: Identifiable, Codable, Hashable, Equatable {
     }
 
     /// True se l'evento ha una data già passata.
+    /// Il cliente può recensire: evento segnato svolto, oppure data passata
+    /// e non annullato. Stessa regola di `brindoo_can_review` sul database;
+    /// prima tre schermate ne usavano tre diverse.
+    func allowsReview(by userId: UUID?) -> Bool {
+        guard userId == clientId, status == .accepted else { return false }
+        switch effectiveBooking {
+        case .completed: return true
+        case .cancelled: return false
+        case .confirmed: return isEventPast
+        }
+    }
+
+    /// Da oggi si può segnare "svolto": serve una data e dev'essere arrivata.
+    var canMarkCompleted: Bool {
+        guard let eventDate, !eventDate.isEmpty,
+              let days = BrindooFormat.daysUntil(day: eventDate) else { return false }
+        return days <= 0
+    }
+
     var isEventPast: Bool {
         guard let eventDate, !eventDate.isEmpty else { return false }
         return BrindooFormat.isPastDay(eventDate)

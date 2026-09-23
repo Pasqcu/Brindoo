@@ -33,6 +33,8 @@ struct ChatDataSource {
 
     // Blocco
     var isBlockingOrBlocked: (_ userId: UUID) -> Bool
+    /// Vero solo se il blocco l'ho messo io (e quindi posso toglierlo).
+    var haveIBlocked: (_ userId: UUID) -> Bool = { _ in false }
     var block: (_ userId: UUID) async throws -> Void
     var unblock: (_ userId: UUID) async throws -> Void
 
@@ -103,6 +105,9 @@ extension ChatDataSource {
             },
             isBlockingOrBlocked: { userId in
                 BlockService.shared.isBlockingOrBlocked(userId)
+            },
+            haveIBlocked: { userId in
+                BlockService.shared.haveIBlocked(userId)
             },
             block: { userId in
                 try await BlockService.shared.block(userId: userId)

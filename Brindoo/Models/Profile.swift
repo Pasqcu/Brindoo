@@ -71,12 +71,17 @@ struct Profile: Identifiable, Codable, Hashable, Equatable {
     /// per sapere se l'abbonamento vale usa `isPro`, che guarda la scadenza.
     private let isProFlag: Bool
     let proExpiresAt: Date?
+    /// Fine del periodo pagato ad Apple (abbonamento). La scrive solo il server.
+    let iapProExpiresAt: Date?
+    /// Fine dei mesi Pro regalati dal codice invito. La scrive solo il server.
+    let bonusProExpiresAt: Date?
     let boostExpiresAt: Date?
     let readReceiptsEnabled: Bool
     /// Quali notifiche l'utente vuole ricevere (messaggi / trattative / promemoria).
     let notifyMessages: Bool
     let notifyNegotiations: Bool
     let notifyReminders: Bool
+    /// Giorno in cui il professionista torna disponibile (non fa parte della vacanza).
     let vacationUntil: Date?
     /// Tempo mediano di risposta in chat (minuti), auto-calcolato dall'app.
     let responseMinutes: Int?
@@ -104,6 +109,8 @@ struct Profile: Identifiable, Codable, Hashable, Equatable {
         case avatarUrl = "avatar_url"
         case isProFlag = "is_pro"
         case proExpiresAt = "pro_expires_at"
+        case iapProExpiresAt = "iap_pro_expires_at"
+        case bonusProExpiresAt = "bonus_pro_expires_at"
         case boostExpiresAt = "boost_expires_at"
         case readReceiptsEnabled = "read_receipts_enabled"
         case notifyMessages = "notify_messages"
@@ -133,6 +140,8 @@ struct Profile: Identifiable, Codable, Hashable, Equatable {
         avatarUrl = try c.decodeIfPresent(String.self, forKey: .avatarUrl)
         isProFlag = try c.decodeIfPresent(Bool.self, forKey: .isProFlag) ?? false
         proExpiresAt = try c.decodeIfPresent(Date.self, forKey: .proExpiresAt)
+        iapProExpiresAt = try c.decodeIfPresent(Date.self, forKey: .iapProExpiresAt)
+        bonusProExpiresAt = try c.decodeIfPresent(Date.self, forKey: .bonusProExpiresAt)
         boostExpiresAt = try c.decodeIfPresent(Date.self, forKey: .boostExpiresAt)
         readReceiptsEnabled = try c.decodeIfPresent(Bool.self, forKey: .readReceiptsEnabled) ?? true
         // Assenti finché la migrazione non è applicata: si parte da "tutte attive".
@@ -173,6 +182,8 @@ struct Profile: Identifiable, Codable, Hashable, Equatable {
         try c.encodeIfPresent(avatarUrl, forKey: .avatarUrl)
         try c.encode(isProFlag, forKey: .isProFlag)
         try c.encodeIfPresent(proExpiresAt, forKey: .proExpiresAt)
+        try c.encodeIfPresent(iapProExpiresAt, forKey: .iapProExpiresAt)
+        try c.encodeIfPresent(bonusProExpiresAt, forKey: .bonusProExpiresAt)
         try c.encodeIfPresent(boostExpiresAt, forKey: .boostExpiresAt)
         try c.encode(readReceiptsEnabled, forKey: .readReceiptsEnabled)
         try c.encode(notifyMessages, forKey: .notifyMessages)
@@ -224,6 +235,17 @@ struct Profile: Identifiable, Codable, Hashable, Equatable {
         return proExpiresAt > Date()
     }
 
+    /// True se il periodo pagato ad Apple è ancora in corso.
+    var hasPaidPro: Bool {
+        guard let iapProExpiresAt else { return false }
+        return iapProExpiresAt > Date()
+    }
+
+    /// True se il Pro di adesso viene solo dai mesi regalati (codice invito).
+    var hasOnlyGiftedPro: Bool {
+        isPro && !hasPaidPro
+    }
+
     /// True quando ha senso mostrare il sigillo Pro accanto al nome.
     ///
     /// Il badge dice "professionista di fiducia": su un cliente abbonato non
@@ -238,13 +260,21 @@ struct Profile: Identifiable, Codable, Hashable, Equatable {
         return boostExpiresAt > Date()
     }
 
-    /// True quando l'organizzatore è in vacanza adesso.
+    /// True quando il professionista è in vacanza adesso.
     var isOnVacation: Bool {
-        guard let vacationUntil else { return false }
-        return vacationUntil >= BrindooFormat.startOfDay()
+        isOnVacation(on: Date())
     }
 
-    /// "Fino al 21 maggio" — usato nei banner.
+    /// True se quel giorno cade nella vacanza. `vacationUntil` è il giorno
+    /// del ritorno: da lì in poi il professionista è di nuovo prenotabile.
+    /// Stessa regola del database (vista `service_offers_ranked`, trigger
+    /// delle proposte).
+    func isOnVacation(on day: Date) -> Bool {
+        guard let vacationUntil else { return false }
+        return BrindooFormat.startOfDay(day) < BrindooFormat.startOfDay(vacationUntil)
+    }
+
+    /// "21 maggio": giorno del ritorno, usato nei banner ("Torna disponibile dal…").
     var vacationUntilDisplay: String? {
         vacationUntil.map { BrindooFormat.italianDayMonth(from: $0) }
     }

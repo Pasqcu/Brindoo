@@ -121,7 +121,7 @@ struct BrindooErrorState: View {
     BrindooEmptyState(
         icon: BrindooIcon.heart,
         title: "Nessun preferito",
-        message: "Salva gli organizer che ti piacciono per ritrovarli qui.",
+        message: "Salva i professionisti che ti piacciono per ritrovarli qui.",
         actionTitle: "Esplora ora"
     ) {}
 }

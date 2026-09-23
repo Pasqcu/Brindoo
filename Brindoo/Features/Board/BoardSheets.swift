@@ -293,7 +293,7 @@ struct ClientWelcomeSheet: View {
                 }
                 .padding(.horizontal, BrindooSpacing.lg)
                 .padding(.vertical, BrindooSpacing.sm)
-                .background(Color.brindooBackground)
+                .background(Color.brindooBackground.ignoresSafeArea(edges: .bottom))
             }
         }
     }

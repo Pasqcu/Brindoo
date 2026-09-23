@@ -44,6 +44,64 @@ final class NotificationService {
         }
     }
 
+    // MARK: - Scelta dell'utente
+
+    /// L'interruttore "Notifiche push" delle Impostazioni. Il permesso di
+    /// sistema da solo non basta: prima spegnere l'interruttore non faceva
+    /// nulla e, riaprendo la schermata, tornava acceso.
+    private static let pushWantedKey = "brindoo.push.enabled"
+    /// Token di questo telefono: spegnendo si toglie solo lui, non quelli
+    /// degli altri dispositivi dello stesso account.
+    private static let lastTokenKey = "brindoo.push.lastToken"
+
+    private(set) var userWantsPush: Bool {
+        get { UserDefaults.standard.object(forKey: Self.pushWantedKey) as? Bool ?? true }
+        set { UserDefaults.standard.set(newValue, forKey: Self.pushWantedKey) }
+    }
+
+    /// Stato da mostrare nell'interruttore: permesso di sistema e scelta dell'utente.
+    func isPushEnabled() async -> Bool {
+        let authorized = await isAuthorized()
+        return authorized && userWantsPush
+    }
+
+    enum PushToggleResult {
+        case enabled
+        case disabled
+        /// Permesso negato in iOS: si attiva solo da Impostazioni di sistema.
+        case deniedBySystem
+    }
+
+    /// Accende o spegne le push di questo telefono.
+    func setPushEnabled(_ on: Bool) async -> PushToggleResult {
+        guard on else {
+            userWantsPush = false
+            await removeThisDeviceToken()
+            return .disabled
+        }
+        userWantsPush = true
+        await refreshAuthorizationStatus()
+        switch authorizationStatus {
+        case .authorized, .provisional, .ephemeral:
+            await registerForRemoteNotifications()
+            return .enabled
+        case .notDetermined:
+            return await requestAuthorization() ? .enabled : .deniedBySystem
+        default:
+            return .deniedBySystem
+        }
+    }
+
+    /// Toglie dal server il token di questo telefono.
+    private func removeThisDeviceToken() async {
+        guard let token = UserDefaults.standard.string(forKey: Self.lastTokenKey) else { return }
+        _ = try? await SupabaseManager.shared.client
+            .from("device_tokens")
+            .delete()
+            .eq("token", value: token)
+            .execute()
+    }
+
     /// True se l'utente ha già concesso permesso (o lo ha concesso in modalità provisional).
     func isAuthorized() async -> Bool {
         await refreshAuthorizationStatus()
@@ -61,6 +119,7 @@ final class NotificationService {
     /// Se l'utente ha già autorizzato le notifiche, registra il device con APNs
     /// (per ottenere il device token). Chiamato all'avvio dell'app.
     func registerForRemoteNotificationsIfAuthorized() async {
+        guard userWantsPush else { return }
         await refreshAuthorizationStatus()
         guard authorizationStatus == .authorized || authorizationStatus == .provisional else {
             return
@@ -85,6 +144,10 @@ final class NotificationService {
     func saveDeviceToken(_ token: Data) async {
         let tokenString = token.map { String(format: "%02x", $0) }.joined()
         BrindooLog.info("Token push ricevuto (\(tokenString.count) caratteri)")
+        UserDefaults.standard.set(tokenString, forKey: Self.lastTokenKey)
+
+        // Push spente dall'utente: il token non va sul server.
+        guard userWantsPush else { return }
 
         guard let userId = SupabaseManager.shared.currentUserID else {
             // Non loggato: salviamo il token solo quando l'utente farà login

@@ -11,23 +11,27 @@ import SwiftUI
 // MARK: - Utente bloccato
 
 struct ChatBlockedBanner: View {
+    /// Falso quando è l'altro ad averti bloccato: non c'è nulla da sbloccare.
+    var canUnblock: Bool = true
     var onUnblock: () -> Void
 
     var body: some View {
         VStack(spacing: BrindooSpacing.xs) {
             HStack(spacing: BrindooSpacing.xs) {
                 Image(systemName: "hand.raised.slash.fill")
-                Text("Utente bloccato")
+                Text(canUnblock ? "Utente bloccato" : "Non puoi più scrivere a questo utente")
                     .font(BrindooFont.bodyMedium.weight(.medium))
             }
             .foregroundStyle(Color.brindooError)
 
-            Button {
-                onUnblock()
-            } label: {
-                Text("Sblocca")
-                    .font(BrindooFont.bodySmall.weight(.semibold))
-                    .foregroundStyle(Color.brindooCoral)
+            if canUnblock {
+                Button {
+                    onUnblock()
+                } label: {
+                    Text("Sblocca")
+                        .font(BrindooFont.bodySmall.weight(.semibold))
+                        .foregroundStyle(Color.brindooCoral)
+                }
             }
         }
         .frame(maxWidth: .infinity)
