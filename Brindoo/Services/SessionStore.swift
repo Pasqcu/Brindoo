@@ -44,6 +44,12 @@ final class SessionStore {
     /// Profilo dell'utente corrente (nome, ruolo, città, ecc.)
     private(set) var currentProfile: Profile?
 
+    /// Vero mentre è aperto il percorso "Diventa Professionista" (festa e
+    /// compilazione del profilo). Il pannello della dichiarazione aspetta
+    /// che finisca: prima provava ad aprirsi sopra il foglio già aperto e
+    /// l'ordine delle schermate dipendeva da SwiftUI.
+    var isChangingRole: Bool = false
+
     /// Utente Supabase corrente (se loggato).
     @ObservationIgnored
     private var currentUser: User?

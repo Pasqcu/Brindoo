@@ -316,10 +316,7 @@ final class BoardViewModel {
         let day = BrindooFormat.startOfDay(eventDate)
         return profiles.filter { p in
             if busyIds.contains(p.id) { return false }
-            if let vacation = p.vacationUntil,
-               day <= BrindooFormat.startOfDay(vacation) {
-                return false
-            }
+            if p.isOnVacation(on: day) { return false }
             return true
         }
     }
@@ -440,7 +437,11 @@ final class BoardViewModel {
         guard !ids.isEmpty else { return }
         do {
             let grouped = try await data.fetchActiveOffers(ids)
-            organizerOffersMap.merge(grouped) { _, new in new }
+            // Chi non ha più offerte visibili (in pausa, in vacanza) va
+            // svuotato: con un semplice merge restavano quelle della cache.
+            for id in ids {
+                organizerOffersMap[id] = grouped[id] ?? []
+            }
         } catch {
             BrindooLog.error("Errore caricamento offerte: \(error)")
         }

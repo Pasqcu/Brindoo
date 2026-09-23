@@ -30,24 +30,43 @@ final class ServiceOfferService {
         searchText: String? = nil,
         excludeDismissed: Bool = true
     ) async throws -> [ServiceOffer] {
+        // Ordine (Boost > Pro > recenti), vacanza e categoria li decide il
+        // database PRIMA di tagliare la pagina a 100: prima si ordinava e si
+        // filtrava a valle, e con più offerte quelle dei Pro più vecchie o
+        // della categoria cercata restavano fuori.
         var query = client
-            .from("service_offers")
+            .from("service_offers_ranked")
             .select()
             .eq("status", value: "active")
+            .eq("organizer_on_vacation", value: false)
 
         if let searchText, !searchText.trimmingCharacters(in: .whitespaces).isEmpty {
             query = query.ilike("title", pattern: "%\(searchText)%")
         }
 
+        // Con troppe corrispondenze il filtro `in` renderebbe l'URL enorme:
+        // in quel caso si torna al filtro a valle (caso raro).
+        var localCategoryIds: Set<UUID>?
+        if !categoryFilters.isEmpty {
+            let ids = try await fetchOfferIds(forCategories: categoryFilters)
+            if ids.isEmpty { return [] }
+            if ids.count <= 150 {
+                query = query.in("id", values: ids.map { $0.uuidString })
+            } else {
+                localCategoryIds = ids
+            }
+        }
+
         var offers: [ServiceOffer] = try await query
+            .order("boost_active", ascending: false)
+            .order("pro_active", ascending: false)
             .order("created_at", ascending: false)
             .limit(100)
             .execute()
             .value
 
-        if !categoryFilters.isEmpty {
-            let ids = try await fetchOfferIds(forCategories: categoryFilters)
-            offers = offers.filter { ids.contains($0.id) }
+        if let localCategoryIds {
+            offers = offers.filter { localCategoryIds.contains($0.id) }
         }
 
         if excludeDismissed {
@@ -57,80 +76,7 @@ final class ServiceOfferService {
             }
         }
 
-        // Escludi gli organizzatori attualmente in vacanza.
-        if !offers.isEmpty {
-            let organizerIds = Set(offers.map { $0.organizerId })
-            let vacationing = try await fetchVacationingOrganizers(in: organizerIds)
-            if !vacationing.isEmpty {
-                offers = offers.filter { !vacationing.contains($0.organizerId) }
-            }
-        }
-
-        // Ordina ereditando boost/pro dell'organizzatore.
-        if !offers.isEmpty {
-            let organizerIds = Set(offers.map { $0.organizerId })
-            let rank = try await fetchOrganizerRanking(in: organizerIds)
-            offers.sort { a, b in
-                let ra = rank[a.organizerId] ?? .default
-                let rb = rank[b.organizerId] ?? .default
-                if ra.isBoosted != rb.isBoosted { return ra.isBoosted }
-                if ra.isPro != rb.isPro { return ra.isPro }
-                return a.createdAt > b.createdAt
-            }
-        }
-
         return offers
-    }
-
-    /// Stato Boost / Pro degli organizzatori dati. Usato per ordinare.
-    private struct OrganizerRank {
-        let isBoosted: Bool
-        let isPro: Bool
-        static let `default` = OrganizerRank(isBoosted: false, isPro: false)
-    }
-
-    private func fetchOrganizerRanking(in ids: Set<UUID>) async throws -> [UUID: OrganizerRank] {
-        guard !ids.isEmpty else { return [:] }
-        struct Row: Decodable {
-            let id: UUID
-            let is_pro: Bool?
-            let pro_expires_at: Date?
-            let boost_expires_at: Date?
-        }
-        let rows: [Row] = try await client
-            .from("profiles")
-            .select("id, is_pro, pro_expires_at, boost_expires_at")
-            .in("id", values: ids.map { $0.uuidString })
-            .execute()
-            .value
-
-        let now = Date()
-        var out: [UUID: OrganizerRank] = [:]
-        for r in rows {
-            let boosted = (r.boost_expires_at ?? .distantPast) > now
-            // Come per il boost, comanda la data: il flag da solo resterebbe
-            // acceso su un abbonamento scaduto.
-            let pro = (r.is_pro ?? false) && (r.pro_expires_at ?? .distantPast) > now
-            out[r.id] = OrganizerRank(isBoosted: boosted, isPro: pro)
-        }
-        return out
-    }
-
-    /// ID degli organizzatori con `vacation_until >= oggi`.
-    private func fetchVacationingOrganizers(in ids: Set<UUID>) async throws -> Set<UUID> {
-        guard !ids.isEmpty else { return [] }
-        struct Row: Decodable { let id: UUID }
-
-        let todayStr = BrindooFormat.todayString
-
-        let rows: [Row] = try await client
-            .from("profiles")
-            .select("id")
-            .in("id", values: ids.map { $0.uuidString })
-            .gte("vacation_until", value: todayStr)
-            .execute()
-            .value
-        return Set(rows.map { $0.id })
     }
 
     private func fetchOfferIds(forCategories categoryIds: Set<UUID>) async throws -> Set<UUID> {
@@ -152,11 +98,14 @@ final class ServiceOfferService {
     func fetchActiveOffers(forOrganizers organizerIds: [UUID]) async throws -> [UUID: [ServiceOffer]] {
         guard !organizerIds.isEmpty else { return [:] }
 
+        // Chi è in vacanza tiene il profilo ma non mostra offerte, come
+        // promette la modalità vacanza.
         let offers: [ServiceOffer] = try await client
-            .from("service_offers")
+            .from("service_offers_ranked")
             .select()
             .in("organizer_id", values: organizerIds.map { $0.uuidString })
             .eq("status", value: "active")
+            .eq("organizer_on_vacation", value: false)
             .order("created_at", ascending: false)
             .execute()
             .value
@@ -336,10 +285,18 @@ final class ServiceOfferService {
                 let category_id: UUID
             }
             let joins = categoryIds.map { Join(offer_id: created.id, category_id: $0) }
-            try await client
-                .from("service_offer_categories")
-                .insert(joins)
-                .execute()
+            do {
+                try await client
+                    .from("service_offer_categories")
+                    .insert(joins)
+                    .execute()
+            } catch {
+                // Tutto o niente: un'offerta senza categorie non si trova in
+                // bacheca e, per chi è al piano gratuito, occupava l'unico
+                // posto facendo scattare la paywall al secondo tentativo.
+                try? await deleteOffer(offerId: created.id)
+                throw error
+            }
         }
 
         return created

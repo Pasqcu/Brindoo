@@ -64,6 +64,11 @@ enum NotificationType: String {
     case newProposal = "new_proposal"
     case proposalCounter = "proposal_counter"
     case proposalAccepted = "proposal_accepted"
+    case proposalRejected = "proposal_rejected"
+    case proposalWithdrawn = "proposal_withdrawn"
+    case bookingCancelled = "booking_cancelled"
+    /// L'altra parte ha eliminato l'account: l'accordo non c'è più.
+    case agreementRemoved = "agreement_removed"
     case newReview = "new_review"
 }
 
@@ -119,9 +124,14 @@ final class DeepLinkRouter {
             selectedTab = 2 // Chat
             pendingConversationId = payload.conversationId
 
-        case .newProposal, .proposalCounter, .proposalAccepted:
+        case .newProposal, .proposalCounter, .proposalAccepted,
+             .proposalRejected, .proposalWithdrawn, .bookingCancelled:
             selectedTab = 1 // Trattative
             pendingOfferId = payload.offerId
+
+        case .agreementRemoved:
+            // Il giorno liberato è segnalato nel calendario disponibilità (Profilo).
+            selectedTab = 3
 
         case .newReview:
             selectedTab = 3 // Profilo (l'organizzatore vede la propria recensione)

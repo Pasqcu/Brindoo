@@ -21,6 +21,8 @@ struct OrganizerDetailView: View {
     @State private var navigateToChat: Conversation?
     @State private var isStartingChat: Bool = false
     @State private var isBlocked: Bool = false
+    /// Il blocco è mio: si può togliere. Se è dell'altro, si legge soltanto.
+    @State private var blockedByMe: Bool = false
     @State private var showBlockConfirm: Bool = false
     @State private var showAvatarFullScreen: Bool = false
     @State private var showReport: Bool = false
@@ -125,7 +127,7 @@ struct OrganizerDetailView: View {
                 }
                 ToolbarItem(placement: .topBarTrailing) {
                     Menu {
-                        if isBlocked {
+                        if blockedByMe {
                             Button {
                                 Task { await unblock() }
                             } label: {
@@ -157,6 +159,7 @@ struct OrganizerDetailView: View {
         .task {
             await loadData()
             isBlocked = BlockService.shared.isBlockingOrBlocked(organizer.id)
+            blockedByMe = BlockService.shared.haveIBlocked(organizer.id)
             if !isViewingOwn && !isPreview {
                 await AnalyticsService.shared.trackProfileView(profileId: organizer.id)
                 isFavorite = (try? await OrganizerFavoriteService.shared.isFavorite(organizerId: organizer.id)) ?? false
@@ -386,7 +389,7 @@ struct OrganizerDetailView: View {
             }
 
             if isBlocked {
-                Text("Hai bloccato questo utente")
+                Text(blockedByMe ? "Hai bloccato questo utente" : "Non puoi contattare questo utente")
                     .font(BrindooFont.caption)
                     .foregroundStyle(Color.brindooError)
             }
@@ -438,6 +441,7 @@ struct OrganizerDetailView: View {
         do {
             try await BlockService.shared.block(userId: organizer.id)
             isBlocked = true
+            blockedByMe = true
             dismiss()
         } catch { BrindooLog.error("\(error)") }
     }
@@ -445,7 +449,8 @@ struct OrganizerDetailView: View {
     private func unblock() async {
         do {
             try await BlockService.shared.unblock(userId: organizer.id)
-            isBlocked = false
+            blockedByMe = false
+            isBlocked = BlockService.shared.isBlockingOrBlocked(organizer.id)
         } catch { BrindooLog.error("\(error)") }
     }
 

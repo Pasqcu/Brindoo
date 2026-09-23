@@ -28,11 +28,19 @@ final class ClientRequestService {
     /// righe, quindi riordinare dopo lascerebbe fuori proprio le richieste in
     /// evidenza piu' vecchie — cioe' il posto che i clienti Pro hanno pagato.
     /// In cima i clienti Pro, poi le urgenti, a parita' la piu' recente.
+    /// Esclude le proprie (chi era cliente e poi è diventato professionista
+    /// non deve ritrovarsele fra quelle da contattare) e quelle con la data
+    /// già passata, anche prima che il lavoro notturno le chiuda.
     func fetchOpenRequests() async throws -> [ClientRequest] {
-        try await client
+        var query = client
             .from("client_requests_ranked")
             .select()
             .eq("status", value: ClientRequestStatus.open.rawValue)
+            .or("event_date.is.null,event_date.gte.\(BrindooFormat.todayString)")
+        if let me = SupabaseManager.shared.currentUserID {
+            query = query.neq("client_id", value: me)
+        }
+        return try await query
             .order("client_is_pro", ascending: false)
             .order("urgent", ascending: false, nullsFirst: false)
             .order("created_at", ascending: false)
@@ -142,6 +150,8 @@ final class ClientRequestService {
             .select("id")
             .eq("client_id", value: userId)
             .eq("status", value: ClientRequestStatus.open.rawValue)
+            // Quelle scadute non contano: il database le chiude da solo.
+            .or("event_date.is.null,event_date.gte.\(BrindooFormat.todayString)")
             .limit(Self.maxOpenRequestsFree)
             .execute()
             .value

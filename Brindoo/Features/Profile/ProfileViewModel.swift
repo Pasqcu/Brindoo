@@ -18,6 +18,8 @@ final class ProfileViewModel {
     private(set) var reviewSummary: ReviewSummary?
     private(set) var portfolioCount: Int = 0
     private(set) var activeOffersCount: Int = 0
+    /// Eventi saltati (cliente che ha eliminato l'account) con la data da decidere.
+    private(set) var cancellationNoticesCount: Int = 0
 
     /// Carica i dati mostrati al professionista. Per il cliente non c'è
     /// nulla da chiedere: il profilo si legge dalla sessione.
@@ -36,6 +38,9 @@ final class ProfileViewModel {
             let items = try await PortfolioService.shared.fetchPortfolio(organizerId: userId)
             portfolioCount = items.count
         } catch { BrindooLog.error("\(error)") }
+
+        cancellationNoticesCount = (try? await AvailabilityService.shared
+            .fetchMyCancellationNotices().count) ?? 0
 
         // Per la barra "profilo completo": quante offerte attive ha.
         if let offers = try? await ServiceOfferService.shared.fetchMyOffers() {

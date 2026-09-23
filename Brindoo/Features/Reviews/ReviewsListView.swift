@@ -125,7 +125,7 @@ struct ReviewsListView: View {
                         ) {
                             showWriteReview = true
                         }
-                    } else {
+                    } else if showsLockedHint {
                         lockedReviewHint
                     }
                 }
@@ -255,8 +255,8 @@ struct ReviewsListView: View {
         BrindooEmptyState(
             icon: "star",
             title: "Nessuna recensione",
-            message: canWriteReview
-                ? "Sii il primo a recensire questo organizzatore"
+            message: canWriteReview && hasCompletedDeal
+                ? "Sii il primo a recensire questo professionista"
                 : "Le recensioni dei clienti appariranno qui"
         )
     }
@@ -404,11 +404,18 @@ struct ReviewsListView: View {
     
     // MARK: - Helpers
     
+    /// Chi può anche solo vedere il pulsante: non il professionista stesso,
+    /// non chi è bloccato. Il resto lo decide l'evento svolto
+    /// (`hasCompletedDeal`), non il ruolo: chi era cliente e poi è diventato
+    /// professionista può recensire chi ha ingaggiato allora.
     private var canWriteReview: Bool {
-        // Solo i clienti possono recensire, non se l'organizzatore è se stesso
-        guard session.currentProfile?.role == .client else { return false }
-        guard session.userID != organizer.id else { return false }
-        return true
+        guard let me = session.userID, me != organizer.id else { return false }
+        return !BlockService.shared.isBlockingOrBlocked(organizer.id)
+    }
+
+    /// Il suggerimento "si recensisce dopo l'evento" parla ai clienti.
+    private var showsLockedHint: Bool {
+        session.currentProfile?.role == .client
     }
     
     // MARK: - Caricamento
@@ -496,7 +503,7 @@ struct ReplyToReviewSheet: View {
                 }
                 .padding(.horizontal, BrindooSpacing.lg)
                 .padding(.vertical, BrindooSpacing.sm)
-                .background(Color.brindooBackground)
+                .background(Color.brindooBackground.ignoresSafeArea(edges: .bottom))
             }
             .onAppear { text = review.reply ?? "" }
         }

@@ -72,7 +72,7 @@ struct ChatView: View {
             }
 
             if vm.isBlocked {
-                ChatBlockedBanner { Task { await vm.unblock() } }
+                ChatBlockedBanner(canUnblock: vm.blockedByMe) { Task { await vm.unblock() } }
             } else {
                 // Una striscia sola per volta sopra la barra di scrittura:
                 // stanno tutte fra i messaggi e la tastiera, e sommate
@@ -106,7 +106,9 @@ struct ChatView: View {
 
             ToolbarItem(placement: .topBarTrailing) {
                 ChatOptionsMenu(
-                    isBlocked: vm.isBlocked,
+                    // Il menu parla del *mio* blocco: se è l'altro ad avermi
+                    // bloccato, posso comunque bloccarlo anch'io.
+                    isBlocked: vm.blockedByMe,
                     onViewProfile: { navigateToProfile = true },
                     onDeleteConversation: { showDeleteConvConfirm = true },
                     onBlock: { showBlockConfirm = true },

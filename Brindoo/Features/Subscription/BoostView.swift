@@ -255,7 +255,7 @@ struct BoostView: View {
             VStack(alignment: .leading, spacing: 2) {
                 Text("Boost attivo")
                     .font(BrindooFont.titleSmall)
-                Text("Il tuo profilo è in cima ai risultati")
+                Text(boostUntilText)
                     .font(BrindooFont.caption)
                     .foregroundStyle(Color.brindooTextSecondary)
             }
@@ -297,6 +297,16 @@ struct BoostView: View {
     /// `boost_expires_at` con adesso, così un Boost finito torna comprabile.
     private var isCurrentlyBoosted: Bool {
         session.currentProfile?.isBoosted ?? false
+    }
+
+    /// Fino a quando, e cosa succede se se ne compra un altro: prima la card
+    /// non diceva la scadenza e il tempo aggiunto arrivava in silenzio.
+    private var boostUntilText: String {
+        guard let until = session.currentProfile?.boostExpiresAt else {
+            return "Il tuo profilo è in cima ai risultati"
+        }
+        let when = "\(BrindooFormat.italianDayMonth(from: until)) alle \(BrindooFormat.time(until))"
+        return "In cima fino al \(when). Un nuovo acquisto si aggiunge al tempo rimasto."
     }
     
     // MARK: - Actions

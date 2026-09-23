@@ -44,6 +44,9 @@ nonisolated enum BrindooErrorText {
         if isOffline(error) {
             return "Connessione assente. Controlla la rete e riprova."
         }
+        if let rule = serverRule(error) {
+            return rule
+        }
         if let localized = error as? LocalizedError,
            let description = localized.errorDescription,
            !description.isEmpty {
@@ -51,6 +54,28 @@ nonisolated enum BrindooErrorText {
         }
         return fallback
     }
+
+    /// Rifiuti delle regole del database (trigger `brindoo_guard_*`,
+    /// limiti, inviti), tradotti in una frase per l'utente. `nil` quando
+    /// l'errore non è uno di questi. Se cambia un testo SQL, cambia anche qui.
+    static func serverRule(_ error: Error) -> String? {
+        let text = "\(error)"
+        return serverRules.first { text.contains($0.needle) }?.message
+    }
+
+    private static let serverRules: [(needle: String, message: String)] = [
+        ("Utente bloccato", "Non puoi interagire con questo utente."),
+        ("e' in vacanza", "Il professionista è in vacanza: potrai contattarlo quando torna disponibile."),
+        ("Data occupata", "Il professionista ha già un evento confermato in quella data."),
+        ("segnare svolto", "Potrai segnarlo come svolto dal giorno dell'evento."),
+        ("Tocca all'altra parte", "Tocca all'altra parte rispondere: aggiorna la trattativa."),
+        ("gia' chiusa", "Questa trattativa è già chiusa: aggiorna la schermata."),
+        ("gia' chiuso", "Questo appuntamento è già chiuso: aggiorna la schermata."),
+        ("data di questa richiesta", "La data di questa richiesta è passata: pubblicane una nuova."),
+        ("non puoi usare il tuo codice", "Non puoi usare il tuo stesso codice."),
+        ("30 giorni dall", "Il codice invito si usa entro 30 giorni dall'iscrizione."),
+        ("Puoi rispondere solo", "Puoi rispondere solo alle recensioni che hai ricevuto."),
+    ]
 
     /// Vero se l'errore è "non c'è linea" e non un problema dell'app.
     static func isOffline(_ error: Error) -> Bool {

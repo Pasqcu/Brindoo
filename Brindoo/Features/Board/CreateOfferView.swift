@@ -164,6 +164,8 @@ struct CreateOfferView: View {
                 .background(
                     Color.brindooBackground
                         .shadow(color: .black.opacity(0.08), radius: 8, x: 0, y: -2)
+                        // Fino al bordo: sotto la barra non deve spuntare il contenuto.
+                        .ignoresSafeArea(edges: .bottom)
                 )
             }
             .task {

@@ -123,6 +123,7 @@ enum LocalReminderService {
 
     /// Toglie tutti i promemoria eventi già programmati (l'utente li ha spenti).
     static func cancelAllEventReminders() async {
+        syncedSignatures.removeAll()
         let center = UNUserNotificationCenter.current()
         let pending = await center.pendingNotificationRequests()
         let ids = pending.map(\.identifier).filter { id in
@@ -130,6 +131,59 @@ enum LocalReminderService {
         }
         guard !ids.isEmpty else { return }
         center.removePendingNotificationRequests(withIdentifiers: ids)
+    }
+
+    // MARK: - Allineamento con gli accordi
+
+    /// Ultima versione programmata per ogni accordo (data, stato, acconto):
+    /// se non è cambiato nulla non si riprogramma a ogni giro.
+    private static var syncedSignatures: [UUID: String] = [:]
+
+    /// Allinea i promemoria di questo telefono agli accordi veri.
+    ///
+    /// Prima la serie la programmava solo il telefono di chi accettava (o
+    /// spostava la data): l'altra parte non riceveva nulla, e un annullamento
+    /// fatto dall'altro telefono lasciava partire avvisi di un evento finito.
+    /// Riaccendendo i promemoria in Impostazioni, qui si rimettono.
+    static func sync(with proposals: [OfferProposal], offerTitles: [UUID: String], me: UUID) async {
+        guard remindersEnabled else { return }
+
+        // Vivi: accordo chiuso, non annullato, dal giorno prima (serve
+        // ancora l'invito a recensire del giorno dopo) in avanti.
+        let live = proposals.filter { p in
+            guard p.status == .accepted, p.effectiveBooking != .cancelled,
+                  let date = p.eventDate,
+                  let days = BrindooFormat.daysUntil(day: date) else { return false }
+            return days >= -1
+        }
+        let liveIds = Set(live.map(\.id))
+
+        // Via le serie degli accordi che non ci sono più (annullati altrove).
+        let pending = await UNUserNotificationCenter.current().pendingNotificationRequests()
+        for request in pending {
+            guard let prefix = reminderPrefixes.first(where: { request.identifier.hasPrefix($0) }),
+                  let id = UUID(uuidString: String(request.identifier.dropFirst(prefix.count))),
+                  !liveIds.contains(id) else { continue }
+            cancelReminder(proposalId: id)
+            syncedSignatures[id] = nil
+        }
+
+        for p in live {
+            let depositDone = p.isDepositPaid || p.isDepositAwaitingConfirmation
+            let signature = "\(p.eventDate ?? "")|\(p.effectiveBooking.rawValue)|\(depositDone)"
+            guard syncedSignatures[p.id] != signature else { continue }
+            // Stessi identificatori: la serie nuova sostituisce la vecchia.
+            cancelReminder(proposalId: p.id)
+            await scheduleEventReminders(
+                proposalId: p.id,
+                eventDate: p.eventDate,
+                offerTitle: offerTitles[p.offerId] ?? "il tuo evento",
+                offerId: p.offerId,
+                isClient: p.clientId == me,
+                depositDone: depositDone
+            )
+            syncedSignatures[p.id] = signature
+        }
     }
 
     // MARK: - Preferenza locale

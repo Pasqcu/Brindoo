@@ -163,6 +163,8 @@ struct WriteReviewView: View {
                 .background(
                     Color.brindooBackground
                         .shadow(color: .black.opacity(0.08), radius: 8, x: 0, y: -2)
+                        // Fino al bordo: sotto la barra non deve spuntare il contenuto.
+                        .ignoresSafeArea(edges: .bottom)
                 )
             }
             .onAppear {
@@ -293,7 +295,7 @@ struct WriteReviewView: View {
             dismiss()
         } catch {
             generalError = BrindooErrorText.isDuplicate(error)
-                ? "Hai già recensito questo organizzatore"
+                ? "Hai già recensito questo professionista"
                 : BrindooErrorText.message(
                     for: error,
                     fallback: BrindooText.saveError("la recensione")
@@ -315,6 +317,36 @@ struct WriteReviewView: View {
         } catch {
             generalError = BrindooText.deleteError("la recensione")
             BrindooLog.error("\(error)")
+        }
+    }
+}
+
+// MARK: - Scrivi o modifica
+
+/// Apre la recensione del cliente per quel professionista: nuova se non
+/// c'è, in modifica se l'ha già scritta. Prima i pulsanti "Lascia una
+/// recensione" aprivano sempre un modulo vuoto e il salvataggio falliva
+/// dopo averlo compilato (una recensione per professionista).
+struct ReviewComposerSheet: View {
+    let organizer: Profile
+    let onSuccess: () -> Void
+
+    @State private var existing: Review?
+    @State private var loaded = false
+
+    var body: some View {
+        Group {
+            if loaded {
+                WriteReviewView(organizer: organizer, existingReview: existing, onSuccess: onSuccess)
+            } else {
+                ProgressView()
+                    .tint(.brindooCoral)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+            }
+        }
+        .task {
+            existing = try? await ReviewService.shared.myReviewFor(organizerId: organizer.id)
+            loaded = true
         }
     }
 }

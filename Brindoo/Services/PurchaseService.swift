@@ -14,12 +14,12 @@ enum BrindooProduct {
     static let proMonthly = "com.pasqcu.Brindoo.pro.monthly"
     static let boostDay = "com.pasqcu.Brindoo.boost.1day"
     static let boostWeek = "com.pasqcu.Brindoo.boost.1week"
-    
+
     static let allIds: Set<String> = [proMonthly, boostDay, boostWeek]
-    
+
     /// I prodotti consumabili (boost) — non sono entitlement permanenti
     static let consumables: Set<String> = [boostDay, boostWeek]
-    
+
     /// Prodotti subscription (Pro)
     static let subscriptions: Set<String> = [proMonthly]
 }
@@ -27,39 +27,48 @@ enum BrindooProduct {
 @MainActor
 @Observable
 final class PurchaseService {
-    
+
     static let shared = PurchaseService()
-    
+
     /// Prodotti caricati da App Store
     private(set) var products: [Product] = []
-    
+
     /// True quando sta caricando i prodotti o un'operazione è in corso
     private(set) var isLoading: Bool = false
-    
+
+    /// True quando l'abbonamento di questo ID Apple è già legato a un altro
+    /// account Brindoo: il server lo tiene a quello, qui non diventa Pro.
+    private(set) var subscriptionOwnedByOtherAccount: Bool = false
+
     /// Listener delle transazioni (StoreKit chiama questo continuously).
     /// Non viene mai cancellato perché PurchaseService è singleton
     /// e vive per tutta la durata dell'app.
     private var transactionListener: Task<Void, Never>?
-    
+
+    /// Allineamento con il server in corso: all'avvio lo chiedono sia l'app
+    /// sia il login, e due giri insieme mandavano due volte le stesse
+    /// transazioni.
+    private var refreshTask: Task<Void, Never>?
+
     private var client: SupabaseClient {
         SupabaseManager.shared.client
     }
-    
+
     private init() {
         // Avvia ascolto transazioni in background
         transactionListener = listenForTransactions()
     }
-    
+
     // MARK: - Caricamento prodotti
-    
+
     /// Carica i prodotti da App Store Connect (o dallo StoreKit Configuration File se attivo)
     func loadProducts() async {
         isLoading = true
         defer { isLoading = false }
-        
+
         do {
             let storeProducts = try await Product.products(for: BrindooProduct.allIds)
-            
+
             // Ordina: subscription prima, poi consumable per prezzo
             self.products = storeProducts.sorted { lhs, rhs in
                 if lhs.type == .autoRenewable && rhs.type != .autoRenewable {
@@ -70,20 +79,20 @@ final class PurchaseService {
                 }
                 return lhs.price < rhs.price
             }
-            
+
             BrindooLog.info("Caricati \(products.count) prodotti")
         } catch {
             BrindooLog.error("Errore caricamento prodotti: \(error)")
         }
     }
-    
+
     /// Cerca un prodotto per ID
     func product(for id: String) -> Product? {
         products.first { $0.id == id }
     }
-    
+
     // MARK: - Acquisto
-    
+
     enum PurchaseResult {
         case success
         /// Pagamento riuscito ma il server non ha ancora registrato il diritto.
@@ -98,7 +107,13 @@ final class PurchaseService {
     /// Avvia l'acquisto di un prodotto
     func purchase(_ product: Product) async -> PurchaseResult {
         do {
-            let result = try await product.purchase()
+            // L'acquisto porta con sé l'account Brindoo che lo fa: il server
+            // lo assegna a lui, non a chiunque altro usi lo stesso ID Apple.
+            var options: Set<Product.PurchaseOption> = []
+            if let userId = SupabaseManager.shared.currentUserID {
+                options.insert(.appAccountToken(userId))
+            }
+            let result = try await product.purchase(options: options)
 
             switch result {
             case .success(let verification):
@@ -112,7 +127,7 @@ final class PurchaseService {
                 // chiuderla prima significava, con una rete ballerina, incassare
                 // un Boost e non consegnarlo mai (i consumabili chiusi non
                 // ricompaiono più in `currentEntitlements`).
-                guard await submitToServer(verification: verification) else {
+                guard await submitToServer(verification: verification) != nil else {
                     return .pendingActivation
                 }
                 await transaction.finish()
@@ -136,41 +151,111 @@ final class PurchaseService {
             return .failed(error)
         }
     }
-    
+
     // MARK: - Restore
-    
-    /// Ripristina gli acquisti (richiamabile da bottone "Ripristina acquisti")
-    func restorePurchases() async {
+
+    enum RestoreOutcome {
+        /// Abbonamento attivo trovato e registrato su questo account.
+        case restored
+        /// Abbonamento attivo, ma appartiene a un altro account Brindoo.
+        case ownedByOtherAccount
+        /// Nessun abbonamento attivo su questo ID Apple.
+        case nothingToRestore
+        case failed
+    }
+
+    /// Ripristina gli acquisti (bottone "Ripristina") e dice com'è andata.
+    func restorePurchases() async -> RestoreOutcome {
         do {
             try await AppStore.sync()
-            await refreshEntitlements()
-            BrindooLog.info("Acquisti ripristinati")
         } catch {
             BrindooLog.error("Errore restore: \(error)")
+            return .failed
         }
+        await refreshEntitlements()
+
+        var foundPro = false
+        for await result in Transaction.currentEntitlements {
+            if case .verified(let t) = result, t.productID == BrindooProduct.proMonthly {
+                foundPro = true
+            }
+        }
+        BrindooLog.info("Acquisti ripristinati")
+        if !foundPro { return .nothingToRestore }
+        return subscriptionOwnedByOtherAccount ? .ownedByOtherAccount : .restored
     }
-    
+
+    // MARK: - Stato dell'abbonamento Apple
+
+    /// Quello che solo Apple sa: se l'abbonamento si rinnoverà da solo.
+    struct SubscriptionState {
+        let willAutoRenew: Bool
+        let expiresAt: Date?
+    }
+
+    /// Stato dell'abbonamento Pro su questo ID Apple, `nil` se non ce n'è uno attivo.
+    func proSubscriptionState() async -> SubscriptionState? {
+        let product: Product?
+        if let loaded = self.product(for: BrindooProduct.proMonthly) {
+            product = loaded
+        } else {
+            product = try? await Product.products(for: [BrindooProduct.proMonthly]).first
+        }
+        guard let statuses = try? await product?.subscription?.status else { return nil }
+        for status in statuses {
+            switch status.state {
+            case .subscribed, .inGracePeriod, .inBillingRetryPeriod:
+                guard case .verified(let renewal) = status.renewalInfo,
+                      case .verified(let transaction) = status.transaction else { continue }
+                return SubscriptionState(
+                    willAutoRenew: renewal.willAutoRenew,
+                    expiresAt: transaction.expirationDate
+                )
+            default:
+                continue
+            }
+        }
+        return nil
+    }
+
     // MARK: - Aggiornamento entitlements
 
     /// Re-invia al server TUTTE le transazioni attive (subscription + consumable
     /// non scaduti). Utile all'avvio dell'app, dopo restore o cambio device.
     ///
     /// La Edge Function `validate-iap-receipt` ricalcola gli entitlement DB
-    /// in modo idempotente. Non aggiorniamo più i campi `profiles.pro_expires_at`
-    /// e `boost_expires_at` direttamente: il trigger DB (vedi migration
-    /// 20260515_reports_and_compliance.sql) li blocca per i client.
+    /// in modo idempotente e li assegna all'account proprietario dell'acquisto.
+    /// Un giro alla volta: chi chiama mentre ne è in corso uno aspetta quello.
     func refreshEntitlements() async {
+        if let refreshTask {
+            await refreshTask.value
+            return
+        }
+        let task = Task { await performRefresh() }
+        refreshTask = task
+        await task.value
+        refreshTask = nil
+    }
+
+    private func performRefresh() async {
         guard SupabaseManager.shared.currentUserID != nil else { return }
 
+        var ownedElsewhere = false
         for await result in Transaction.currentEntitlements {
-            _ = await submitToServer(verification: result)
+            let matches = await submitToServer(verification: result)
+            if case .verified(let t) = result,
+               t.productID == BrindooProduct.proMonthly,
+               matches == false {
+                ownedElsewhere = true
+            }
         }
+        subscriptionOwnedByOtherAccount = ownedElsewhere
 
         // Acquisti pagati e mai registrati sul server (rete caduta a metà):
         // si riprova adesso e si chiudono solo quando il server li accetta.
         for await result in Transaction.unfinished {
             guard case .verified(let transaction) = result else { continue }
-            if await submitToServer(verification: result) {
+            if await submitToServer(verification: result) != nil {
                 await transaction.finish()
             }
         }
@@ -185,19 +270,23 @@ final class PurchaseService {
         let signed_transaction: String
     }
 
+    private struct ValidateReceiptResponse: Decodable {
+        let owner_matches: Bool?
+    }
+
     /// Invia il JWS firmato Apple alla Edge Function `validate-iap-receipt`,
     /// che ne verifica la firma e aggiorna l'entitlement DB con service_role.
-    /// - Returns: `true` se il server ha registrato il diritto. Chi chiama usa
-    ///   l'esito per decidere se chiudere la transazione StoreKit.
-    @discardableResult
-    private func submitToServer(verification: VerificationResult<Transaction>) async -> Bool {
+    /// - Returns: `nil` se il server non ha registrato nulla (la transazione
+    ///   va lasciata aperta); altrimenti se l'acquisto appartiene a questo
+    ///   account (`false` = legato a un altro account Brindoo).
+    private func submitToServer(verification: VerificationResult<Transaction>) async -> Bool? {
         // Estraggo il JWS originale firmato da Apple.
         // `jwsRepresentation` è disponibile solo su VerificationResult<Transaction>
         // (e su altre specializzazioni concrete), non sul generico.
         let jws = verification.jwsRepresentation
 
         do {
-            _ = try await client.functions
+            let response: ValidateReceiptResponse = try await client.functions
                 .invoke(
                     "validate-iap-receipt",
                     options: FunctionInvokeOptions(
@@ -205,10 +294,10 @@ final class PurchaseService {
                     )
                 )
             BrindooLog.info("Entitlement validato server-side")
-            return true
+            return response.owner_matches ?? true
         } catch {
             BrindooLog.error("Errore validazione server-side: \(error)")
-            return false
+            return nil
         }
     }
 
@@ -224,7 +313,8 @@ final class PurchaseService {
                     // Invia al server per la verifica autoritativa. Se il server
                     // non risponde, la transazione resta aperta e StoreKit la
                     // ripropone: meglio riprovare che perdere un acquisto pagato.
-                    if await self.submitToServer(verification: result) {
+                    // Anche i rimborsi arrivano da qui: il server toglie il diritto.
+                    if await self.submitToServer(verification: result) != nil {
                         await transaction.finish()
                     }
                 } catch {

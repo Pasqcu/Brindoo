@@ -124,7 +124,7 @@ struct NegotiationsView: View {
             ChatView(conversation: target.conversation, otherUser: target.other)
         }
         .sheet(item: $reviewTarget) { organizer in
-            WriteReviewView(organizer: organizer, existingReview: nil) {
+            ReviewComposerSheet(organizer: organizer) {
                 Task { await loadData() }
             }
         }
@@ -292,8 +292,8 @@ struct NegotiationsView: View {
 
     /// Il cliente può recensire quando l'evento è svolto o la data è passata.
     private func canReview(_ proposal: OfferProposal) -> Bool {
-        guard currentUserId == proposal.clientId else { return false }
-        return proposal.effectiveBooking == .completed || proposal.isEventPast
+        proposal.allowsReview(by: currentUserId)
+            && !BlockService.shared.isBlockingOrBlocked(proposal.organizerId)
     }
 
     private func openChat(for proposal: OfferProposal) async {

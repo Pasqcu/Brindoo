@@ -80,7 +80,8 @@ struct BoardView: View {
             content
         }
         .background(Color.brindooBackground)
-        .navigationTitle(clientPreview ? "Anteprima bacheca" : "Bacheca")
+        // Stesso nome della scheda in basso: "Esplora" per il cliente.
+        .navigationTitle(clientPreview ? "Anteprima bacheca" : (isClient ? "Esplora" : "Bacheca"))
         .navigationBarTitleDisplayMode(clientPreview ? .inline : .large)
         .toolbar {
             if !clientPreview {

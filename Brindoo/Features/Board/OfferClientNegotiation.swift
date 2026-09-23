@@ -85,6 +85,9 @@ struct ClientNegotiationSection: View {
     var onAddToCalendar: (OfferProposal) -> Void
     /// Chiamata dopo l'invio di una recensione (per ricaricare i dati).
     var onReviewSubmitted: () -> Void
+    /// Perché oggi non si può aprire una trattativa nuova (vacanza, blocco).
+    /// Una trattativa già aperta resta gestibile.
+    var newProposalUnavailableReason: String? = nil
 
     /// Serve solo a firmare il riepilogo dell'accordo col nome del cliente.
     @Environment(SessionStore.self) private var session
@@ -99,6 +102,8 @@ struct ClientNegotiationSection: View {
     var body: some View {
         if let proposal {
             existingProposalCard(proposal)
+        } else if let reason = newProposalUnavailableReason {
+            BrindooBanner(style: .info, title: reason)
         } else {
             initialClientActions
         }
@@ -174,7 +179,7 @@ struct ClientNegotiationSection: View {
             HStack(spacing: BrindooSpacing.sm) {
                 BrindooIconBadge(proposal.lastProposer == .organizer ? "person.badge.shield.checkmark" : "person.fill")
                 VStack(alignment: .leading, spacing: 2) {
-                    Text(proposal.lastProposer == .organizer ? "Controproposta organizzatore" : "La tua proposta")
+                    Text(proposal.lastProposer == .organizer ? "Controproposta del professionista" : "La tua proposta")
                         .font(BrindooFont.bodySmall.weight(.semibold))
                     Text(proposal.currentPriceDisplay)
                         .font(BrindooFont.titleMedium)
@@ -218,7 +223,8 @@ struct ClientNegotiationSection: View {
                     onOpenChat(org)
                 }
 
-                if proposal.effectiveBooking == .completed {
+                if proposal.allowsReview(by: session.userID),
+                   !BlockService.shared.isBlockingOrBlocked(proposal.organizerId) {
                     BrindooButton("Lascia una recensione", style: .secondary, size: .medium, icon: "star.fill") {
                         showWriteReview = true
                     }
@@ -255,7 +261,7 @@ struct ClientNegotiationSection: View {
                 )
             }
             .sheet(isPresented: $showWriteReview) {
-                WriteReviewView(organizer: org, existingReview: nil) {
+                ReviewComposerSheet(organizer: org) {
                     onReviewSubmitted()
                 }
             }
@@ -290,7 +296,7 @@ struct ClientNegotiationSection: View {
                 }
             } else {
                 // L'utente sta aspettando una risposta dall'organizzatore.
-                Text("In attesa di risposta dall'organizzatore.")
+                Text("In attesa di risposta dal professionista.")
                     .font(BrindooFont.bodySmall)
                     .foregroundStyle(Color.brindooTextSecondary)
 

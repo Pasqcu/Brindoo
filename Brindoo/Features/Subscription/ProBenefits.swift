@@ -60,7 +60,7 @@ enum ProBenefits {
         ProBenefit(
             icon: "beach.umbrella.fill",
             title: "Modalità vacanza",
-            description: "Metti in pausa le offerte mantenendo il profilo"
+            description: "Offerte nascoste e nuove proposte in pausa, il profilo resta visibile"
         ),
         ProBenefit(
             icon: "chart.bar.fill",
@@ -71,6 +71,11 @@ enum ProBenefits {
             icon: "photo.on.rectangle.angled",
             title: "Portfolio fino a 50 foto",
             description: "Free: 5 foto. Pro: 50 foto."
+        ),
+        ProBenefit(
+            icon: "app.gift",
+            title: "Icona dorata",
+            description: "Brindoo in oro sulla Home del tuo iPhone"
         )
     ]
 

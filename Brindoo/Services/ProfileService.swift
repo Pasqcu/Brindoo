@@ -270,16 +270,17 @@ final class ProfileService {
     ) async -> Profile? {
         guard let userID = SupabaseManager.shared.currentUserID else { return nil }
         let deadline = Date().addingTimeInterval(timeout)
-        var latest: Profile?
 
         while Date() < deadline {
-            if let profile = try? await fetchProfile(userID: userID) {
-                latest = profile
-                if condition(profile) { return profile }
+            if let profile = try? await fetchProfile(userID: userID),
+               condition(profile) {
+                return profile
             }
             try? await Task.sleep(for: .seconds(pollEvery))
         }
-        return latest
+        // Condizione mai vista vera: nil, non l'ultimo profilo letto. Chi
+        // chiama festeggia solo su un profilo che la rispetta davvero.
+        return nil
     }
 
     /// Quali notifiche l'utente vuole ricevere. Il filtro vero è sul server:

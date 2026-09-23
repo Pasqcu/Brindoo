@@ -180,7 +180,8 @@ final class BrindooImageLoader: @unchecked Sendable {
             return image
         }
 
-        guard let (data, response) = try? await URLSession.shared.data(from: url),
+        let request = await PrivateChatMedia.request(for: url)
+        guard let (data, response) = try? await URLSession.shared.data(for: request),
               (response as? HTTPURLResponse).map({ (200..<300).contains($0.statusCode) }) ?? true,
               let image = await Self.decodeAndSave(data, to: fileURL, maxPixelSize: pixels)
         else { return nil }

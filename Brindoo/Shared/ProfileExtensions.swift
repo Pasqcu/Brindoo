@@ -13,7 +13,7 @@ extension Profile {
         if let fullName, !fullName.trimmingCharacters(in: .whitespaces).isEmpty {
             return fullName
         }
-        return role == .organizer ? "Organizzatore" : "Cliente"
+        return role == .organizer ? "Professionista" : "Cliente"
     }
 
     /// True se manca (o è vecchia) l'accettazione dei Termini registrata sul server.

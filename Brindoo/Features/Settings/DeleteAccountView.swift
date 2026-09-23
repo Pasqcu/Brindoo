@@ -8,6 +8,7 @@
 //
 
 import SwiftUI
+import StoreKit
 
 struct DeleteAccountView: View {
     
@@ -18,6 +19,9 @@ struct DeleteAccountView: View {
     @State private var isLoading: Bool = false
     @State private var errorMessage: String?
     @State private var showFinalConfirm: Bool = false
+    @State private var showManageSubscriptions: Bool = false
+    /// Vero se Apple dice che l'abbonamento Pro si rinnoverà ancora.
+    @State private var subscriptionWillRenew: Bool = false
     
     private let confirmationKeyword = "ELIMINA"
     
@@ -67,7 +71,21 @@ struct DeleteAccountView: View {
                 .padding(BrindooSpacing.md)
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .brindooSurfaceBackground()
-                
+
+                // L'abbonamento lo incassa Apple: eliminare l'account non lo ferma.
+                if hasAppleSubscription {
+                    VStack(alignment: .leading, spacing: BrindooSpacing.sm) {
+                        BrindooBanner(
+                            style: .warning,
+                            title: "Hai un abbonamento Brindoo Pro attivo",
+                            message: "Eliminare l'account non disdice l'abbonamento: Apple continuerebbe ad addebitarlo. Disdicilo prima da qui."
+                        )
+                        BrindooButton("Gestisci abbonamento", style: .secondary, size: .medium, icon: "gearshape") {
+                            showManageSubscriptions = true
+                        }
+                    }
+                }
+
                 // Conferma testuale
                 VStack(alignment: .leading, spacing: BrindooSpacing.sm) {
                     Text("Per confermare scrivi **\(confirmationKeyword)** qui sotto:")
@@ -127,8 +145,14 @@ struct DeleteAccountView: View {
             .background(
                 Color.brindooBackground
                     .shadow(color: .black.opacity(0.08), radius: 8, x: 0, y: -2)
+                    // Fino al bordo: sotto la barra non deve spuntare il contenuto.
+                    .ignoresSafeArea(edges: .bottom)
             )
         }
+        .task {
+            subscriptionWillRenew = await PurchaseService.shared.proSubscriptionState()?.willAutoRenew ?? false
+        }
+        .manageSubscriptionsSheet(isPresented: $showManageSubscriptions)
         .alert("Sei davvero sicuro?", isPresented: $showFinalConfirm) {
             Button("Annulla", role: .cancel) {}
             Button("Sì, elimina tutto", role: .destructive) {
@@ -154,6 +178,11 @@ struct DeleteAccountView: View {
     
     private var isOrganizer: Bool {
         session.currentProfile?.role == .organizer
+    }
+
+    /// Abbonamento Apple che si rinnoverà ancora: è quello da disdire.
+    private var hasAppleSubscription: Bool {
+        subscriptionWillRenew
     }
     
     private var isConfirmed: Bool {

@@ -172,7 +172,7 @@ struct OfferCard: View {
             case .withdrawn: return "Ritirata"
             case .pending:
                 return waitingForMe
-                    ? "Controproposta organizzatore"
+                    ? "Controproposta del professionista"
                     : "Tua proposta in attesa"
             }
         }()

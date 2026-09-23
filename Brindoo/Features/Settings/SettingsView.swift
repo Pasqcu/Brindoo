@@ -30,6 +30,12 @@ struct SettingsView: View {
     /// Mostrato quando le preferenze non hanno raggiunto il server: prima
     /// l'interruttore restava acceso e nessuno lo sapeva.
     @State private var notifySaveFailed: Bool = false
+    /// Permesso notifiche negato in iOS: l'interruttore non può accenderle da qui.
+    @State private var pushDeniedBySystem: Bool = false
+    /// Ultimo stato push confermato: un cambio dell'interruttore uguale a
+    /// questo arriva dal caricamento, non da un tocco.
+    @State private var pushConfirmed: Bool = true
+    @State private var diagnosticsUnavailable: Bool = false
 
     // Diagnostica (rapporto errori da inviare al supporto)
     @State private var diagnosticsPayload: DiagnosticsPayload?
@@ -89,7 +95,7 @@ struct SettingsView: View {
                                 SettingsPromoCard(
                                     icon: "crown.fill",
                                     iconStyle: .gradient([Color.brindooCoral, .orange]),
-                                    title: "Diventa Pro",
+                                    title: isPro ? "Brindoo Pro" : "Diventa Pro",
                                     badgeText: isPro ? "ATTIVO" : nil,
                                     subtitle: isPro
                                         ? "Gestisci abbonamento"
@@ -111,9 +117,10 @@ struct SettingsView: View {
                                 .buttonStyle(.plain)
                             }
 
-                            // Icona dorata: piccolo lusso riservato ai Pro.
+                            // Icona dorata: piccolo lusso riservato ai Pro. Tornare
+                            // alla classica si può sempre, anche a Pro scaduto.
                             Button {
-                                if isPro {
+                                if isPro || goldIconActive {
                                     toggleGoldIcon()
                                 } else {
                                     showPaywall = true
@@ -123,9 +130,9 @@ struct SettingsView: View {
                                     icon: "app.gift",
                                     iconColor: .brindooProGold,
                                     title: "Icona dorata",
-                                    subtitle: isPro
-                                        ? (goldIconActive ? "Attiva — tocca per tornare alla classica" : "Metti l'oro in Home")
-                                        : "Riservata agli abbonati Pro"
+                                    subtitle: goldIconActive
+                                        ? "Attiva — tocca per tornare alla classica"
+                                        : (isPro ? "Metti l'oro in Home" : "Riservata agli abbonati Pro")
                                 )
                             }
                             .buttonStyle(.plain)
@@ -165,11 +172,8 @@ struct SettingsView: View {
                                 isOn: $pushEnabled
                             )
                             .onChange(of: pushEnabled) { _, newValue in
-                                Task {
-                                    if newValue {
-                                        await NotificationService.shared.requestAuthorization()
-                                    }
-                                }
+                                guard newValue != pushConfirmed else { return }
+                                Task { await applyPushToggle(newValue) }
                             }
 
                             // Scelta per tipo: chi non vuole i promemoria non
@@ -259,7 +263,7 @@ struct SettingsView: View {
                                 NavigationLink {
                                     FavoriteOrganizersView()
                                 } label: {
-                                    SettingsRow(icon: BrindooIcon.heartFilled, iconColor: .brindooCoral, title: "Preferiti", subtitle: "Organizer salvati")
+                                    SettingsRow(icon: BrindooIcon.heartFilled, iconColor: .brindooCoral, title: "Preferiti", subtitle: "Professionisti salvati")
                                 }
                                 .buttonStyle(.plain)
                                 Divider().padding(.leading, 56)
@@ -267,7 +271,7 @@ struct SettingsView: View {
                             NavigationLink {
                                 ReferralView()
                             } label: {
-                                SettingsRow(icon: BrindooIcon.gift, iconColor: Color.brindooProGold, title: "Invita amici", subtitle: "1 mese Pro per ogni amico")
+                                SettingsRow(icon: BrindooIcon.gift, iconColor: Color.brindooProGold, title: "Invita amici", subtitle: "1 mese Pro per amico, fino a \(ReferralService.maxInviterMonths)")
                             }
                             .buttonStyle(.plain)
                         }
@@ -314,6 +318,8 @@ struct SettingsView: View {
                             Button {
                                 if let url = BrindooDiagnostics.reportFileURL() {
                                     diagnosticsPayload = DiagnosticsPayload(url: url)
+                                } else {
+                                    diagnosticsUnavailable = true
                                 }
                             } label: {
                                 SettingsRow(
@@ -349,7 +355,7 @@ struct SettingsView: View {
 
                             Divider().padding(.leading, 56)
 
-                            SettingsRow(icon: "info.circle", iconColor: .brindooTextSecondary, title: "Versione", subtitle: appVersion)
+                            SettingsRow(icon: "info.circle", iconColor: .brindooTextSecondary, title: "Versione", subtitle: appVersion, showsChevron: false)
                         }
                         .brindooSurfaceBackground()
                     }
@@ -362,7 +368,8 @@ struct SettingsView: View {
                                     icon: "envelope.fill",
                                     iconColor: .brindooTextSecondary,
                                     title: "Email",
-                                    subtitle: email
+                                    subtitle: email,
+                                    showsChevron: false
                                 )
                                 Divider().padding(.leading, 56)
                             }
@@ -431,12 +438,40 @@ struct SettingsView: View {
                     Task { await AuthService.shared.signOut() }
                 }
             }
+            .alert("Notifiche disattivate in iOS", isPresented: $pushDeniedBySystem) {
+                Button("Apri Impostazioni") {
+                    if let url = URL(string: UIApplication.openSettingsURLString) {
+                        UIApplication.shared.open(url)
+                    }
+                }
+                Button("Annulla", role: .cancel) {}
+            } message: {
+                Text("Per ricevere le notifiche di Brindoo attivale in Impostazioni → Notifiche → Brindoo.")
+            }
+            .alert("Diagnostica non disponibile", isPresented: $diagnosticsUnavailable) {
+                Button("OK", role: .cancel) {}
+            } message: {
+                Text("Non ci sono ancora errori registrati da inviare. Se hai un problema, scrivici da «Segnala un problema».")
+            }
             .alert("Preferenze non salvate", isPresented: $notifySaveFailed) {
                 Button("Riprova") { scheduleNotificationSave() }
                 Button("Annulla", role: .cancel) {}
             } message: {
                 Text("Le scelte sulle notifiche non hanno raggiunto il server. Con la linea attiva riprova.")
             }
+        }
+    }
+
+    /// Interruttore push: spento toglie il token di questo telefono dal
+    /// server, acceso chiede il permesso (o rimanda a iOS se è negato).
+    private func applyPushToggle(_ on: Bool) async {
+        let result = await NotificationService.shared.setPushEnabled(on)
+        if result == .deniedBySystem {
+            pushConfirmed = false
+            pushEnabled = false
+            pushDeniedBySystem = true
+        } else {
+            pushConfirmed = on
         }
     }
 
@@ -461,7 +496,9 @@ struct SettingsView: View {
     private func loadPreferences() async {
         guard let profile = session.currentProfile else { return }
         readReceiptsEnabled = profile.readReceiptsEnabled
-        pushEnabled = await NotificationService.shared.isAuthorized()
+        let pushOn = await NotificationService.shared.isPushEnabled()
+        pushConfirmed = pushOn
+        pushEnabled = pushOn
         notifyMessages = profile.notifyMessages
         notifyNegotiations = profile.notifyNegotiations
         notifyReminders = profile.notifyReminders
@@ -520,6 +557,14 @@ struct SettingsView: View {
     }
 
     private func persistVacation(on: Bool) async {
+        // Il caricamento iniziale cambia gli stessi valori: se coincidono con
+        // quelli del profilo non c'è niente da salvare.
+        if let profile = session.currentProfile {
+            let same = on
+                ? (profile.isOnVacation && profile.vacationUntil.map(BrindooFormat.dayString(from:)) == BrindooFormat.dayString(from: vacationUntil))
+                : !profile.isOnVacation
+            if same { return }
+        }
         vacationSaving = true
         defer { vacationSaving = false }
         do {

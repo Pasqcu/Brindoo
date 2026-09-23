@@ -42,6 +42,9 @@ struct OfferDetailView: View {
 
     // Sposta data + festa per l'accordo
     @State private var moveDateTarget: OfferProposal?
+    /// Proposta da accettare su un giorno che il professionista ha segnato
+    /// come non disponibile: si chiede conferma prima.
+    @State private var busyDayAccept: OfferProposal?
     @State private var showConfetti: Bool = false
 
     /// Callback chiamato quando l'offerta viene modificata o cancellata.
@@ -68,6 +71,22 @@ struct OfferDetailView: View {
 
     private var canClientInteract: Bool {
         isClient && !isOwnOffer && vm.currentStatus == .active
+    }
+
+    /// Stesse regole del profilo (e del database): niente proposte nuove a
+    /// chi è in vacanza o bloccato. Prima dal profilo "Non disponibile",
+    /// dall'offerta la proposta partiva lo stesso.
+    private var newProposalUnavailableReason: String? {
+        if BlockService.shared.isBlockingOrBlocked(offer.organizerId) {
+            return "Non puoi fare proposte a questo professionista."
+        }
+        if let organizer = vm.organizerProfile, organizer.isOnVacation {
+            if let back = organizer.vacationUntilDisplay {
+                return "Il professionista è in vacanza: torna disponibile dal \(back)."
+            }
+            return "Il professionista è in vacanza."
+        }
+        return nil
     }
 
     var body: some View {
@@ -123,7 +142,8 @@ struct OfferDetailView: View {
                         onMarkBooking: { p, status in Task { await markBooking(p, status) } },
                         onMoveDate: { p in moveDateTarget = p },
                         onAddToCalendar: { p in Task { await addToCalendar(p) } },
-                        onReviewSubmitted: { Task { await vm.loadData() } }
+                        onReviewSubmitted: { Task { await vm.loadData() } },
+                        newProposalUnavailableReason: newProposalUnavailableReason
                     )
                     // Mentre una mossa è in volo i comandi restano fermi:
                     // niente doppio invio, e si vede che sta succedendo.
@@ -238,6 +258,23 @@ struct OfferDetailView: View {
             }
         }
         .confirmationDialog(
+            "Quel giorno risulti non disponibile",
+            isPresented: Binding(
+                get: { busyDayAccept != nil },
+                set: { if !$0 { busyDayAccept = nil } }
+            ),
+            titleVisibility: .visible,
+            presenting: busyDayAccept
+        ) { proposal in
+            Button("Accetta comunque") {
+                busyDayAccept = nil
+                Task { await acceptProposal(proposal, confirmedBusyDay: true) }
+            }
+            Button("Annulla", role: .cancel) { busyDayAccept = nil }
+        } message: { proposal in
+            Text("Hai segnato il \(proposal.eventDateDisplay ?? "giorno dell'evento") come non disponibile nel calendario. Accettando, i clienti lo vedranno occupato dall'evento.")
+        }
+        .confirmationDialog(
             "Eliminare questa offerta?",
             isPresented: $showDeleteConfirm,
             titleVisibility: .visible
@@ -315,7 +352,15 @@ struct OfferDetailView: View {
     // festa, navigazione, avvisi e cose del telefono (calendario).
 
     /// Accordo raggiunto: coriandoli, poi si apre la chat.
-    private func acceptProposal(_ proposal: OfferProposal) async {
+    private func acceptProposal(_ proposal: OfferProposal, confirmedBusyDay: Bool = false) async {
+        // Il professionista che accetta su un giorno segnato "non disponibile"
+        // lo sa prima. Due eventi confermati nello stesso giorno li ferma il
+        // database; il giorno segnato a mano è una sua scelta.
+        if !confirmedBusyDay, isOwnOffer, let day = proposal.eventDate,
+           await vm.isMarkedUnavailable(day) {
+            busyDayAccept = proposal
+            return
+        }
         guard let result = await vm.acceptProposal(proposal) else { return }
         BrindooHaptics.notify(.success)
         showConfetti = true

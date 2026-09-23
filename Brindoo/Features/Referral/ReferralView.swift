@@ -41,7 +41,7 @@ final class ReferralViewModel: BrindooViewModel {
     func redeem() async {
         do {
             try await ReferralService.shared.redeem(code: redeemCode)
-            redeemMessage = (.success, "Codice riscattato! Riceverai il bonus a breve.")
+            redeemMessage = (.success, "Codice riscattato! Il mese Pro arriva quando il tuo profilo ha nome, foto e una descrizione di almeno 30 caratteri.")
             redeemCode = ""
             BrindooHaptics.notify(.success)
             await load()
@@ -111,7 +111,7 @@ struct ReferralView: View {
                 .font(BrindooFont.titleMedium)
                 .foregroundStyle(.white)
                 .multilineTextAlignment(.center)
-            Text("Quando un amico si iscrive con il tuo codice e completa il profilo (nome, foto e descrizione), il mese Pro arriva da solo. Anche a lui!")
+            Text("Quando un amico si iscrive con il tuo codice e completa il profilo (nome, foto e descrizione), il mese Pro arriva da solo. Anche a lui! Fino a \(ReferralService.maxInviterMonths) mesi per te; se sei già abbonato, il mese si aggiunge dopo il periodo pagato.")
                 .font(BrindooFont.bodySmall)
                 .foregroundStyle(.white.opacity(0.85))
                 .multilineTextAlignment(.center)
@@ -178,9 +178,9 @@ struct ReferralView: View {
     private var redeemSection: some View {
         BrindooCard(style: .flat) {
             VStack(alignment: .leading, spacing: BrindooSpacing.sm) {
-                BrindooSectionHeader("Hai un codice da un amico?", subtitle: "Inseriscilo qui per riscattarlo.")
+                BrindooSectionHeader("Hai un codice da un amico?", subtitle: "Uno per account, entro 30 giorni dall'iscrizione.")
                 BrindooTextField(
-                    placeholder: "Es. BRN-1234",
+                    placeholder: "Es. WM3VCZ3",
                     text: $vm.redeemCode,
                     icon: BrindooIcon.referral,
                     autocapitalization: .characters

@@ -142,16 +142,8 @@ final class OfferProposalService {
             message: message
         )
 
-        // Push all'organizzatore
-        Task {
-            let me = try? await ProfileService.shared.fetchProfile(userID: userId)
-            await PushOutboxService.shared.notifyNewProposal(
-                to: offer.organizerId,
-                clientName: me?.fullName ?? "Un cliente",
-                offerTitle: offer.title,
-                offerId: offer.id
-            )
-        }
+        // La push all'organizzatore la genera il database
+        // (trigger `offer_proposals_notify`).
 
         // Live Activity sul Lock Screen / Dynamic Island
         Task { @MainActor in
@@ -159,7 +151,7 @@ final class OfferProposalService {
             await LiveActivityManager.shared.startOrUpdateNegotiation(
                 proposalId: created.id,
                 offerTitle: offer.title,
-                counterpartyName: organizer?.fullName ?? "Organizzatore",
+                counterpartyName: organizer?.fullName ?? "Professionista",
                 viewerRole: .client,
                 currentPrice: Int(price),
                 lastProposer: .client,
@@ -207,28 +199,15 @@ final class OfferProposalService {
             message: message
         )
 
-        // Push alla controparte
+        // La push alla controparte la genera il database
+        // (trigger `offer_proposals_notify`).
         Task {
-            var meName: String? = nil
-            if let userId = SupabaseManager.shared.currentUserID,
-               let me = try? await ProfileService.shared.fetchProfile(userID: userId) {
-                meName = me.fullName
-            }
-            let recipientId: UUID = (role == .client) ? proposal.organizerId : proposal.clientId
-            let offerTitle: String = (try? await ServiceOfferService.shared.fetchOffer(id: proposal.offerId))?.title ?? "Offerta"
-            await PushOutboxService.shared.notifyProposalCounter(
-                to: recipientId,
-                fromName: meName ?? "Utente",
-                offerTitle: offerTitle,
-                offerId: proposal.offerId
-            )
-
             // Aggiorna la Live Activity con il nuovo prezzo e l'autore della proposta
             let offerTitleResolved: String = (try? await ServiceOfferService.shared.fetchOffer(id: proposal.offerId))?.title ?? "Offerta"
             await LiveActivityManager.shared.startOrUpdateNegotiation(
                 proposalId: proposal.id,
                 offerTitle: offerTitleResolved,
-                counterpartyName: (role == .client ? "Organizzatore" : "Cliente"),
+                counterpartyName: (role == .client ? "Professionista" : "Cliente"),
                 viewerRole: (role == .client ? .client : .organizer),
                 currentPrice: Int(price),
                 lastProposer: (role == .client ? .client : .organizer),
@@ -244,17 +223,8 @@ final class OfferProposalService {
     func accept(proposal: OfferProposal) async throws -> Conversation? {
         try await updateStatus(proposalId: proposal.id, status: .accepted)
 
-        // Notifica la controparte
-        Task {
-            let userId = SupabaseManager.shared.currentUserID
-            let recipientId: UUID = (userId == proposal.clientId) ? proposal.organizerId : proposal.clientId
-            let offerTitle: String = (try? await ServiceOfferService.shared.fetchOffer(id: proposal.offerId))?.title ?? "Offerta"
-            await PushOutboxService.shared.notifyProposalAccepted(
-                to: recipientId,
-                offerTitle: offerTitle,
-                offerId: proposal.offerId
-            )
-        }
+        // La push alla controparte la genera il database
+        // (trigger `offer_proposals_notify`).
 
         await LiveActivityManager.shared.endNegotiation(
             proposalId: proposal.id,
@@ -364,13 +334,33 @@ final class OfferProposalService {
     }
 
     /// Aggiorna lo stato dell'appuntamento (svolto / annullato) di una trattativa accettata.
-    func updateBookingStatus(proposalId: UUID, booking: BookingStatus) async throws {
+    /// Un annullamento lo racconta anche in chat, come lo spostamento di data:
+    /// la push la manda il database, il messaggio resta nella conversazione.
+    func updateBookingStatus(proposal: OfferProposal, booking: BookingStatus, offerTitle: String) async throws {
         struct U: Encodable { let booking_status: String }
         try await client
             .from("offer_proposals")
             .update(U(booking_status: booking.rawValue))
-            .eq("id", value: proposalId)
+            .eq("id", value: proposal.id)
             .execute()
+
+        guard booking == .cancelled, let me = SupabaseManager.shared.currentUserID else { return }
+        LocalReminderService.cancelReminder(proposalId: proposal.id)
+        let when = proposal.eventDateDisplay.map { " del \($0)" } ?? ""
+        let conv: Conversation?
+        if me == proposal.clientId {
+            conv = try? await ConversationService.shared
+                .findOrCreateConversationAsClient(organizerId: proposal.organizerId)
+        } else {
+            conv = try? await ConversationService.shared
+                .findOrCreateConversationAsOrganizer(clientId: proposal.clientId)
+        }
+        if let conv {
+            _ = try? await MessageService.shared.sendSystemMessage(
+                conversationId: conv.id,
+                content: "❌ L'evento \"\(offerTitle)\"\(when) è stato annullato"
+            )
+        }
     }
 
     /// Segna (o toglie) l'acconto versato su una trattativa accettata.

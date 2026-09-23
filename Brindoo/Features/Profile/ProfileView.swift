@@ -50,6 +50,21 @@ struct ProfileView: View {
                             }
                         }
 
+                        // Un cliente ha eliminato l'account: l'evento è sparito
+                        // dall'agenda e la data va ricontrollata.
+                        if isOrganizer && vm.cancellationNoticesCount > 0 {
+                            Button { showAvailability = true } label: {
+                                BrindooBanner(
+                                    style: .error,
+                                    title: vm.cancellationNoticesCount == 1
+                                        ? "Un evento è stato annullato"
+                                        : "\(vm.cancellationNoticesCount) eventi sono stati annullati",
+                                    message: "Il cliente ha eliminato l'account. Tocca per decidere se liberare la data."
+                                )
+                            }
+                            .buttonStyle(.plain)
+                        }
+
                         if let bio = profile.bio, !bio.isEmpty {
                             bioSection(bio)
                         }
@@ -170,7 +185,9 @@ struct ProfileView: View {
                     }
                 }
             }
-            .sheet(isPresented: $showAvailability) {
+            .sheet(isPresented: $showAvailability, onDismiss: {
+                Task { await vm.load(userId: session.userID, isOrganizer: isOrganizer) }
+            }) {
                 AvailabilityView()
             }
             .sheet(isPresented: $showFAQs) {

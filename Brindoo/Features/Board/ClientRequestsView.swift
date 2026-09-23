@@ -14,6 +14,9 @@ struct ClientRequestsView: View {
     @Environment(SessionStore.self) private var session
 
     @State private var requests: [ClientRequest] = []
+    /// Professionista che era cliente: le richieste pubblicate allora, da
+    /// poter ancora chiudere o eliminare (prima restavano orfane in bacheca).
+    @State private var ownRequests: [ClientRequest] = []
     @State private var clientProfiles: [UUID: Profile] = [:]
     @State private var categories: [ServiceCategory] = []
     @State private var isLoading = true
@@ -41,7 +44,7 @@ struct ClientRequestsView: View {
     /// richieste: se lo paga, deve accorgersi che c'e'.
     private func isFeatured(_ request: ClientRequest) -> Bool {
         guard request.status == .open else { return false }
-        let author = isClient ? session.currentProfile : clientProfiles[request.clientId]
+        let author = isMine(request) ? session.currentProfile : clientProfiles[request.clientId]
         return author?.isPro == true
     }
 
@@ -54,7 +57,7 @@ struct ClientRequestsView: View {
                 BrindooErrorState(message: BrindooText.loadError("le richieste")) {
                     Task { await load() }
                 }
-            } else if requests.isEmpty {
+            } else if requests.isEmpty && ownRequests.isEmpty {
                 emptyState
             } else {
                 list
@@ -136,14 +139,16 @@ struct ClientRequestsView: View {
     /// vista e da quello che compare tenendo premuto.
     @ViewBuilder
     private func requestActions(_ request: ClientRequest) -> some View {
-        if isClient {
+        if isMine(request) {
             if request.status == .open {
                 Button {
                     Task { await close(request) }
                 } label: {
                     Label("Segna come chiusa", systemImage: "checkmark.circle")
                 }
-            } else {
+            } else if isClient && !request.isExpired {
+                // Una richiesta con la data passata non si riapre: se ne pubblica
+                // una nuova. Da professionista le vecchie si chiudono, non si riaprono.
                 Button {
                     Task { await reopen(request) }
                 } label: {
@@ -158,23 +163,53 @@ struct ClientRequestsView: View {
         }
     }
 
+    private func isMine(_ request: ClientRequest) -> Bool {
+        request.clientId == session.userID
+    }
+
+    private func sectionTitle(_ text: String) -> some View {
+        Text(text)
+            .font(BrindooFont.titleSmall)
+            .foregroundStyle(Color.brindooTextSecondary)
+            .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
     private var list: some View {
         ScrollView {
             LazyVStack(spacing: BrindooSpacing.md) {
+                if !isClient && !ownRequests.isEmpty {
+                    sectionTitle("Le tue richieste da cliente")
+                    ForEach(ownRequests) { request in
+                        requestCard(request)
+                    }
+                    if !requests.isEmpty {
+                        sectionTitle("Richieste dei clienti")
+                    }
+                }
                 ForEach(requests) { request in
+                    requestCard(request)
+                }
+            }
+            .padding(BrindooSpacing.md)
+            .brindooReadableWidth()
+        }
+    }
+
+    @ViewBuilder
+    private func requestCard(_ request: ClientRequest) -> some View {
                     ClientRequestCard(
                         request: request,
                         category: categories.first { $0.id == request.categoryId },
-                        clientProfile: isClient ? nil : clientProfiles[request.clientId],
+                        clientProfile: isMine(request) ? nil : clientProfiles[request.clientId],
                         featured: isFeatured(request),
                         isContacting: contactingId == request.id,
-                        onContact: isClient ? nil : { Task { await contact(request) } }
+                        onContact: isMine(request) ? nil : { Task { await contact(request) } }
                     )
                     .contextMenu { requestActions(request) }
                     // Il tenere premuto non lo scopre nessuno: le stesse
                     // azioni stanno anche dietro un bottone sempre visibile.
                     .overlay(alignment: .topTrailing) {
-                        if isClient {
+                        if isMine(request) {
                             Menu {
                                 requestActions(request)
                             } label: {
@@ -187,11 +222,6 @@ struct ClientRequestsView: View {
                             .accessibilityLabel("Azioni sulla richiesta")
                         }
                     }
-                }
-            }
-            .padding(BrindooSpacing.md)
-            .brindooReadableWidth()
-        }
     }
 
     // MARK: - Dati
@@ -207,7 +237,10 @@ struct ClientRequestsView: View {
             } else {
                 // Ordine gia' deciso dal database (Pro > urgenti > recenti):
                 // riordinare qui rimescolerebbe solo le 100 righe scaricate.
+                // Chi ha bloccato o è stato bloccato non si vede e non si contatta.
                 requests = try await ClientRequestService.shared.fetchOpenRequests()
+                    .filter { !BlockService.shared.isBlockingOrBlocked($0.clientId) }
+                ownRequests = (try? await ClientRequestService.shared.fetchMyRequests()) ?? []
                 await loadClientProfiles()
             }
         } catch {
@@ -227,7 +260,10 @@ struct ClientRequestsView: View {
     // MARK: - Azioni
 
     private func contact(_ request: ClientRequest) async {
-        guard let profile = clientProfiles[request.clientId] else { return }
+        guard let profile = clientProfiles[request.clientId] else {
+            actionError = "Profilo del cliente non disponibile. Aggiorna e riprova."
+            return
+        }
         contactingId = request.id
         defer { contactingId = nil }
         do {
@@ -236,6 +272,8 @@ struct ClientRequestsView: View {
             chatPartner = profile
             navigateToChat = conv
         } catch {
+            // Prima il tocco falliva senza dire nulla.
+            actionError = BrindooErrorText.serverRule(error) ?? "Impossibile aprire la chat. Riprova."
             BrindooLog.error("Contatto richiesta: \(error)")
         }
     }

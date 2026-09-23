@@ -55,8 +55,8 @@ struct FavoriteOrganizersView: View {
             case .empty:
                 BrindooEmptyState(
                     icon: BrindooIcon.heart,
-                    title: "Nessun organizer salvato",
-                    message: "Tocca il cuore sul profilo di un organizer per ritrovarlo qui."
+                    title: "Nessun professionista salvato",
+                    message: "Tocca il cuore sul profilo di un professionista per ritrovarlo qui."
                 )
             case .loaded(let list):
                 List {
@@ -132,6 +132,8 @@ struct FavoriteOrganizersView: View {
                 .background(
                     Color.brindooBackground
                         .shadow(color: .black.opacity(0.08), radius: 8, x: 0, y: -2)
+                        // Fino al bordo: sotto la barra non deve spuntare il contenuto.
+                        .ignoresSafeArea(edges: .bottom)
                 )
             }
         }

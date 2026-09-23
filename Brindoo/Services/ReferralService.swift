@@ -48,6 +48,8 @@ enum ReferralError: LocalizedError {
     case alreadyRedeemed
     case selfReferral
     case notFound
+    /// Il codice si usa solo nei primi 30 giorni dall'iscrizione (regola del database).
+    case tooLate
 
     var errorDescription: String? {
         switch self {
@@ -55,6 +57,7 @@ enum ReferralError: LocalizedError {
         case .alreadyRedeemed: return "Hai già usato un codice referral."
         case .selfReferral: return "Non puoi usare il tuo stesso codice."
         case .notFound: return "Codice non trovato."
+        case .tooLate: return "Il codice invito si usa entro 30 giorni dall'iscrizione."
         }
     }
 }
@@ -118,6 +121,10 @@ final class ReferralService {
         )
     }
 
+    /// Mesi Pro che si guadagnano invitando: lo stesso tetto vive nel
+    /// database (`brindoo_referral_pay`). Se cambia uno, cambia l'altro.
+    nonisolated static let maxInviterMonths = 6
+
     /// Riscatta un codice referral (al primo login o dalle impostazioni).
     func redeem(code: String) async throws {
         guard let userId = SupabaseManager.shared.currentUserID else {
@@ -151,7 +158,13 @@ final class ReferralService {
                 .insert(InsertPayload(code_id: owner.id, redeemer_id: userId, code: clean))
                 .execute()
         } catch {
-            throw ReferralError.alreadyRedeemed
+            // Il database dice perché: tardi (oltre 30 giorni), proprio
+            // codice, oppure un codice già usato (uno per account).
+            let text = "\(error)"
+            if text.contains("30 giorni") { throw ReferralError.tooLate }
+            if text.contains("tuo codice") { throw ReferralError.selfReferral }
+            if BrindooErrorText.isDuplicate(error) { throw ReferralError.alreadyRedeemed }
+            throw error
         }
     }
 
