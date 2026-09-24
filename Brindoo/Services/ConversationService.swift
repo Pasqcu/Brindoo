@@ -76,7 +76,12 @@ final class ConversationService {
 
         await stopListening()
 
-        let channel = client.realtimeV2.channel("conv-list-\(userId.uuidString)")
+        // Nome unico per aggancio: con lo stesso nome `channel(_:)` ridava il
+        // canale vecchio, che non si riagganciava (vedi MessageService).
+        let channel = client.realtimeV2.channel("conv-list-\(userId.uuidString)-\(UUID().uuidString.prefix(8))")
+        // Registrato subito: se si smette di ascoltare mentre l'aggancio è
+        // ancora in corso, il canale va tolto lo stesso.
+        self.realtimeChannel = channel
 
         // IMPORTANTE: registrare i callback PRIMA di chiamare subscribe(),
         // altrimenti il Realtime stampa un warning e li ignora.
@@ -93,15 +98,15 @@ final class ConversationService {
         } catch {
             BrindooLog.error("Realtime lista chat non agganciato: \(error)")
         }
-        self.realtimeChannel = channel
     }
 
     func stopListening() async {
         streamTasks.forEach { $0.cancel() }
         streamTasks.removeAll()
         if let channel = realtimeChannel {
-            await channel.unsubscribe()
             realtimeChannel = nil
+            await channel.unsubscribe()
+            await client.realtimeV2.removeChannel(channel)
         }
     }
     

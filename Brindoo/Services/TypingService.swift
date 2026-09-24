@@ -38,7 +38,15 @@ final class TypingService {
             return existing
         }
 
-        let channel = client.realtimeV2.channel("typing-\(conversationId.uuidString)")
+        // Il nome deve essere lo stesso per i due utenti (è un broadcast),
+        // quindi non si può rendere unico: si toglie il canale rimasto da
+        // un'apertura precedente, altrimenti `channel(_:)` restituirebbe
+        // quello, che non si riaggancia più.
+        let topic = "typing-\(conversationId.uuidString)"
+        if let stale = client.realtimeV2.channels["realtime:\(topic)"] {
+            await client.realtimeV2.removeChannel(stale)
+        }
+        let channel = client.realtimeV2.channel(topic)
 
         let stream = channel.broadcastStream(event: "typing")
 
@@ -87,6 +95,7 @@ final class TypingService {
     func unsubscribe(conversationId: UUID) async {
         if let state = channels.removeValue(forKey: conversationId) {
             await state.channel.unsubscribe()
+            await client.realtimeV2.removeChannel(state.channel)
         }
     }
 }

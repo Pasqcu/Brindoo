@@ -396,7 +396,12 @@ final class MessageService {
         onInsert: @escaping (Message) -> Void,
         onUpdate: @escaping (Message) -> Void
     ) -> RealtimeSubscription {
-        let channel = client.realtimeV2.channel("conv-\(conversationId.uuidString)")
+        // Nome unico per ogni aggancio: `channel(_:)` restituisce il canale
+        // già registrato con lo stesso nome, e riaprendo la chat si riusava
+        // quello vecchio, che non si riagganciava più ("Maximum retry
+        // attempts reached") e la chat smetteva di aggiornarsi da sola.
+        // Le modifiche al database arrivano per il filtro, non per il nome.
+        let channel = client.realtimeV2.channel("conv-\(conversationId.uuidString)-\(UUID().uuidString.prefix(8))")
 
         // IMPORTANTE: registrare i callback PRIMA di subscribe(), altrimenti
         // il Realtime stampa un warning e li ignora.
@@ -414,15 +419,23 @@ final class MessageService {
         let tasks = [
             Task {
                 for await action in insertStream {
-                    if let message = try? action.decodeRecord(as: Message.self, decoder: JSONDecoder.brindooDecoder) {
-                        onInsert(message)
+                    do {
+                        onInsert(try action.decodeRecord(as: Message.self, decoder: JSONDecoder.brindooDecoder))
+                    } catch {
+                        // Prima era un try? muto: un messaggio illeggibile
+                        // spariva e la chat sembrava ferma.
+                        BrindooLog.error("Realtime messaggio (insert) illeggibile: \(error)")
                     }
                 }
             },
             Task {
                 for await action in updateStream {
-                    if let message = try? action.decodeRecord(as: Message.self, decoder: JSONDecoder.brindooDecoder) {
-                        onUpdate(message)
+                    do {
+                        onUpdate(try action.decodeRecord(as: Message.self, decoder: JSONDecoder.brindooDecoder))
+                    } catch {
+                        // Prima era un try? muto: un messaggio illeggibile
+                        // spariva e la chat sembrava ferma.
+                        BrindooLog.error("Realtime messaggio (update) illeggibile: \(error)")
                     }
                 }
             },
@@ -461,6 +474,9 @@ struct RealtimeSubscription {
     func cancel() async {
         tasks.forEach { $0.cancel() }
         await channel.unsubscribe()
+        // Senza rimozione il canale restava registrato nel client per tutta
+        // la sessione.
+        await SupabaseManager.shared.realtime.removeChannel(channel)
     }
 }
 
