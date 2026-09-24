@@ -152,7 +152,7 @@ struct SignUpView: View {
                 )
                 
                 if !password.isEmpty && arePasswordsEnabled {
-                    passwordStrengthIndicator
+                    PasswordStrengthView(validation: passwordValidation)
                 }
             }
             
@@ -247,50 +247,6 @@ struct SignUpView: View {
         .frame(maxWidth: .infinity, alignment: .leading)
         .brindooSurfaceBackground()
         .disabled(isLoading)
-    }
-    
-    @ViewBuilder
-    private var passwordStrengthIndicator: some View {
-        VStack(alignment: .leading, spacing: BrindooSpacing.xs) {
-            HStack(spacing: 4) {
-                ForEach(0..<PasswordValidation.criteriaCount, id: \.self) { index in
-                    Rectangle()
-                        .fill(index < passwordValidation.strengthLevel ? strengthColor : Color.brindooBorder)
-                        .frame(height: 4)
-                        .clipShape(Capsule())
-                }
-            }
-            
-            VStack(alignment: .leading, spacing: 4) {
-                requirementRow(text: "Almeno 8 caratteri", met: passwordValidation.hasMinLength)
-                requirementRow(text: "Almeno una lettera maiuscola", met: passwordValidation.hasUppercase)
-                requirementRow(text: "Almeno una lettera minuscola", met: passwordValidation.hasLowercase)
-                requirementRow(text: "Almeno un numero", met: passwordValidation.hasNumber)
-                requirementRow(text: "Almeno un carattere speciale (es. !@#$)", met: passwordValidation.hasSpecialChar)
-            }
-        }
-        .padding(BrindooSpacing.sm)
-        .brindooSurfaceBackground(radius: BrindooRadius.sm)
-    }
-    
-    private var strengthColor: Color {
-        switch passwordValidation.strengthLevel {
-        case 0...2: return .brindooError
-        case PasswordValidation.criteriaCount: return .brindooSuccess
-        default: return .brindooWarning
-        }
-    }
-    
-    @ViewBuilder
-    private func requirementRow(text: String, met: Bool) -> some View {
-        HStack(spacing: BrindooSpacing.xxs) {
-            Image(systemName: met ? "checkmark.circle.fill" : "circle")
-                .font(.system(size: 12))
-                .foregroundStyle(met ? Color.brindooSuccess : Color.brindooTextSecondary)
-            Text(text)
-                .font(BrindooFont.caption)
-                .foregroundStyle(met ? Color.brindooTextPrimary : Color.brindooTextSecondary)
-        }
     }
     
     @ViewBuilder

@@ -97,6 +97,14 @@ struct RootView: View {
                 }
             }
         }
+        .sheet(item: Binding(
+            get: { session.passwordRecovery },
+            set: { session.passwordRecovery = $0 }
+        )) { recovery in
+            NewPasswordView(recovery: recovery)
+                .environment(session)
+                .environmentObject(toastCenter)
+        }
         .brindooToastOverlay()
         .environmentObject(toastCenter)
         // Il testo scala con le impostazioni di accessibilità, ma con un limite

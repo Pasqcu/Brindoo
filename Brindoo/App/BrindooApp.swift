@@ -54,11 +54,16 @@ struct BrindooApp: App {
                 }
                 .onOpenURL { url in
                     // Deep link in arrivo (conferma email, reset password, link condivisi)
-                    BrindooLog.info("Deep link ricevuto: \(url.absoluteString)")
+                    // Senza query: i link di accesso portano codici monouso.
+                    BrindooLog.info("Deep link ricevuto: \(url.scheme ?? "")://\(url.host ?? "")\(url.path)")
                     // Link condivisi di profilo/offerta (https://brindoo.app/p|o/<id>)
                     if DeepLinkRouter.shared.handleShareLink(url) { return }
                     Task {
-                        await AuthService.shared.handleDeepLink(url)
+                        switch await AuthService.shared.handleDeepLink(url) {
+                        case .passwordRecovery: session.passwordRecovery = .ready
+                        case .passwordRecoveryFailed: session.passwordRecovery = .linkInvalid
+                        case .handled: break
+                        }
                     }
                 }
         }

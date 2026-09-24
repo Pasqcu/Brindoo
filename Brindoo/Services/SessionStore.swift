@@ -28,6 +28,13 @@ enum AuthState {
     case signedIn
 }
 
+enum PasswordRecovery: String, Identifiable {
+    case ready
+    case linkInvalid
+
+    var id: String { rawValue }
+}
+
 @Observable
 @MainActor
 final class SessionStore {
@@ -49,6 +56,11 @@ final class SessionStore {
     /// che finisca: prima provava ad aprirsi sopra il foglio già aperto e
     /// l'ordine delle schermate dipendeva da SwiftUI.
     var isChangingRole: Bool = false
+
+    /// Impostato quando l'app si apre dal link "Password dimenticata":
+    /// RootView mostra la scelta della nuova password (o dice che il link
+    /// non vale più).
+    var passwordRecovery: PasswordRecovery?
 
     /// Utente Supabase corrente (se loggato).
     @ObservationIgnored

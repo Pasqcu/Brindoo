@@ -33,6 +33,7 @@ enum BrindooAuthError: LocalizedError, Equatable {
     case googleSignInCancelled
     case googleSignInFailed
     case googleSignInExpired
+    case samePassword
     case unknown(String)
 
     var errorDescription: String? {
@@ -67,6 +68,8 @@ enum BrindooAuthError: LocalizedError, Equatable {
             return "Impossibile accedere con Google. Riprova."
         case .googleSignInExpired:
             return "L'accesso ha impiegato troppo tempo ed è scaduto. Tocca di nuovo \"Continua con Google\": stavolta sarà più rapido."
+        case .samePassword:
+            return "La nuova password deve essere diversa da quella attuale"
         case .unknown(let message):
             return message
         }
@@ -80,6 +83,7 @@ enum BrindooAuthError: LocalizedError, Equatable {
              (.passwordMissingNumber, .passwordMissingNumber),
              (.passwordMissingSpecialChar, .passwordMissingSpecialChar),
              (.passwordMissingCase, .passwordMissingCase),
+             (.samePassword, .samePassword),
              (.emailAlreadyRegistered, .emailAlreadyRegistered),
              (.invalidCredentials, .invalidCredentials),
              (.userNotFound, .userNotFound),
@@ -379,12 +383,50 @@ final class AuthService {
 
     // MARK: - Deep link
 
-    func handleDeepLink(_ url: URL) async {
+    /// Indirizzo a cui rimanda il link di reset. Con il flusso PKCE il link
+    /// porta solo `?code=` e la libreria non emette `passwordRecovery`: è da
+    /// questo percorso che si capisce che l'utente deve scegliere una nuova
+    /// password. Già ammesso sul server da `com.pasqcu.brindoo://**`.
+    static let passwordResetURL = URL(string: "com.pasqcu.brindoo://auth/reset")!
+
+    static func isPasswordResetLink(_ url: URL) -> Bool {
+        url.scheme == passwordResetURL.scheme
+            && url.host == passwordResetURL.host
+            && url.path == passwordResetURL.path
+    }
+
+    /// Esito di un link di autenticazione: serve solo a sapere se aprire la
+    /// schermata della nuova password.
+    enum DeepLinkOutcome {
+        case handled
+        case passwordRecovery
+        case passwordRecoveryFailed
+    }
+
+    @discardableResult
+    func handleDeepLink(_ url: URL) async -> DeepLinkOutcome {
+        let isReset = Self.isPasswordResetLink(url)
         do {
             try await auth.session(from: url)
             BrindooLog.info("Sessione attivata via deep link")
+            return isReset ? .passwordRecovery : .handled
         } catch {
             BrindooLog.error("Errore handle deep link: \(error)")
+            return isReset ? .passwordRecoveryFailed : .handled
+        }
+    }
+
+    /// Nuova password dopo il link di reset (l'utente ha già la sessione).
+    func updatePassword(_ newPassword: String) async throws {
+        if let error = passwordError(newPassword) {
+            throw error
+        }
+        do {
+            try await auth.update(user: UserAttributes(password: newPassword))
+            BrindooLog.info("Password aggiornata")
+        } catch {
+            BrindooLog.error("Errore aggiornamento password: \(error)")
+            throw mapError(error)
         }
     }
 
@@ -421,7 +463,7 @@ final class AuthService {
         do {
             try await auth.resetPasswordForEmail(
                 trimmedEmail,
-                redirectTo: redirectURL
+                redirectTo: Self.passwordResetURL
             )
             BrindooLog.info("Email di reset password inviata")
         } catch {
@@ -450,6 +492,10 @@ final class AuthService {
         }
         if description.contains("user not found") {
             return .userNotFound
+        }
+        if description.contains("should be different from the old password") ||
+           description.contains("same_password") {
+            return .samePassword
         }
         if description.contains("password should contain") {
             return .passwordMissingCase
