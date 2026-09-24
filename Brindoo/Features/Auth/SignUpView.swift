@@ -253,7 +253,7 @@ struct SignUpView: View {
     private var passwordStrengthIndicator: some View {
         VStack(alignment: .leading, spacing: BrindooSpacing.xs) {
             HStack(spacing: 4) {
-                ForEach(0..<3) { index in
+                ForEach(0..<PasswordValidation.criteriaCount, id: \.self) { index in
                     Rectangle()
                         .fill(index < passwordValidation.strengthLevel ? strengthColor : Color.brindooBorder)
                         .frame(height: 4)
@@ -263,6 +263,8 @@ struct SignUpView: View {
             
             VStack(alignment: .leading, spacing: 4) {
                 requirementRow(text: "Almeno 8 caratteri", met: passwordValidation.hasMinLength)
+                requirementRow(text: "Almeno una lettera maiuscola", met: passwordValidation.hasUppercase)
+                requirementRow(text: "Almeno una lettera minuscola", met: passwordValidation.hasLowercase)
                 requirementRow(text: "Almeno un numero", met: passwordValidation.hasNumber)
                 requirementRow(text: "Almeno un carattere speciale (es. !@#$)", met: passwordValidation.hasSpecialChar)
             }
@@ -273,10 +275,9 @@ struct SignUpView: View {
     
     private var strengthColor: Color {
         switch passwordValidation.strengthLevel {
-        case 0, 1: return .brindooError
-        case 2: return .brindooWarning
-        case 3: return .brindooSuccess
-        default: return .brindooBorder
+        case 0...2: return .brindooError
+        case PasswordValidation.criteriaCount: return .brindooSuccess
+        default: return .brindooWarning
         }
     }
     
@@ -348,6 +349,8 @@ struct SignUpView: View {
         
         let validation = passwordValidation
         if !validation.hasMinLength { passwordError = "Almeno 8 caratteri"; return }
+        if !validation.hasUppercase { passwordError = "Manca una lettera maiuscola"; return }
+        if !validation.hasLowercase { passwordError = "Manca una lettera minuscola"; return }
         if !validation.hasNumber { passwordError = "Manca un numero"; return }
         if !validation.hasSpecialChar { passwordError = "Manca un carattere speciale"; return }
         
