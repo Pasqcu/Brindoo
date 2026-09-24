@@ -35,6 +35,10 @@ struct EditProfileView: View {
 
     @State private var avatarPickerItem: PhotosPickerItem?
     @State private var newAvatarImage: UIImage?
+    /// Foto scelta prima del ritaglio: serve per ritagliarla di nuovo
+    /// senza perdere quello che il primo ritaglio ha tagliato via.
+    @State private var originalAvatarImage: UIImage?
+    @State private var avatarToCrop: AvatarCropSource?
     @State private var isUploadingAvatar: Bool = false
 
     @State private var allCategories: [ServiceCategory] = []
@@ -137,6 +141,17 @@ struct EditProfileView: View {
                 }
             }
             .task { await loadInitialData() }
+            .fullScreenCover(item: $avatarToCrop) { source in
+                AvatarCropView(
+                    image: source.image,
+                    onCancel: { avatarToCrop = nil },
+                    onDone: { cropped in
+                        originalAvatarImage = source.image
+                        newAvatarImage = cropped
+                        avatarToCrop = nil
+                    }
+                )
+            }
             .onChange(of: avatarPickerItem) { _, newItem in
                 guard let newItem else { return }
                 Task { await loadAvatarFromPicker(newItem) }
@@ -158,7 +173,10 @@ struct EditProfileView: View {
                     currentAvatarUrl: session.currentProfile?.avatarUrl,
                     fallbackName: fullName.isEmpty ? session.currentProfile?.fullName : fullName,
                     isUploading: isUploadingAvatar,
-                    isDisabled: isLoading
+                    isDisabled: isLoading,
+                    onRecrop: originalAvatarImage.map { original in
+                        { avatarToCrop = AvatarCropSource(image: original) }
+                    }
                 )
 
                 sectionHeader("Informazioni personali")
@@ -252,7 +270,8 @@ struct EditProfileView: View {
                 generalError = BrindooText.loadError("la foto selezionata. Riprova.")
                 return
             }
-            newAvatarImage = uiImage
+            // Prima si ritaglia: la foto diventa quella nuova solo con "Usa foto".
+            avatarToCrop = AvatarCropSource(image: uiImage)
         } catch {
             // Prima falliva in silenzio: si sceglieva una foto e non
             // succedeva niente, senza sapere perché.

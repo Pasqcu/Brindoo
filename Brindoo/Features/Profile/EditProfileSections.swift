@@ -18,6 +18,9 @@ struct AvatarEditSection: View {
     let fallbackName: String?
     let isUploading: Bool
     let isDisabled: Bool
+    /// Presente quando c'è una foto nuova appena ritagliata: toccandola
+    /// si riapre il ritaglio.
+    var onRecrop: (() -> Void)? = nil
 
     var body: some View {
         VStack(spacing: BrindooSpacing.sm) {
@@ -37,6 +40,9 @@ struct AvatarEditSection: View {
                 }
                 .frame(width: 110, height: 110)
                 .clipShape(Circle())
+                .onTapGesture { if !isUploading && !isDisabled { onRecrop?() } }
+                .accessibilityAddTraits(onRecrop != nil ? .isButton : [])
+                .accessibilityHint(onRecrop != nil ? "Ritaglia di nuovo la foto" : "")
 
                 PhotosPicker(
                     selection: $avatarPickerItem,
@@ -62,7 +68,7 @@ struct AvatarEditSection: View {
                 .disabled(isUploading || isDisabled)
             }
 
-            Text(newAvatarImage != nil ? "Nuova foto selezionata" : "Tocca l'icona per cambiare foto")
+            Text(newAvatarImage != nil ? "Tocca la foto per ritagliarla di nuovo" : "Tocca l'icona per cambiare foto")
                 .font(BrindooFont.caption)
                 .foregroundStyle(Color.brindooTextSecondary)
         }
