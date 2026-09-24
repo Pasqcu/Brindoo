@@ -39,6 +39,8 @@ struct EditProfileView: View {
     /// senza perdere quello che il primo ritaglio ha tagliato via.
     @State private var originalAvatarImage: UIImage?
     @State private var avatarToCrop: AvatarCropSource?
+    /// Foto attuale da togliere al salvataggio.
+    @State private var removeAvatar: Bool = false
     @State private var isUploadingAvatar: Bool = false
 
     @State private var allCategories: [ServiceCategory] = []
@@ -148,6 +150,7 @@ struct EditProfileView: View {
                     onDone: { cropped in
                         originalAvatarImage = source.image
                         newAvatarImage = cropped
+                        removeAvatar = false
                         avatarToCrop = nil
                     }
                 )
@@ -176,6 +179,13 @@ struct EditProfileView: View {
                     isDisabled: isLoading,
                     onRecrop: originalAvatarImage.map { original in
                         { avatarToCrop = AvatarCropSource(image: original) }
+                    },
+                    isRemoved: removeAvatar,
+                    onRemove: {
+                        newAvatarImage = nil
+                        originalAvatarImage = nil
+                        // Senza foto salvata non c'è niente da togliere sul server.
+                        removeAvatar = !(session.currentProfile?.avatarUrl ?? "").isEmpty
                     }
                 )
 
@@ -333,7 +343,7 @@ struct EditProfileView: View {
         if selectedProvince != profile.province { return true }
         if trimmedPhone != storedPhoneUI { return true }
         if trimmedBio != (profile.bio ?? "") { return true }
-        if newAvatarImage != nil { return true }
+        if newAvatarImage != nil || removeAvatar { return true }
         if isOrganizer {
             if selectedCategoryIds != initialCategoryIds { return true }
             for catId in selectedCategoryIds {
@@ -413,7 +423,7 @@ struct EditProfileView: View {
         defer { isLoading = false }
 
         do {
-            var avatarUrl: String? = session.currentProfile?.avatarUrl
+            var avatarUrl: String? = removeAvatar ? nil : session.currentProfile?.avatarUrl
             if let newImage = newAvatarImage {
                 isUploadingAvatar = true
                 avatarUrl = try await StorageService.shared.uploadAvatar(newImage)
@@ -432,6 +442,12 @@ struct EditProfileView: View {
             )
 
             session.updateLocalProfile(updatedProfile)
+
+            // Il file si cancella solo dopo che il profilo non lo usa più.
+            if removeAvatar && newAvatarImage == nil {
+                try? await StorageService.shared.deleteAvatar()
+                removeAvatar = false
+            }
 
             if isOrganizer {
                 guard let userId = session.userID else { return }

@@ -21,6 +21,19 @@ struct AvatarEditSection: View {
     /// Presente quando c'è una foto nuova appena ritagliata: toccandola
     /// si riapre il ritaglio.
     var onRecrop: (() -> Void)? = nil
+    /// La foto attuale verrà tolta al salvataggio.
+    var isRemoved: Bool = false
+    var onRemove: (() -> Void)? = nil
+
+    private var hasPhoto: Bool {
+        newAvatarImage != nil || (!isRemoved && !(currentAvatarUrl ?? "").isEmpty)
+    }
+
+    private var caption: String {
+        if newAvatarImage != nil { return "Tocca la foto per ritagliarla di nuovo" }
+        if isRemoved { return "La foto verrà rimossa quando salvi" }
+        return "Tocca l'icona per cambiare foto"
+    }
 
     var body: some View {
         VStack(spacing: BrindooSpacing.sm) {
@@ -32,7 +45,7 @@ struct AvatarEditSection: View {
                             .scaledToFill()
                     } else {
                         AvatarView(
-                            url: currentAvatarUrl,
+                            url: isRemoved ? nil : currentAvatarUrl,
                             name: fallbackName,
                             size: 110
                         )
@@ -68,9 +81,19 @@ struct AvatarEditSection: View {
                 .disabled(isUploading || isDisabled)
             }
 
-            Text(newAvatarImage != nil ? "Tocca la foto per ritagliarla di nuovo" : "Tocca l'icona per cambiare foto")
+            Text(caption)
                 .font(BrindooFont.caption)
                 .foregroundStyle(Color.brindooTextSecondary)
+
+            if hasPhoto, let onRemove {
+                Button(role: .destructive, action: onRemove) {
+                    Label("Rimuovi foto", systemImage: BrindooIcon.delete)
+                        .font(BrindooFont.caption.weight(.semibold))
+                        .foregroundStyle(Color.brindooError)
+                }
+                .buttonStyle(.plain)
+                .disabled(isUploading || isDisabled)
+            }
         }
         .frame(maxWidth: .infinity)
     }

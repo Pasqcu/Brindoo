@@ -155,6 +155,22 @@ final class ProfileService {
             let province: String
             let bio: String
             let avatar_url: String?
+
+            enum CodingKeys: String, CodingKey {
+                case full_name, phone, city, province, bio, avatar_url
+            }
+
+            // avatar_url va scritto anche quando è nil: è così che si
+            // toglie la foto. Il sintetizzato ometterebbe la chiave.
+            func encode(to encoder: Encoder) throws {
+                var c = encoder.container(keyedBy: CodingKeys.self)
+                try c.encode(full_name, forKey: .full_name)
+                try c.encode(phone, forKey: .phone)
+                try c.encode(city, forKey: .city)
+                try c.encode(province, forKey: .province)
+                try c.encode(bio, forKey: .bio)
+                try c.encode(avatar_url, forKey: .avatar_url)
+            }
         }
 
         let payload = Payload(
