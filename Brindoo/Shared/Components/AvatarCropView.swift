@@ -41,21 +41,23 @@ struct AvatarCropView: View {
                 zoom: liveZoom, base: base, diameter: diameter
             )
 
-            ZStack {
-                Color.black
-
-                Image(uiImage: image)
-                    .resizable()
-                    .frame(
-                        width: image.size.width * base * liveZoom,
-                        height: image.size.height * base * liveZoom
-                    )
-                    .offset(liveOffset)
-
-                cropMask(diameter: diameter, in: geo.size)
-            }
-            .frame(width: geo.size.width, height: geo.size.height)
-            .clipped()
+            // Base fissa a misura di schermo, tutto il resto in overlay: la
+            // foto ingrandita sborda senza allargare niente. Prima stavano
+            // in uno ZStack che cresceva con lo zoom e la maschera scura,
+            // disegnata a coordinate fisse, scivolava via dal cerchio.
+            Color.black
+                .frame(width: geo.size.width, height: geo.size.height)
+                .overlay {
+                    Image(uiImage: image)
+                        .resizable()
+                        .frame(
+                            width: image.size.width * base * liveZoom,
+                            height: image.size.height * base * liveZoom
+                        )
+                        .offset(liveOffset)
+                }
+                .clipped()
+                .overlay { cropMask(diameter: diameter) }
             .contentShape(Rectangle())
             .gesture(
                 SimultaneousGesture(
@@ -108,19 +110,10 @@ struct AvatarCropView: View {
     }
 
     /// Oscura tutto tranne il cerchio.
-    private func cropMask(diameter: CGFloat, in size: CGSize) -> some View {
-        let circle = CGRect(
-            x: (size.width - diameter) / 2,
-            y: (size.height - diameter) / 2,
-            width: diameter,
-            height: diameter
-        )
-        return ZStack {
-            Path { p in
-                p.addRect(CGRect(origin: .zero, size: size))
-                p.addEllipse(in: circle)
-            }
-            .fill(Color.black.opacity(0.6), style: FillStyle(eoFill: true))
+    private func cropMask(diameter: CGFloat) -> some View {
+        ZStack {
+            CropMaskShape(diameter: diameter)
+                .fill(Color.black.opacity(0.6), style: FillStyle(eoFill: true))
 
             Circle()
                 .strokeBorder(Color.white.opacity(0.8), lineWidth: 1)
@@ -174,5 +167,22 @@ struct AvatarCropView: View {
                 height: image.size.height * ratio
             ))
         }
+    }
+}
+
+/// Rettangolo pieno con un buco tondo al centro. Il buco si calcola dal
+/// rettangolo che la forma riceve, così resta sempre centrato.
+private nonisolated struct CropMaskShape: Shape {
+    let diameter: CGFloat
+
+    func path(in rect: CGRect) -> Path {
+        var path = Path(rect)
+        path.addEllipse(in: CGRect(
+            x: rect.midX - diameter / 2,
+            y: rect.midY - diameter / 2,
+            width: diameter,
+            height: diameter
+        ))
+        return path
     }
 }
