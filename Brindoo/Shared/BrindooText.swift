@@ -70,6 +70,9 @@ nonisolated enum BrindooText {
     static let verifiedIdentity = "Identità verificata"
     static let invalidImage = "Immagine non valida"
     static let close = "Chiudi"
+    /// Casella di assistenza: la stessa di Privacy e Termini. `supporto@brindoo.app`
+    /// non esiste (il dominio non è registrato).
+    static let supportEmail = "pasqcu.app.support@gmail.com"
     static let cancel = "Annulla"
     static let retry = "Riprova"
 }

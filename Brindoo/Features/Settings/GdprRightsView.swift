@@ -78,7 +78,7 @@ struct GdprRightsView: View {
                         .foregroundStyle(Color.brindooError)
                 }
 
-                Text("Per ogni richiesta sui tuoi dati: supporto@brindoo.app")
+                Text("Per ogni richiesta sui tuoi dati: \(BrindooText.supportEmail)")
                     .font(BrindooFont.caption)
                     .foregroundStyle(Color.brindooTextSecondary)
             }

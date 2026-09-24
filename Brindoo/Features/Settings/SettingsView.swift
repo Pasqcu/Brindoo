@@ -311,15 +311,15 @@ struct SettingsView: View {
 
                             Divider().padding(.leading, 56)
 
-                            if let url = URL(string: "mailto:supporto@brindoo.app?subject=Assistenza%20Brindoo") {
+                            if let url = URL(string: "mailto:\(BrindooText.supportEmail)?subject=Assistenza%20Brindoo") {
                                 Link(destination: url) {
-                                    SettingsRow(icon: "envelope", iconColor: .brindooCoral, title: "Contattaci", subtitle: "supporto@brindoo.app")
+                                    SettingsRow(icon: "envelope", iconColor: .brindooCoral, title: "Contattaci", subtitle: BrindooText.supportEmail)
                                 }
                             }
 
                             Divider().padding(.leading, 56)
 
-                            if let url = URL(string: "mailto:supporto@brindoo.app?subject=Segnalazione%20problema%20Brindoo") {
+                            if let url = URL(string: "mailto:\(BrindooText.supportEmail)?subject=Segnalazione%20problema%20Brindoo") {
                                 Link(destination: url) {
                                     SettingsRow(icon: "exclamationmark.bubble", iconColor: .brindooCoral, title: "Segnala un problema")
                                 }

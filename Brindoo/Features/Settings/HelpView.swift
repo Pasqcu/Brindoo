@@ -52,7 +52,7 @@ struct HelpView: View {
                     .brindooSurfaceBackground()
                 }
 
-                if let url = URL(string: "mailto:supporto@brindoo.app?subject=Assistenza%20Brindoo") {
+                if let url = URL(string: "mailto:\(BrindooText.supportEmail)?subject=Assistenza%20Brindoo") {
                     Link(destination: url) {
                         HStack(spacing: BrindooSpacing.sm) {
                             Image(systemName: BrindooIcon.invite)
