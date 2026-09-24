@@ -44,6 +44,9 @@ final class ResponseInsightsService {
             let rows: [Row] = try await client
                 .from("messages")
                 .select("conversation_id, sender_id, created_at")
+                // La risposta automatica non è una risposta vera: contarla
+                // farebbe sembrare velocissimo chi è assente.
+                .eq("is_auto_reply", value: false)
                 .order("created_at", ascending: false)
                 .limit(400)
                 .execute()

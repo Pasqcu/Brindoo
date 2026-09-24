@@ -53,6 +53,11 @@ struct ChatView: View {
                 ChatNegotiationBanner(proposal: proposal)
             }
 
+            // Solo il cliente: al professionista la striscia non serve.
+            if conversation.clientId == session.userID, otherUser.isAutoReplyActive {
+                ChatAwayBanner(organizer: otherUser)
+            }
+
             messagesScroll
 
             // Messaggi scritti senza linea: restano visibili qui finché

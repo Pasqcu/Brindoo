@@ -127,6 +127,13 @@ struct MessageBubble: View {
             
             // Footer (orario + check + edited)
             HStack(spacing: 4) {
+                if message.isAutoReply && !message.isDeleted {
+                    Label("Risposta automatica", systemImage: "arrowshape.turn.up.left.fill")
+                        .labelStyle(.titleAndIcon)
+                        .font(BrindooFont.scaled(10, relativeTo: .caption2))
+                        .italic()
+                        .foregroundStyle(Color.brindooTextSecondary)
+                }
                 if message.isEdited && !message.isDeleted {
                     Text("modificato")
                         .font(BrindooFont.scaled(10, relativeTo: .caption2))

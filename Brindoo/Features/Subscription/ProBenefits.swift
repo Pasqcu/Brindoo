@@ -63,6 +63,11 @@ enum ProBenefits {
             description: "Offerte nascoste e nuove proposte in pausa, il profilo resta visibile"
         ),
         ProBenefit(
+            icon: "arrowshape.turn.up.left.fill",
+            title: "Risposta automatica",
+            description: "Quando sei assente, i clienti che ti scrivono ricevono un tuo messaggio"
+        ),
+        ProBenefit(
             icon: "chart.bar.fill",
             title: "Statistiche dettagliate",
             description: "Visite profilo, offerte, proposte e tempo medio risposta"

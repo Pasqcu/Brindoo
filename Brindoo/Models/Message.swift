@@ -25,6 +25,8 @@ struct Message: Identifiable, Codable, Hashable, Equatable {
     let deletedAt: Date?
     let isBomb: Bool
     let bombViewedAt: Date?
+    /// Scritto dal database al posto del professionista assente.
+    let isAutoReply: Bool
     
     enum CodingKeys: String, CodingKey {
         case id
@@ -40,6 +42,7 @@ struct Message: Identifiable, Codable, Hashable, Equatable {
         case deletedAt = "deleted_at"
         case isBomb = "is_bomb"
         case bombViewedAt = "bomb_viewed_at"
+        case isAutoReply = "is_auto_reply"
     }
     
     init(from decoder: Decoder) throws {
@@ -57,13 +60,14 @@ struct Message: Identifiable, Codable, Hashable, Equatable {
         deletedAt = try c.decodeIfPresent(Date.self, forKey: .deletedAt)
         isBomb = try c.decodeIfPresent(Bool.self, forKey: .isBomb) ?? false
         bombViewedAt = try c.decodeIfPresent(Date.self, forKey: .bombViewedAt)
+        isAutoReply = try c.decodeIfPresent(Bool.self, forKey: .isAutoReply) ?? false
     }
     
     var isEdited: Bool { editedAt != nil }
     var isDeleted: Bool { deletedAt != nil }
     
     var isEditable: Bool {
-        guard messageType == .text, !isDeleted else { return false }
+        guard messageType == .text, !isDeleted, !isAutoReply else { return false }
         return editableSecondsRemaining > 10
     }
 

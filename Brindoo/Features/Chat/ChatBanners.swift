@@ -133,6 +133,38 @@ struct ChatNegotiationBanner: View {
     }
 }
 
+// MARK: - Professionista assente (risposta automatica attiva)
+
+struct ChatAwayBanner: View {
+    let organizer: Profile
+
+    private var title: String {
+        organizer.autoReplyUntil
+            .map { "Non raggiungibile fino al \(BrindooFormat.italianDayMonth(from: $0))" }
+            ?? "Al momento non raggiungibile"
+    }
+
+    var body: some View {
+        HStack(spacing: BrindooSpacing.xs) {
+            Image(systemName: "moon.zzz.fill")
+                .font(.system(size: 14, weight: .semibold))
+            VStack(alignment: .leading, spacing: 0) {
+                Text(title)
+                    .font(BrindooFont.caption.weight(.semibold))
+                Text("Puoi scrivere lo stesso: risponderà al rientro.")
+                    .font(BrindooFont.caption)
+                    .foregroundStyle(Color.brindooTextSecondary)
+            }
+            Spacer()
+        }
+        .foregroundStyle(Color.brindooWarning)
+        .padding(.horizontal, BrindooSpacing.md)
+        .padding(.vertical, BrindooSpacing.xs)
+        .background(Color.brindooWarning.opacity(0.1))
+        .accessibilityElement(children: .combine)
+    }
+}
+
 // MARK: - "Sta scrivendo…"
 
 struct ChatTypingIndicator: View {

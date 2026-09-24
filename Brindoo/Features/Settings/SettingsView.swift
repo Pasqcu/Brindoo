@@ -248,6 +248,18 @@ struct SettingsView: View {
                         }
                     }
 
+                    // MARK: - Risposta automatica (organizzatori, Pro-only)
+                    if isOrganizer {
+                        SettingsSection(title: "Assenza") {
+                            SettingsAutoReplyRow(
+                                profile: session.currentProfile,
+                                isPro: isPro,
+                                onUpgradeTap: { showPaywall = true }
+                            )
+                            .brindooSurfaceBackground()
+                        }
+                    }
+
                     // MARK: - Scorciatoie
                     SettingsSection(title: "Scorciatoie") {
                         VStack(spacing: 0) {

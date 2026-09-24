@@ -83,6 +83,13 @@ struct Profile: Identifiable, Codable, Hashable, Equatable {
     let notifyReminders: Bool
     /// Giorno in cui il professionista torna disponibile (non fa parte della vacanza).
     let vacationUntil: Date?
+    /// Risposta automatica ("fuori sede"): la manda il database ai clienti
+    /// che scrivono, solo se il professionista è Pro e siamo nell'intervallo.
+    let autoReplyEnabled: Bool
+    let autoReplyMessage: String?
+    /// Primo e ultimo giorno di assenza, compresi. Nil = senza limite.
+    let autoReplyFrom: Date?
+    let autoReplyUntil: Date?
     /// Tempo mediano di risposta in chat (minuti), auto-calcolato dall'app.
     let responseMinutes: Int?
     /// Domande frequenti scritte dal professionista (max 5).
@@ -117,6 +124,10 @@ struct Profile: Identifiable, Codable, Hashable, Equatable {
         case notifyNegotiations = "notify_negotiations"
         case notifyReminders = "notify_reminders"
         case vacationUntil = "vacation_until"
+        case autoReplyEnabled = "auto_reply_enabled"
+        case autoReplyMessage = "auto_reply_message"
+        case autoReplyFrom = "auto_reply_from"
+        case autoReplyUntil = "auto_reply_until"
         case responseMinutes = "response_minutes"
         case faqs
         case identityVerified = "identity_verified"
@@ -163,6 +174,11 @@ struct Profile: Identifiable, Codable, Hashable, Equatable {
             vacationUntil = nil
         }
 
+        autoReplyEnabled = try c.decodeIfPresent(Bool.self, forKey: .autoReplyEnabled) ?? false
+        autoReplyMessage = try c.decodeIfPresent(String.self, forKey: .autoReplyMessage)
+        autoReplyFrom = try c.decodeIfPresent(String.self, forKey: .autoReplyFrom).flatMap(BrindooFormat.day(from:))
+        autoReplyUntil = try c.decodeIfPresent(String.self, forKey: .autoReplyUntil).flatMap(BrindooFormat.day(from:))
+
         createdAt = try c.decode(Date.self, forKey: .createdAt)
         updatedAt = try c.decode(Date.self, forKey: .updatedAt)
     }
@@ -192,6 +208,10 @@ struct Profile: Identifiable, Codable, Hashable, Equatable {
         if let vacationUntil {
             try c.encode(BrindooFormat.dayString(from: vacationUntil), forKey: .vacationUntil)
         }
+        try c.encode(autoReplyEnabled, forKey: .autoReplyEnabled)
+        try c.encodeIfPresent(autoReplyMessage, forKey: .autoReplyMessage)
+        try c.encodeIfPresent(autoReplyFrom.map(BrindooFormat.dayString(from:)), forKey: .autoReplyFrom)
+        try c.encodeIfPresent(autoReplyUntil.map(BrindooFormat.dayString(from:)), forKey: .autoReplyUntil)
         try c.encodeIfPresent(responseMinutes, forKey: .responseMinutes)
         try c.encode(faqs, forKey: .faqs)
         try c.encode(identityVerified, forKey: .identityVerified)
@@ -272,6 +292,17 @@ struct Profile: Identifiable, Codable, Hashable, Equatable {
     func isOnVacation(on day: Date) -> Bool {
         guard let vacationUntil else { return false }
         return BrindooFormat.startOfDay(day) < BrindooFormat.startOfDay(vacationUntil)
+    }
+
+    /// True se oggi il database manderebbe la risposta automatica: stessa
+    /// regola del trigger `brindoo_send_auto_reply` (Pro, acceso, oggi
+    /// dentro l'intervallo con gli estremi compresi).
+    var isAutoReplyActive: Bool {
+        guard autoReplyEnabled, isPro else { return false }
+        let today = BrindooFormat.startOfDay()
+        if let from = autoReplyFrom, BrindooFormat.startOfDay(from) > today { return false }
+        if let until = autoReplyUntil, BrindooFormat.startOfDay(until) < today { return false }
+        return true
     }
 
     /// "21 maggio": giorno del ritorno, usato nei banner ("Torna disponibile dal…").

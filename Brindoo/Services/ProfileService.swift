@@ -331,4 +331,43 @@ final class ProfileService {
             .execute()
     }
 
+    /// Salva la risposta automatica. I nil vanno scritti davvero come null
+    /// (una data tolta deve sparire dal DB), per questo il payload è a mano.
+    func updateAutoReply(enabled: Bool, message: String, from: Date?, until: Date?) async throws {
+        guard let userID = SupabaseManager.shared.currentUserID else { return }
+
+        struct Payload: Encodable {
+            let enabled: Bool
+            let message: String
+            let from: String?
+            let until: String?
+
+            enum CodingKeys: String, CodingKey {
+                case enabled = "auto_reply_enabled"
+                case message = "auto_reply_message"
+                case from = "auto_reply_from"
+                case until = "auto_reply_until"
+            }
+
+            func encode(to encoder: Encoder) throws {
+                var c = encoder.container(keyedBy: CodingKeys.self)
+                try c.encode(enabled, forKey: .enabled)
+                try c.encode(message, forKey: .message)
+                try c.encode(from, forKey: .from)
+                try c.encode(until, forKey: .until)
+            }
+        }
+
+        try await client
+            .from("profiles")
+            .update(Payload(
+                enabled: enabled,
+                message: message,
+                from: from.map(BrindooFormat.dayString(from:)),
+                until: until.map(BrindooFormat.dayString(from:))
+            ))
+            .eq("id", value: userID)
+            .execute()
+    }
+
 }
