@@ -187,7 +187,11 @@ final class AuthService {
 
     // MARK: - Registrazione email
 
-    func signUp(email: String, password: String) async throws {
+    /// Registra l'account. Restituisce true se serve confermare l'email
+    /// prima di entrare, false se il server ha già aperto la sessione
+    /// (conferma email spenta nel progetto: `mailer_autoconfirm`).
+    @discardableResult
+    func signUp(email: String, password: String) async throws -> Bool {
         let trimmedEmail = email.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
 
         guard isValidEmail(trimmedEmail) else {
@@ -199,12 +203,13 @@ final class AuthService {
         }
 
         do {
-            _ = try await auth.signUp(
+            let response = try await auth.signUp(
                 email: trimmedEmail,
                 password: password,
                 redirectTo: redirectURL
             )
             BrindooLog.info("Registrazione completata")
+            return response.session == nil
         } catch {
             BrindooLog.error("Errore registrazione: \(error)")
             throw mapError(error)

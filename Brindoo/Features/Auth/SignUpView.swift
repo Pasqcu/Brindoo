@@ -367,8 +367,11 @@ struct SignUpView: View {
         defer { isLoading = false }
         
         do {
-            try await AuthService.shared.signUp(email: email, password: password)
-            showSuccessMessage = true
+            // Con la sessione già aperta l'app passa da sola al setup del
+            // profilo: dire "controlla la tua email" era falso, non parte
+            // nessuna email.
+            let needsConfirmation = try await AuthService.shared.signUp(email: email, password: password)
+            showSuccessMessage = needsConfirmation
         } catch let error as BrindooAuthError {
             generalError = error.errorDescription
         } catch {
