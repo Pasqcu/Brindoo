@@ -22,6 +22,7 @@ enum BrindooAuthError: LocalizedError, Equatable {
     case weakPassword
     case passwordMissingNumber
     case passwordMissingSpecialChar
+    case passwordMissingCase
     case emailAlreadyRegistered
     case invalidCredentials
     case userNotFound
@@ -44,6 +45,8 @@ enum BrindooAuthError: LocalizedError, Equatable {
             return "La password deve contenere almeno un numero"
         case .passwordMissingSpecialChar:
             return "La password deve contenere almeno un carattere speciale (es. !@#$%)"
+        case .passwordMissingCase:
+            return "La password deve contenere almeno una lettera maiuscola e una minuscola"
         case .emailAlreadyRegistered:
             return "Questa email è già registrata. Prova ad accedere."
         case .invalidCredentials:
@@ -76,6 +79,7 @@ enum BrindooAuthError: LocalizedError, Equatable {
              (.weakPassword, .weakPassword),
              (.passwordMissingNumber, .passwordMissingNumber),
              (.passwordMissingSpecialChar, .passwordMissingSpecialChar),
+             (.passwordMissingCase, .passwordMissingCase),
              (.emailAlreadyRegistered, .emailAlreadyRegistered),
              (.invalidCredentials, .invalidCredentials),
              (.userNotFound, .userNotFound),
@@ -102,14 +106,25 @@ struct PasswordValidation {
     let hasMinLength: Bool      // almeno 8 caratteri
     let hasNumber: Bool          // almeno 1 cifra
     let hasSpecialChar: Bool     // almeno 1 carattere speciale
+    // Maiuscola e minuscola le pretende il server (policy password di
+    // Supabase Auth): senza questi due controlli la lista diventava tutta
+    // verde e poi la registrazione falliva con un messaggio in inglese.
+    let hasUppercase: Bool
+    let hasLowercase: Bool
 
-    var isValid: Bool {
-        hasMinLength && hasNumber && hasSpecialChar
+    private var criteria: [Bool] {
+        [hasMinLength, hasUppercase, hasLowercase, hasNumber, hasSpecialChar]
     }
 
-    /// Numero di criteri soddisfatti (per progress bar 0/3, 1/3, 2/3, 3/3)
+    static let criteriaCount = 5
+
+    var isValid: Bool {
+        criteria.allSatisfy { $0 }
+    }
+
+    /// Numero di criteri soddisfatti (per la barra di robustezza)
     var strengthLevel: Int {
-        [hasMinLength, hasNumber, hasSpecialChar].filter { $0 }.count
+        criteria.filter { $0 }.count
     }
 }
 
@@ -149,7 +164,9 @@ final class AuthService {
         return PasswordValidation(
             hasMinLength: hasMinLength,
             hasNumber: hasNumber,
-            hasSpecialChar: hasSpecialChar
+            hasSpecialChar: hasSpecialChar,
+            hasUppercase: password.contains { $0.isUppercase },
+            hasLowercase: password.contains { $0.isLowercase }
         )
     }
 
@@ -162,6 +179,7 @@ final class AuthService {
     private func passwordError(_ password: String) -> BrindooAuthError? {
         let validation = validatePassword(password)
         if !validation.hasMinLength { return .weakPassword }
+        if !validation.hasUppercase || !validation.hasLowercase { return .passwordMissingCase }
         if !validation.hasNumber { return .passwordMissingNumber }
         if !validation.hasSpecialChar { return .passwordMissingSpecialChar }
         return nil
@@ -263,6 +281,43 @@ final class AuthService {
             BrindooLog.error("Errore login Apple: \(error)")
             throw mapError(error)
         }
+
+        // Apple manda il nome solo al primo accesso e non sta nel token:
+        // se non lo si mette da parte adesso, poi bisognerebbe chiederlo
+        // all'utente, e le regole di Apple lo vietano (Guideline 4).
+        if let name = Self.displayName(from: credential.fullName) {
+            do {
+                try await auth.update(user: UserAttributes(data: ["full_name": .string(name)]))
+            } catch {
+                BrindooLog.error("Nome da Apple non salvato: \(error)")
+            }
+        }
+    }
+
+    private static func displayName(from components: PersonNameComponents?) -> String? {
+        guard let components else { return nil }
+        let name = PersonNameComponentsFormatter()
+            .string(from: components)
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+        return name.isEmpty ? nil : name
+    }
+
+    /// Nome arrivato dal fornitore dell'accesso (Apple o Google), se c'è.
+    var providerFullName: String? {
+        guard let metadata = auth.currentUser?.userMetadata else { return nil }
+        for key in ["full_name", "name"] {
+            if case .string(let value)? = metadata[key] {
+                let trimmed = value.trimmingCharacters(in: .whitespacesAndNewlines)
+                if !trimmed.isEmpty { return trimmed }
+            }
+        }
+        return nil
+    }
+
+    /// True se l'account è entrato con "Accedi con Apple": a queste persone
+    /// il nome non si può chiedere come obbligatorio.
+    var isAppleAccount: Bool {
+        auth.currentUser?.identities?.contains { $0.provider == "apple" } ?? false
     }
 
     // MARK: - Sign in with Google
@@ -390,6 +445,9 @@ final class AuthService {
         }
         if description.contains("user not found") {
             return .userNotFound
+        }
+        if description.contains("password should contain") {
+            return .passwordMissingCase
         }
         if description.contains("password should be at least") ||
            description.contains("weak_password") {

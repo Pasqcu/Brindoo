@@ -25,6 +25,9 @@ struct ProfileSetupView: View {
     @State private var provinceError: String?
     @State private var generalError: String?
     @State private var isLoading: Bool = false
+    /// Con "Accedi con Apple" il nome non si può pretendere: Apple lo
+    /// fornisce già (solo al primo accesso). Si propone, ma è facoltativo.
+    @State private var nameIsOptional: Bool = false
 
     enum SetupStep: Int {
         case role = 0
@@ -72,7 +75,21 @@ struct ProfileSetupView: View {
                     }
                 }
             }
+            .onAppear(perform: prefillFromAccount)
         }
+    }
+
+    /// Il nome che Apple o Google hanno già dato non si richiede a mano.
+    private func prefillFromAccount() {
+        nameIsOptional = AuthService.shared.isAppleAccount
+        guard fullName.isEmpty else { return }
+        fullName = session.currentProfile?.fullName ?? AuthService.shared.providerFullName ?? ""
+    }
+
+    /// Nome pubblico quando chi entra con Apple non ne ha dato uno:
+    /// si cambia quando si vuole da Modifica profilo.
+    static func fallbackName(for role: UserRole) -> String {
+        role == .organizer ? "Professionista Brindoo" : "Utente Brindoo"
     }
 
     // MARK: - Progress bar
@@ -187,7 +204,8 @@ struct ProfileSetupView: View {
 
             VStack(spacing: BrindooSpacing.md) {
                 BrindooTextField(
-                    title: selectedRole == .organizer ? "Nome o nome dell'attività" : "Nome e cognome",
+                    title: (selectedRole == .organizer ? "Nome o nome dell'attività" : "Nome e cognome")
+                        + (nameIsOptional ? " (opzionale)" : ""),
                     placeholder: selectedRole == .organizer ? "Es. Mario Rossi Eventi" : "Es. Mario Rossi",
                     text: $fullName,
                     icon: "person",
@@ -319,8 +337,10 @@ struct ProfileSetupView: View {
         let trimmedCity = city.trimmingCharacters(in: .whitespaces)
 
         if trimmedName.isEmpty {
-            fullNameError = "Inserisci il tuo nome"
-            hasError = true
+            if !nameIsOptional {
+                fullNameError = "Inserisci il tuo nome"
+                hasError = true
+            }
         } else if trimmedName.count < 2 {
             fullNameError = "Il nome è troppo corto"
             hasError = true
@@ -351,7 +371,7 @@ struct ProfileSetupView: View {
             let trimmedPhone = phone.trimmingCharacters(in: .whitespaces)
             let update = ProfileUpdate(
                 role: selectedRole,
-                fullName: trimmedName,
+                fullName: trimmedName.isEmpty ? Self.fallbackName(for: selectedRole) : trimmedName,
                 phone: trimmedPhone.isEmpty ? nil : trimmedPhone,
                 city: CityValidator.normalizedCity(trimmedCity),
                 province: province,
