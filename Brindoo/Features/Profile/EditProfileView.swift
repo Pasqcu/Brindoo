@@ -47,6 +47,9 @@ struct EditProfileView: View {
     @State private var selectedCategoryIds: Set<UUID> = []
     @State private var categoryDescriptions: [UUID: String] = [:]
     @State private var initialCategoryIds: Set<UUID> = []
+    /// Le categorie del professionista non sono arrivate: finché non si
+    /// ricaricano, il salvataggio non le tocca (le avrebbe cancellate tutte).
+    @State private var categoriesLoadFailed = false
     @State private var initialCategoryDescriptions: [UUID: String] = [:]
 
     @State private var selectedAreaSlugs: Set<String> = []
@@ -245,6 +248,18 @@ struct EditProfileView: View {
                         .font(BrindooFont.bodySmall)
                         .foregroundStyle(Color.brindooTextSecondary)
 
+                    if categoriesLoadFailed {
+                        HStack(spacing: BrindooSpacing.sm) {
+                            Text(BrindooText.loadError("le categorie"))
+                                .font(BrindooFont.bodySmall)
+                                .foregroundStyle(Color.brindooError)
+                            Spacer()
+                            Button(BrindooText.retry) { Task { await loadOrganizerCategories() } }
+                                .font(BrindooFont.bodySmall.weight(.semibold))
+                                .foregroundStyle(Color.brindooCoral)
+                        }
+                    }
+
                     VStack(spacing: BrindooSpacing.xs) {
                         ForEach(allCategories) { category in
                             EditCategoryRow(
@@ -359,13 +374,19 @@ struct EditProfileView: View {
         if trimmedBio != (profile.bio ?? "") { return true }
         if newAvatarImage != nil || removeAvatar { return true }
         if isOrganizer {
-            if selectedCategoryIds != initialCategoryIds { return true }
-            for catId in selectedCategoryIds {
-                let new = (categoryDescriptions[catId] ?? "").trimmingCharacters(in: .whitespaces)
-                let old = (initialCategoryDescriptions[catId] ?? "").trimmingCharacters(in: .whitespaces)
-                if new != old { return true }
-            }
+            if categoriesChanged { return true }
             if selectedAreaSlugs != initialAreaSlugs { return true }
+        }
+        return false
+    }
+
+    /// Categorie o loro descrizioni diverse da quelle caricate.
+    private var categoriesChanged: Bool {
+        if selectedCategoryIds != initialCategoryIds { return true }
+        for catId in selectedCategoryIds {
+            let new = (categoryDescriptions[catId] ?? "").trimmingCharacters(in: .whitespaces)
+            let old = (initialCategoryDescriptions[catId] ?? "").trimmingCharacters(in: .whitespaces)
+            if new != old { return true }
         }
         return false
     }
@@ -386,25 +407,31 @@ struct EditProfileView: View {
         }
 
         if isOrganizer {
-            do {
-                allCategories = try await CategoryService.shared.fetchCategories()
+            await loadOrganizerCategories()
+        }
+    }
 
-                if let userId = session.userID {
-                    let details = try await OrganizerCategoriesService.shared.fetchDetailed(organizerId: userId)
-                    let ids = Set(details.map { $0.category.id })
-                    selectedCategoryIds = ids
-                    initialCategoryIds = ids
+    private func loadOrganizerCategories() async {
+        do {
+            allCategories = try await CategoryService.shared.fetchCategories()
 
-                    var descs: [UUID: String] = [:]
-                    for d in details {
-                        if let desc = d.description { descs[d.category.id] = desc }
-                    }
-                    categoryDescriptions = descs
-                    initialCategoryDescriptions = descs
+            if let userId = session.userID {
+                let details = try await OrganizerCategoriesService.shared.fetchDetailed(organizerId: userId)
+                let ids = Set(details.map { $0.category.id })
+                selectedCategoryIds = ids
+                initialCategoryIds = ids
+
+                var descs: [UUID: String] = [:]
+                for d in details {
+                    if let desc = d.description { descs[d.category.id] = desc }
                 }
-            } catch {
-                BrindooLog.error("Errore caricamento categorie: \(error)")
+                categoryDescriptions = descs
+                initialCategoryDescriptions = descs
             }
+            categoriesLoadFailed = false
+        } catch {
+            BrindooLog.error("Errore caricamento categorie: \(error)")
+            categoriesLoadFailed = true
         }
     }
 
@@ -470,16 +497,18 @@ struct EditProfileView: View {
 
             if isOrganizer {
                 guard let userId = session.userID else { return }
-                let items: [(categoryId: UUID, description: String?)] = selectedCategoryIds.map { id in
-                    let desc = categoryDescriptions[id]?.trimmingCharacters(in: .whitespaces)
-                    return (categoryId: id, description: (desc?.isEmpty == false) ? desc : nil)
+                if !categoriesLoadFailed && categoriesChanged {
+                    let items: [(categoryId: UUID, description: String?)] = selectedCategoryIds.map { id in
+                        let desc = categoryDescriptions[id]?.trimmingCharacters(in: .whitespaces)
+                        return (categoryId: id, description: (desc?.isEmpty == false) ? desc : nil)
+                    }
+                    try await OrganizerCategoriesService.shared.updateCategoriesWithDescriptions(
+                        organizerId: userId,
+                        items: items
+                    )
+                    initialCategoryIds = selectedCategoryIds
+                    initialCategoryDescriptions = categoryDescriptions
                 }
-                try await OrganizerCategoriesService.shared.updateCategoriesWithDescriptions(
-                    organizerId: userId,
-                    items: items
-                )
-                initialCategoryIds = selectedCategoryIds
-                initialCategoryDescriptions = categoryDescriptions
 
                 // Aree di copertura
                 if selectedAreaSlugs != initialAreaSlugs {
