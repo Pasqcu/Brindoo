@@ -411,7 +411,12 @@ struct PaywallView: View {
             errorMessage = "Acquisto in attesa di approvazione (es. «Chiedi di acquistare» in Famiglia)"
             
         case .failed(let error):
-            errorMessage = "Acquisto fallito: \(error.localizedDescription)"
+            // Il testo tecnico (spesso in inglese) resta nei log: gli errori di
+            // pagamento veri li mostra già il foglio di Apple.
+            BrindooLog.error("Acquisto: \(error)")
+            errorMessage = BrindooErrorText.isOffline(error)
+                ? "Connessione assente. Controlla la rete e riprova."
+                : "Acquisto non riuscito. Riprova tra poco."
         }
     }
     
