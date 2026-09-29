@@ -241,8 +241,16 @@ nonisolated private func brindooScaledFont(
     } else {
         base = UIFont.systemFont(ofSize: size, weight: weight)
     }
-    let scaled = UIFontMetrics(forTextStyle: textStyle).scaledFont(for: base)
-    return Font(scaled as CTFont)
+    let metrics = UIFontMetrics(forTextStyle: textStyle)
+    let scaled = metrics.scaledFont(for: base)
+    // Stesso tetto di RootView (`...accessibility2`): UIFontMetrics legge la
+    // dimensione scelta nel sistema e scavalcherebbe il limite messo da
+    // SwiftUI, facendo crescere i testi oltre quello per cui i layout reggono.
+    let cap = metrics.scaledFont(
+        for: base,
+        compatibleWith: UITraitCollection(preferredContentSizeCategory: .accessibilityLarge)
+    )
+    return Font((scaled.pointSize > cap.pointSize ? cap : scaled) as CTFont)
 }
 
 nonisolated enum BrindooFont {
