@@ -66,6 +66,11 @@ struct BrindooToastOverlay: ViewModifier {
                         message: toast.message,
                         dismissAction: { center.dismiss() }
                     )
+                    // Il banner ha una tinta leggera pensata per stare in
+                    // pagina: galleggiando sopra i titoli li lasciava
+                    // trasparire in mezzo al testo. Qui serve un fondo pieno.
+                    .background(Color.brindooBackground, in: RoundedRectangle(cornerRadius: BrindooRadius.md))
+                    .shadow(color: .black.opacity(0.12), radius: 10, y: 4)
                     .padding(.horizontal, BrindooSpacing.md)
                     .padding(.top, BrindooSpacing.xs)
                     .transition(.move(edge: .top).combined(with: .opacity))
