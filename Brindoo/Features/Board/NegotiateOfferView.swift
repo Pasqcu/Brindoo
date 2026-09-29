@@ -216,12 +216,12 @@ struct NegotiateOfferView: View {
         isLoading = true
         defer { isLoading = false }
 
+        // Una data segnata come occupata non ferma la proposta: l'avviso
+        // sotto al calendario lo dice, e decide il professionista quando
+        // risponde. Il server rifiuta solo l'accettazione su un giorno che
+        // ha già un evento confermato.
         var eventDateString: String? = nil
         if includeEventDate {
-            if isDateUnavailable(eventDate) {
-                generalError = "Il professionista non è disponibile nella data scelta. Scegli un altro giorno."
-                return
-            }
             eventDateString = BrindooFormat.dayString(from: eventDate)
         }
 
@@ -246,7 +246,7 @@ struct NegotiateOfferView: View {
             onDone()
             dismiss()
         } catch {
-            generalError = "Impossibile inviare la proposta. Riprova."
+            generalError = BrindooErrorText.serverRule(error) ?? "Impossibile inviare la proposta. Riprova."
             BrindooLog.error("\(error)")
         }
     }
