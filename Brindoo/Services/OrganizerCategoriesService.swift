@@ -66,30 +66,4 @@ final class OrganizerCategoriesService {
             .insert(payloads)
             .execute()
     }
-    
-    func updateCategories(organizerId: UUID, add: [UUID], remove: [UUID]) async throws {
-        if !remove.isEmpty {
-            for catId in remove {
-                try await client
-                    .from("organizer_categories")
-                    .delete()
-                    .eq("organizer_id", value: organizerId)
-                    .eq("category_id", value: catId)
-                    .execute()
-            }
-        }
-        
-        if !add.isEmpty {
-            struct Payload: Encodable {
-                let organizer_id: UUID
-                let category_id: UUID
-            }
-            
-            let payloads = add.map { Payload(organizer_id: organizerId, category_id: $0) }
-            try await client
-                .from("organizer_categories")
-                .insert(payloads)
-                .execute()
-        }
-    }
 }

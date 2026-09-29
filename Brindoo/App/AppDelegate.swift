@@ -14,9 +14,6 @@ import UserNotifications
 
 final class AppDelegate: NSObject, UIApplicationDelegate {
 
-    /// Deep link memorizzato quando l'utente tocca una notifica da app chiusa.
-    /// DeepLinkRouter lo legge all'avvio.
-    static var pendingDeepLink: NotificationPayload?
 
     func application(
         _ application: UIApplication,

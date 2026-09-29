@@ -62,11 +62,6 @@ final class SupabaseManager {
     
     // MARK: - Sessione corrente
     
-    /// Restituisce true se c'è un utente loggato
-    var isAuthenticated: Bool {
-        client.auth.currentSession != nil
-    }
-    
     /// ID dell'utente loggato, nil se non autenticato
     var currentUserID: UUID? {
         client.auth.currentUser?.id

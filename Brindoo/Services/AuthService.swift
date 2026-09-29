@@ -174,11 +174,6 @@ final class AuthService {
         )
     }
 
-    /// Versione boolean rapida
-    func isValidPassword(_ password: String) -> Bool {
-        validatePassword(password).isValid
-    }
-
     /// Restituisce l'errore specifico per la prima validazione fallita
     private func passwordError(_ password: String) -> BrindooAuthError? {
         let validation = validatePassword(password)

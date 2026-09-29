@@ -126,9 +126,6 @@ struct OfferProposal: Identifiable, Codable, Hashable, Equatable {
         depositDeclaredAt != nil && depositConfirmedAt == nil
     }
 
-    /// Chi deve confermare adesso (nil se non c'è nulla in sospeso).
-    var depositConfirmationPending: Bool { isDepositAwaitingConfirmation }
-
     /// True se tocca a questo utente confermare l'acconto dichiarato dall'altro.
     func canConfirmDeposit(as userId: UUID) -> Bool {
         isDepositAwaitingConfirmation && depositDeclaredBy != userId
@@ -212,29 +209,6 @@ struct OfferProposal: Identifiable, Codable, Hashable, Equatable {
         case .client:    return userId == organizerId
         case .organizer: return userId == clientId
         }
-    }
-}
-
-/// Round della trattativa: ogni controproposta o proposta iniziale è un round.
-struct OfferProposalRound: Identifiable, Codable, Hashable, Equatable {
-    let id: UUID
-    let proposalId: UUID
-    let proposerRole: ProposerRole
-    let price: Double
-    let message: String?
-    let createdAt: Date
-
-    enum CodingKeys: String, CodingKey {
-        case id
-        case proposalId = "proposal_id"
-        case proposerRole = "proposer_role"
-        case price
-        case message
-        case createdAt = "created_at"
-    }
-
-    var priceDisplay: String {
-        BrindooFormat.euro(price)
     }
 }
 

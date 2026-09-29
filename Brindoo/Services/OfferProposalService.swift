@@ -71,21 +71,6 @@ final class OfferProposalService {
             .value
     }
 
-    // MARK: - Round (cronologia)
-
-    /// Ultimo round della trattativa (per UI "ultima controproposta").
-    func fetchLastRound(proposalId: UUID) async throws -> OfferProposalRound? {
-        let rows: [OfferProposalRound] = try await client
-            .from("offer_proposal_rounds")
-            .select()
-            .eq("proposal_id", value: proposalId)
-            .order("created_at", ascending: false)
-            .limit(1)
-            .execute()
-            .value
-        return rows.first
-    }
-
     // MARK: - Apertura trattativa (cliente)
 
     /// Apre una nuova trattativa sull'offerta. Crea anche il round iniziale.
@@ -361,16 +346,6 @@ final class OfferProposalService {
                 content: "❌ L'evento \"\(offerTitle)\"\(when) è stato annullato"
             )
         }
-    }
-
-    /// Segna (o toglie) l'acconto versato su una trattativa accettata.
-    func setDepositPaid(proposalId: UUID, paid: Bool) async throws {
-        struct U: Encodable { let deposit_paid: Bool }
-        try await client
-            .from("offer_proposals")
-            .update(U(deposit_paid: paid))
-            .eq("id", value: proposalId)
-            .execute()
     }
 
     // MARK: - Acconto e saldo
