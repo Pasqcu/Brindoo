@@ -431,6 +431,11 @@ struct EditProfileView: View {
             hasError = true
         }
         if trimmedBio.count > 500 { generalError = "La bio non può superare 500 caratteri"; hasError = true }
+        if !hasError, ContentFilter.containsBlockedWords(trimmedName, trimmedBio)
+            || selectedCategoryIds.contains(where: { ContentFilter.containsBlockedWords(categoryDescriptions[$0]) }) {
+            generalError = ContentFilter.message
+            hasError = true
+        }
         if hasError { return }
 
         isLoading = true

@@ -167,6 +167,10 @@ struct SuggestCategorySheet: View {
             generalError = "Descrizione troppo lunga (max 280 caratteri)"
             return
         }
+        guard !ContentFilter.containsBlockedWords(trimmedName, description) else {
+            generalError = ContentFilter.message
+            return
+        }
 
         isLoading = true
         defer { isLoading = false }

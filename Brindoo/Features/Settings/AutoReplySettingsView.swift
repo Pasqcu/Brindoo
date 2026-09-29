@@ -239,6 +239,11 @@ struct AutoReplySettingsView: View {
 
     private func save() async {
         errorText = nil
+        // Il messaggio arriva ai clienti a nome tuo: stesse regole dei testi pubblici.
+        guard !ContentFilter.containsBlockedWords(trimmedMessage) else {
+            errorText = ContentFilter.message
+            return
+        }
         isSaving = true
         defer { isSaving = false }
         do {

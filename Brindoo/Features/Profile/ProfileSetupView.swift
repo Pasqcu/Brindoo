@@ -362,6 +362,11 @@ struct ProfileSetupView: View {
             hasError = true
         }
 
+        if ContentFilter.containsBlockedWords(trimmedName) {
+            fullNameError = ContentFilter.message
+            hasError = true
+        }
+
         if hasError { return }
 
         isLoading = true

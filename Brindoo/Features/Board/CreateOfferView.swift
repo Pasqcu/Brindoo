@@ -370,6 +370,12 @@ struct CreateOfferView: View {
             let desc = draft.description.trimmingCharacters(in: .whitespacesAndNewlines)
             validPackages.append((name: name, description: desc.isEmpty ? nil : desc, price: value!))
         }
+        let packageTexts = validPackages.flatMap { [$0.name, $0.description ?? ""] }
+        if !hasError, ContentFilter.containsBlockedWords(tTitle, tDesc)
+            || packageTexts.contains(where: { ContentFilter.containsBlockedWords($0) }) {
+            generalError = ContentFilter.message
+            hasError = true
+        }
         if hasError { return }
 
         isLoading = true

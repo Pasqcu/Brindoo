@@ -263,6 +263,10 @@ struct WriteReviewView: View {
             generalError = "Il commento è troppo lungo"
             return
         }
+        guard !ContentFilter.containsBlockedWords(comment) else {
+            generalError = ContentFilter.message
+            return
+        }
         
         isLoading = true
         defer { isLoading = false }

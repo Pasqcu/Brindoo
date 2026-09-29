@@ -240,9 +240,9 @@ struct CreateClientRequestView: View {
         areaError = nil
         generalError = nil
 
-        let trimmedTitle = title.trimmingCharacters(in: .whitespaces)
-        let trimmedArea = area.trimmingCharacters(in: .whitespaces)
-        let trimmedDesc = description.trimmingCharacters(in: .whitespaces)
+        let trimmedTitle = title.trimmingCharacters(in: .whitespacesAndNewlines)
+        let trimmedArea = area.trimmingCharacters(in: .whitespacesAndNewlines)
+        let trimmedDesc = description.trimmingCharacters(in: .whitespacesAndNewlines)
 
         var hasError = false
         if trimmedTitle.count < 5 {
@@ -257,6 +257,10 @@ struct CreateClientRequestView: View {
         let budgetValue = BrindooFormat.price(from: budget)
         if !budget.trimmingCharacters(in: .whitespaces).isEmpty && budgetValue == nil {
             generalError = "Il budget non è un numero valido (fino a \(BrindooFormat.euro(BrindooFormat.maxPrice)))."
+            hasError = true
+        }
+        if !hasError, ContentFilter.containsBlockedWords(trimmedTitle, trimmedDesc, trimmedArea) {
+            generalError = ContentFilter.message
             hasError = true
         }
         if hasError { return }

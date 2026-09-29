@@ -513,6 +513,10 @@ struct ReplyToReviewSheet: View {
     }
 
     private func submit() async {
+        guard !ContentFilter.containsBlockedWords(text) else {
+            error = ContentFilter.message
+            return
+        }
         isLoading = true
         defer { isLoading = false }
         do {

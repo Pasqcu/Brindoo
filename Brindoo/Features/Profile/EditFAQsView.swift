@@ -185,8 +185,12 @@ struct EditFAQsView: View {
     }
 
     private func save() async {
-        isSaving = true
         errorMessage = nil
+        guard !faqs.contains(where: { ContentFilter.containsBlockedWords($0.question, $0.answer) }) else {
+            errorMessage = ContentFilter.message
+            return
+        }
+        isSaving = true
         defer { isSaving = false }
         do {
             let updated = try await ProfileService.shared.updateFAQs(faqs)
