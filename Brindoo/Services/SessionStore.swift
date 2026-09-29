@@ -57,6 +57,37 @@ final class SessionStore {
     /// l'ordine delle schermate dipendeva da SwiftUI.
     var isChangingRole: Bool = false
 
+    /// Consenso ai Termini dato nell'onboarding su questo telefono e non
+    /// ancora registrato sul server: MainTabView lo registra in silenzio.
+    var hasPendingLocalTermsConsent: Bool {
+        guard let p = currentProfile, p.needsTermsAcceptance, p.termsVersion == nil else { return false }
+        return !(UserDefaults.standard.string(forKey: "brindoo.legal.acceptedTermsAt") ?? "").isEmpty
+    }
+
+    /// La registrazione silenziosa non è riuscita: serve il pannello.
+    var silentTermsRecordFailed: Bool = false
+
+    /// Pannello dei Termini a tutto schermo (MainTabView): bloccante finché
+    /// il consenso non è registrato sul server. Con un consenso locale in
+    /// attesa si aspetta l'esito della registrazione silenziosa: prima il
+    /// pannello si apriva e richiudeva in un lampo davanti a ogni nuovo utente.
+    var showsTermsGate: Bool {
+        guard currentProfile?.needsTermsAcceptance == true else { return false }
+        return !hasPendingLocalTermsConsent || silentTermsRecordFailed
+    }
+
+    /// Pannello della dichiarazione del professionista, dopo i Termini.
+    var showsProfessionalDeclarationGate: Bool {
+        guard let p = currentProfile, !isChangingRole else { return false }
+        return !p.needsTermsAcceptance && p.needsProfessionalDeclaration
+    }
+
+    /// Uno dei due pannelli legali è aperto: i fogli che si aprono da soli
+    /// (benvenuto, spiegazione delle notifiche) aspettano che si chiuda.
+    var showsLegalGate: Bool {
+        showsTermsGate || showsProfessionalDeclarationGate
+    }
+
     /// Impostato quando l'app si apre dal link "Password dimenticata":
     /// RootView mostra la scelta della nuova password (o dice che il link
     /// non vale più).
@@ -217,6 +248,7 @@ final class SessionStore {
         self.userEmail = nil
         self.userID = nil
         self.currentProfile = nil
+        self.silentTermsRecordFailed = false
     }
 
     // MARK: - Logout

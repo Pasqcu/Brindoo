@@ -76,25 +76,21 @@ struct MainTabView: View {
             // deve rifirmare: registriamo la prova sul server in silenzio.
             // Il pannello resta per i casi rimanenti (nuovo dispositivo,
             // Termini aggiornati).
-            guard let p = session.currentProfile, p.needsTermsAcceptance,
-                  p.termsVersion == nil,
-                  !(UserDefaults.standard.string(forKey: "brindoo.legal.acceptedTermsAt") ?? "").isEmpty
-            else { return }
+            guard session.hasPendingLocalTermsConsent else { return }
             if let updated = try? await ProfileService.shared.recordTermsAcceptance() {
                 session.updateLocalProfile(updated)
+            } else {
+                session.silentTermsRecordFailed = true
             }
         }
         .fullScreenCover(isPresented: Binding(
-            get: { session.currentProfile?.needsTermsAcceptance == true },
+            get: { session.showsTermsGate },
             set: { _ in }
         )) {
             LegalConsentGate()
         }
         .fullScreenCover(isPresented: Binding(
-            get: {
-                guard let p = session.currentProfile, !session.isChangingRole else { return false }
-                return !p.needsTermsAcceptance && p.needsProfessionalDeclaration
-            },
+            get: { session.showsProfessionalDeclarationGate },
             set: { _ in }
         )) {
             ProfessionalDeclarationGate()

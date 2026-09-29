@@ -139,12 +139,14 @@ struct RootView: View {
     // MARK: - Permessi notifiche
 
     /// La spiegazione esce ad app visibile (splash finita, bacheca pronta) e
-    /// solo se non c'è già aperto il benvenuto: quello ha la precedenza.
+    /// solo se non c'è già aperto il benvenuto (ha la precedenza) né un
+    /// pannello legale.
     private var canShowPrePrompt: Bool {
         wantsNotificationPrePrompt
             && splashFinished
             && launchGate.isFirstScreenReady
             && launchGate.launchSheet == nil
+            && !session.showsLegalGate
     }
 
     private func preparePushPermissionFlow() async {

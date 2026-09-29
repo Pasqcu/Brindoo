@@ -217,7 +217,7 @@ struct BoardView: View {
             }
             // Chiuso anche col trascinamento, il benvenuto conta come visto:
             // prima tornava a ogni avvio finché non si toccava "Salta".
-            .onChange(of: launchGate.launchSheet == nil) { _, isFree in
+            .onChange(of: launchGate.launchSheet == nil && !session.showsLegalGate) { _, isFree in
                 if isFree { presentWelcomeIfPossible() }
             }
             .sheet(isPresented: $showWelcome, onDismiss: {
@@ -262,6 +262,7 @@ struct BoardView: View {
                     ),
                 // Dopo i fogli del primo avvio, non sotto.
                 deferredWhile: showWelcome || welcomeWanted || launchGate.launchSheet != nil
+                    || session.showsLegalGate
             )
     }
 
@@ -500,7 +501,8 @@ struct BoardView: View {
     }
 
     private func presentWelcomeIfPossible() {
-        guard welcomeWanted, !showWelcome, launchGate.claimLaunchSheet(.welcome) else { return }
+        guard welcomeWanted, !showWelcome, !session.showsLegalGate,
+              launchGate.claimLaunchSheet(.welcome) else { return }
         welcomeWanted = false
         showWelcome = true
     }
