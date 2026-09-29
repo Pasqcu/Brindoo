@@ -124,24 +124,36 @@ nonisolated extension Color {
     /// In modalità chiara il tono è scurito per restare leggibile come testo
     /// (etichette e pillole): i colori pieni di prima scendevano a 2,3:1.
     static func brindooCategory(_ slug: String) -> Color {
+        let tones = categoryTones(slug)
+        return tones.map { adaptive(light: $0.light, dark: $0.dark) } ?? .brindooCoral
+    }
+
+    /// Tinta della categoria come fondo pieno sotto una scritta bianca
+    /// (filtro selezionato): il tono scuro in entrambi i temi, perché quello
+    /// chiaro del tema scuro teneva il bianco sotto 3:1.
+    static func brindooCategoryFill(_ slug: String) -> Color {
+        let tones = categoryTones(slug)
+        return tones.map { adaptive(light: $0.light, dark: $0.light) } ?? .brindooCoralFill
+    }
+
+    private typealias RGB = (CGFloat, CGFloat, CGFloat)
+
+    private static func categoryTones(_ slug: String) -> (light: RGB, dark: RGB)? {
         switch slug.lowercased() {
-        case "animation", "animazione":             return adaptive(light: (0.74, 0.28, 0.18), dark: (0.95, 0.45, 0.35)) // corallo caldo
-        case "photo", "foto", "video", "foto-video": return adaptive(light: (0.28, 0.40, 0.82), dark: (0.40, 0.50, 0.85)) // blu/indaco
-        case "catering", "food":                     return adaptive(light: (0.61, 0.38, 0.07), dark: (0.90, 0.60, 0.20)) // ambra
-        case "music", "musica", "dj", "music-dj":    return adaptive(light: (0.51, 0.35, 0.78), dark: (0.55, 0.40, 0.80)) // viola
-        case "location", "venue", "sale":            return adaptive(light: (0.15, 0.49, 0.41), dark: (0.20, 0.65, 0.55)) // verde acqua
-        case "decor", "decorazioni", "allestimenti": return adaptive(light: (0.78, 0.20, 0.45), dark: (0.85, 0.40, 0.60)) // rosa
-        case "cake", "torte", "pasticceria":         return adaptive(light: (0.70, 0.32, 0.25), dark: (0.80, 0.50, 0.45)) // terracotta
-        case "transport", "trasporti", "noleggio":   return adaptive(light: (0.27, 0.45, 0.59), dark: (0.35, 0.55, 0.70)) // azzurro
-        default:                                      return .brindooCoral
+        case "animation", "animazione":             return ((0.74, 0.28, 0.18), (0.95, 0.45, 0.35)) // corallo caldo
+        case "photo", "foto", "video", "foto-video": return ((0.28, 0.40, 0.82), (0.40, 0.50, 0.85)) // blu/indaco
+        case "catering", "food":                     return ((0.61, 0.38, 0.07), (0.90, 0.60, 0.20)) // ambra
+        case "music", "musica", "dj", "music-dj":    return ((0.51, 0.35, 0.78), (0.55, 0.40, 0.80)) // viola
+        case "location", "venue", "sale":            return ((0.15, 0.49, 0.41), (0.20, 0.65, 0.55)) // verde acqua
+        case "decor", "decorazioni", "allestimenti": return ((0.78, 0.20, 0.45), (0.85, 0.40, 0.60)) // rosa
+        case "cake", "torte", "pasticceria":         return ((0.70, 0.32, 0.25), (0.80, 0.50, 0.45)) // terracotta
+        case "transport", "trasporti", "noleggio":   return ((0.27, 0.45, 0.59), (0.35, 0.55, 0.70)) // azzurro
+        default:                                      return nil
         }
     }
 
     /// Colore che cambia con il tema chiaro/scuro.
-    private static func adaptive(
-        light: (CGFloat, CGFloat, CGFloat),
-        dark: (CGFloat, CGFloat, CGFloat)
-    ) -> Color {
+    private static func adaptive(light: RGB, dark: RGB) -> Color {
         Color(UIColor { trait in
             let c = trait.userInterfaceStyle == .dark ? dark : light
             return UIColor(red: c.0, green: c.1, blue: c.2, alpha: 1)

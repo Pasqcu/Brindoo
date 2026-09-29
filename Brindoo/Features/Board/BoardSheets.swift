@@ -265,7 +265,7 @@ struct ClientWelcomeSheet: View {
                                 .padding(.horizontal, BrindooSpacing.md)
                                 .padding(.vertical, BrindooSpacing.xs)
                                 .foregroundStyle(isOn ? .white : cat.tint)
-                                .background(isOn ? cat.tint : cat.tint.opacity(0.12))
+                                .background(isOn ? cat.fillTint : cat.tint.opacity(0.12))
                                 .clipShape(Capsule())
                             }
                         }

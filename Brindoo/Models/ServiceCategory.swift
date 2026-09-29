@@ -38,6 +38,9 @@ extension ServiceCategory {
     /// Colore distintivo della categoria, derivato dallo slug.
     var tint: Color { Color.brindooCategory(slug) }
 
+    /// Tinta per il fondo pieno (categoria selezionata, scritta bianca sopra).
+    var fillTint: Color { Color.brindooCategoryFill(slug) }
+
     /// Categoria placeholder per anteprime SwiftUI
     static var preview: ServiceCategory {
         ServiceCategory(

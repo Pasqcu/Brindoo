@@ -111,7 +111,7 @@ struct BoardFiltersBar: View {
                             .foregroundStyle(isSelected ? .white : tint)
                             .padding(.horizontal, BrindooSpacing.md)
                             .padding(.vertical, BrindooSpacing.xs)
-                            .background(isSelected ? tint : tint.opacity(0.12))
+                            .background(isSelected ? category.fillTint : tint.opacity(0.12))
                             .clipShape(Capsule())
                         }
                         .accessibilityLabel(category.name)
