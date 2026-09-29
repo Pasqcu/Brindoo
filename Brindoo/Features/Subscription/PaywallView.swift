@@ -85,9 +85,19 @@ struct PaywallView: View {
                             .tint(.brindooCoral)
                             .padding(.vertical, BrindooSpacing.lg)
                     } else {
-                        Text("Caricamento prodotti non riuscito")
-                            .font(BrindooFont.bodyMedium)
-                            .foregroundStyle(Color.brindooTextSecondary)
+                        // Senza prezzo non si compra: si dice cosa è successo e
+                        // si lascia riprovare, invece di un vicolo cieco.
+                        VStack(spacing: BrindooSpacing.sm) {
+                            Text("Non riusciamo a caricare il prezzo dall'App Store.")
+                                .font(BrindooFont.bodyMedium)
+                                .foregroundStyle(Color.brindooTextSecondary)
+                                .multilineTextAlignment(.center)
+                            BrindooButton(BrindooText.retry, style: .secondary, size: .medium, icon: BrindooIcon.refresh) {
+                                Task { await purchaseService.loadProducts() }
+                            }
+                            .frame(maxWidth: 220)
+                        }
+                        .padding(.vertical, BrindooSpacing.md)
                     }
                     
                     // Footer info legali
@@ -123,7 +133,7 @@ struct PaywallView: View {
                     Button {
                         Task { await restore() }
                     } label: {
-                        Text("Ripristina")
+                        Text("Ripristina acquisti")
                             .font(BrindooFont.bodySmall.weight(.medium))
                             .foregroundStyle(Color.brindooCoral)
                     }
@@ -284,7 +294,7 @@ struct PaywallView: View {
     @ViewBuilder
     private var footerSection: some View {
         VStack(spacing: BrindooSpacing.xs) {
-            Text("Il pagamento sarà addebitato sul tuo account Apple alla conferma. La sottoscrizione si rinnova automaticamente a meno che non venga annullata almeno 24 ore prima della scadenza.")
+            Text("Abbonamento mensile a rinnovo automatico. Il pagamento viene addebitato sul tuo account Apple alla conferma. L'abbonamento si rinnova ogni mese allo stesso prezzo, a meno che non venga disdetto almeno 24 ore prima della scadenza. Puoi gestirlo o disdirlo in qualsiasi momento dalle impostazioni del tuo ID Apple.")
                 .font(BrindooFont.caption)
                 .foregroundStyle(Color.brindooTextSecondary)
                 .multilineTextAlignment(.center)
