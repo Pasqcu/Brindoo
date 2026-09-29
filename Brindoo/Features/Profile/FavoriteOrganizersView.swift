@@ -164,7 +164,7 @@ struct FavoriteOrganizersView: View {
                     Text(profile.displayName)
                         .font(BrindooFont.titleSmall)
                     if profile.showsProBadge {
-                        BrindooBadge("Pro", style: .pro, icon: BrindooIcon.crown)
+                        ProBadge()
                     }
                 }
                 if let city = profile.city {

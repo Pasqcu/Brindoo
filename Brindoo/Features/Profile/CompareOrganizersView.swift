@@ -31,7 +31,7 @@ struct CompareOrganizersView: View {
                                 .multilineTextAlignment(.center)
                                 .lineLimit(2)
                             if profile.showsProBadge {
-                                BrindooBadge("Pro", style: .pro, icon: BrindooIcon.crown)
+                                ProBadge()
                             }
                         }
                     }
