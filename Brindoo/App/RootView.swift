@@ -352,7 +352,11 @@ struct LoadingView: View {
                     .tint(.brindooCoral)
                     .opacity(spinnerIn ? 1 : 0)
             }
-            .offset(y: logoDiameter / 2 + BrindooSpacing.xxl)
+            // Si aggancia il bordo alto (non il centro) sotto al logo: con il
+            // testo più grande la scritta cresceva anche verso l'alto e
+            // finiva sopra il cerchio.
+            .alignmentGuide(VerticalAlignment.center) { $0[.top] }
+            .offset(y: logoDiameter / 2 + BrindooSpacing.xs)
             .opacity(contentOut ? 0 : 1)
         }
         .accessibilityElement(children: .combine)
