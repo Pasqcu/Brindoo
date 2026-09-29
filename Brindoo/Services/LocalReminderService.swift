@@ -46,14 +46,14 @@ enum LocalReminderService {
             // E se è già stato versato (es. cambio data), non si riesuma.
             await schedule(center, id: "event-deposit-\(proposalId.uuidString)",
                            day: day, daysOffset: -30,
-                           title: "Un mese a \(offerTitle)",
+                           title: "Manca un mese: \(offerTitle)",
                            body: "Se avete concordato un acconto, è il momento buono per versarlo e registrarlo.",
                            userInfo: userInfo)
         }
 
         await schedule(center, id: "event-checkup-\(proposalId.uuidString)",
                        day: day, daysOffset: -7,
-                       title: "Una settimana a \(offerTitle)",
+                       title: "Manca una settimana: \(offerTitle)",
                        body: "Riguarda orari, indirizzo e dettagli in chat: meglio adesso che all'ultimo.",
                        userInfo: userInfo)
 
@@ -67,7 +67,7 @@ enum LocalReminderService {
             await schedule(center, id: "event-review-\(proposalId.uuidString)",
                            day: day, daysOffset: 1,
                            title: "Com'è andata? ⭐️",
-                           body: "Racconta com'è andato \(offerTitle): la tua recensione aiuta chi organizza dopo di te.",
+                           body: "Racconta com'è andata con «\(offerTitle)»: la tua recensione aiuta chi organizza dopo di te.",
                            userInfo: userInfo)
         }
     }
