@@ -2,8 +2,10 @@
 //  CalendarService.swift
 //  Brindoo
 //
-//  Aggiunge gli eventi confermati al calendario dell'iPhone
-//  (accesso in sola scrittura: non leggiamo nulla dal calendario).
+//  Aggiunge gli eventi confermati al calendario dell'iPhone (accesso in
+//  sola scrittura) e, solo se il professionista lo chiede da Disponibilità,
+//  legge i giorni già impegnati (accesso completo, dati che restano sul
+//  telefono).
 //
 
 import Foundation
