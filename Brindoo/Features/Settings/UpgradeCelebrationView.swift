@@ -29,11 +29,17 @@ struct UpgradeCelebrationView: View {
                 endPoint: .bottomTrailing
             )
             .ignoresSafeArea()
+            // Velo scuro leggero: al centro il rosa di sistema dava al testo
+            // bianco un contrasto di 3,6:1, sotto la soglia AA.
+            Color.black.opacity(0.15)
+                .ignoresSafeArea()
 
-            // Sparkles di sfondo casuali
+            // Sparkles di sfondo
             ForEach(0..<14, id: \.self) { i in
                 Image(systemName: "sparkle")
-                    .font(.system(size: CGFloat.random(in: 12...24)))
+                    // Misura fissa per stellina: un random qui cambiava a
+                    // ogni ridisegno e le stelline saltavano durante l'animazione.
+                    .font(.system(size: CGFloat(12 + (i * 7) % 13)))
                     .foregroundStyle(.white.opacity(0.7))
                     .offset(
                         x: CGFloat(i.hashValue % 200 - 100),
@@ -41,6 +47,7 @@ struct UpgradeCelebrationView: View {
                     )
                     .opacity(iconOpacity)
                     .rotationEffect(.degrees(Double(i) * 23))
+                    .accessibilityHidden(true)
             }
 
             VStack(spacing: BrindooSpacing.xl) {
@@ -65,6 +72,7 @@ struct UpgradeCelebrationView: View {
                         .opacity(iconOpacity)
                         .shadow(color: .white.opacity(0.6), radius: 18)
                 }
+                .accessibilityHidden(true)
 
                 VStack(spacing: BrindooSpacing.xs) {
                     Text("Sei un Professionista!")
@@ -72,7 +80,7 @@ struct UpgradeCelebrationView: View {
                         .foregroundStyle(.white)
                     Text("Ora completiamo il tuo profilo.")
                         .font(BrindooFont.bodyLarge)
-                        .foregroundStyle(.white.opacity(0.85))
+                        .foregroundStyle(.white)
                 }
                 .opacity(textOpacity)
                 .offset(y: textOffset)
@@ -83,6 +91,9 @@ struct UpgradeCelebrationView: View {
 
     private func runAnimation() {
         BrindooHaptics.notify(.success)
+        // La schermata si chiude da sola: con VoiceOver il messaggio va
+        // annunciato, altrimenti passa senza che nessuno lo senta.
+        AccessibilityNotification.Announcement("Sei un Professionista! Ora completiamo il tuo profilo.").post()
 
         if reduceMotion {
             // Stesso messaggio, senza scala né rotazione: stato finale diretto.
