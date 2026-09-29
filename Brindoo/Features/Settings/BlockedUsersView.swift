@@ -11,6 +11,7 @@ struct BlockedUsersView: View {
     @Environment(\.dismiss) private var dismiss
     @State private var profiles: [Profile] = []
     @State private var isLoading = true
+    @State private var loadFailed = false
     @State private var unblockError: String?
 
     var body: some View {
@@ -19,6 +20,12 @@ struct BlockedUsersView: View {
                 if isLoading {
                     ProgressView().tint(.brindooCoral)
                         .frame(maxWidth: .infinity, maxHeight: .infinity)
+                } else if loadFailed {
+                    // Senza questo, un errore di rete diceva "Nessun utente
+                    // bloccato" anche a chi ne ha.
+                    BrindooErrorState(message: BrindooText.loadError("gli utenti bloccati")) {
+                        Task { await load() }
+                    }
                 } else if profiles.isEmpty {
                     VStack(spacing: BrindooSpacing.md) {
                         Image(systemName: "hand.raised.slash")
@@ -82,9 +89,15 @@ struct BlockedUsersView: View {
         defer { isLoading = false }
         await BlockService.shared.loadBlocks()
         // Una richiesta sola per tutti i bloccati.
-        profiles = (try? await ProfileService.shared.fetchProfiles(
-            ids: Array(BlockService.shared.blockedIds)
-        )) ?? []
+        do {
+            profiles = try await ProfileService.shared.fetchProfiles(
+                ids: Array(BlockService.shared.blockedIds)
+            )
+            loadFailed = false
+        } catch {
+            BrindooLog.error("\(error)")
+            loadFailed = true
+        }
     }
 
     private func unblock(_ userId: UUID) async {
