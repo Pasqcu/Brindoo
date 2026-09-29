@@ -37,7 +37,7 @@ struct BrindooNegotiationLiveActivity: Widget {
                     }
                 }
                 DynamicIslandExpandedRegion(.trailing) {
-                    Text("€\(context.state.currentPrice)")
+                    Text(Self.euro(context.state.currentPrice))
                         .font(.system(size: 18, weight: .bold))
                         .foregroundStyle(.orange)
                 }
@@ -56,7 +56,7 @@ struct BrindooNegotiationLiveActivity: Widget {
                 Image(systemName: "tag.fill")
                     .foregroundStyle(.orange)
             } compactTrailing: {
-                Text("€\(context.state.currentPrice)")
+                Text(Self.euro(context.state.currentPrice))
                     .font(.caption2).bold()
             } minimal: {
                 Image(systemName: "tag.fill")
@@ -74,7 +74,7 @@ struct BrindooNegotiationLiveActivity: Widget {
                     .font(.subheadline).bold()
                     .lineLimit(1)
                 Spacer()
-                Text("€\(context.state.currentPrice)")
+                Text(Self.euro(context.state.currentPrice))
                     .font(.title3).bold()
                     .foregroundStyle(.orange)
             }
@@ -103,6 +103,11 @@ struct BrindooNegotiationLiveActivity: Widget {
         case .rejected:  return "xmark.circle.fill"
         case .withdrawn: return "arrow.uturn.backward"
         }
+    }
+
+    /// Prezzo all'italiana come nell'app ("1.500 €"), non "€1500".
+    private static func euro(_ value: Int) -> String {
+        value.formatted(.number.locale(Locale(identifier: "it_IT"))) + " €"
     }
 
     private func statusLabel(
