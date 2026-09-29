@@ -112,6 +112,9 @@ struct ChatComposerView: View {
                 Image(systemName: BrindooIcon.attachment)
                     .font(.system(size: 22))
                     .foregroundStyle(isAttachDisabled ? Color.brindooBorder : Color.brindooCoral)
+                    // Area di tocco piena: l'icona da sola era di 22 punti.
+                    .frame(width: 36, height: 44)
+                    .contentShape(Rectangle())
             }
             .disabled(isAttachDisabled)
             .accessibilityLabel("Allega foto")

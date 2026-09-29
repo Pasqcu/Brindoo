@@ -68,6 +68,8 @@ struct QuickReplyMenuButton: View {
             Image(systemName: "bolt.circle")
                 .font(.system(size: 22))
                 .foregroundStyle(Color.brindooCoral)
+                .frame(width: 36, height: 44)
+                .contentShape(Rectangle())
         }
         .accessibilityLabel("Risposte rapide")
         .onAppear { replies = QuickRepliesStore.load() }
@@ -112,6 +114,8 @@ struct QuickRepliesManageSheet: View {
                                     Image(systemName: BrindooIcon.delete)
                                         .font(.system(size: 14))
                                         .foregroundStyle(Color.brindooError)
+                                        .frame(width: 44, height: 44)
+                                        .contentShape(Rectangle())
                                 }
                                 .accessibilityLabel("Elimina risposta rapida")
                             }
@@ -142,6 +146,8 @@ struct QuickRepliesManageSheet: View {
                                         .font(.system(size: 28))
                                         .foregroundStyle(newPhrase.trimmingCharacters(in: .whitespaces).isEmpty
                                                          ? Color.brindooBorder : Color.brindooCoral)
+                                        .frame(width: 44, height: 44)
+                                        .contentShape(Rectangle())
                                 }
                                 .disabled(newPhrase.trimmingCharacters(in: .whitespaces).isEmpty)
                                 .accessibilityLabel("Aggiungi risposta rapida")
