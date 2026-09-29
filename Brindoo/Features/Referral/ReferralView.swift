@@ -84,7 +84,8 @@ struct ReferralView: View {
         let code = vm.code?.displayCode ?? ""
         var items: [Any] = [
             "Usa il mio codice \(code) su Brindoo e ottieni 1 mese Pro gratis! "
-            + "Installa l'app, poi inseriscilo in Profilo → Invita amici."
+            + "Scarica l'app dall'App Store (cerca «Brindoo»), poi inserisci il codice "
+            + "in Profilo → Impostazioni → Invita amici."
         ]
         if let url = vm.code?.shareURL {
             items.append(url)

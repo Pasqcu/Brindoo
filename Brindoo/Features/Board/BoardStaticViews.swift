@@ -125,7 +125,9 @@ struct BoardDiscoveryHeader: View {
 
 struct BoardInviteCard: View {
 
-    static let inviteMessage = "Ti ho trovato su Brindoo? 🎉 È l'app per organizzare feste ed eventi: crea il tuo profilo da professionista e fatti scegliere dai clienti del Lazio!"
+    /// Il testo dice anche dove trovare l'app: senza un link (il sito non
+    /// esiste ancora) chi lo riceveva non sapeva da dove partire.
+    static let inviteMessage = "Conosci Brindoo? 🎉 È l'app per organizzare feste ed eventi nel Lazio: crea il tuo profilo da professionista e fatti scegliere dai clienti. La trovi sull'App Store cercando «Brindoo»."
 
     var body: some View {
         ShareLink(item: Self.inviteMessage) {
