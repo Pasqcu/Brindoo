@@ -11,6 +11,7 @@ struct BlockedUsersView: View {
     @Environment(\.dismiss) private var dismiss
     @State private var profiles: [Profile] = []
     @State private var isLoading = true
+    @State private var unblockError: String?
 
     var body: some View {
         NavigationStack {
@@ -48,6 +49,9 @@ struct BlockedUsersView: View {
                                 }
                                 .font(BrindooFont.bodySmall.weight(.medium))
                                 .foregroundStyle(Color.brindooCoral)
+                                // Solo il bottone sblocca: in una List, senza
+                                // questo stile, bastava toccare il nome.
+                                .buttonStyle(.borderless)
                             }
                         }
                     }
@@ -62,6 +66,14 @@ struct BlockedUsersView: View {
                 }
             }
             .task { await load() }
+            .alert(
+                "Non riuscito",
+                isPresented: Binding(get: { unblockError != nil }, set: { if !$0 { unblockError = nil } })
+            ) {
+                Button("OK", role: .cancel) { unblockError = nil }
+            } message: {
+                Text(unblockError ?? "")
+            }
         }
     }
 
@@ -79,6 +91,9 @@ struct BlockedUsersView: View {
         do {
             try await BlockService.shared.unblock(userId: userId)
             profiles.removeAll { $0.id == userId }
-        } catch { BrindooLog.error("\(error)") }
+        } catch {
+            BrindooLog.error("\(error)")
+            unblockError = BrindooErrorText.message(for: error, fallback: "Sblocco non riuscito. \(BrindooText.retryHint)")
+        }
     }
 }

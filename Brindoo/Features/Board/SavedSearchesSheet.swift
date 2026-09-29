@@ -94,10 +94,13 @@ struct SavedSearchesSheet: View {
                         .foregroundStyle(Color.brindooTextSecondary)
                         Spacer()
                         Button("Salva") { save(current) }
-                            .disabled(newName.trimmingCharacters(in: .whitespaces).isEmpty)
-                            .foregroundStyle(Color.brindooCoral)
+                            .disabled(isNewNameEmpty)
+                            .foregroundStyle(isNewNameEmpty ? Color.brindooTextTertiary : Color.brindooCoral)
                     }
                     .font(BrindooFont.bodyMedium)
+                    // Due bottoni nella stessa riga di una List: senza questo
+                    // stile un tocco li attiva entrambi.
+                    .buttonStyle(.borderless)
                 } else {
                     Button {
                         newName = current.summary(categories: categories)
@@ -111,6 +114,10 @@ struct SavedSearchesSheet: View {
             }
             .padding(.vertical, BrindooSpacing.xxs)
         }
+    }
+
+    private var isNewNameEmpty: Bool {
+        newName.trimmingCharacters(in: .whitespaces).isEmpty
     }
 
     private func save(_ current: SavedSearch) {
