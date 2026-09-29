@@ -482,7 +482,10 @@ struct BoardView: View {
             clientPreview: clientPreview,
             userID: session.userID,
             province: session.currentProfile?.province
-        ) { toast in
+        ) { [clientPreview] toast in
+            // Con la rete lenta l'errore arriva quando si è già altrove, e
+            // "Trascina in basso per riprovare" lì non vuol dire niente.
+            guard clientPreview || DeepLinkRouter.shared.selectedTab == 0 else { return }
             toastCenter.show(toast)
         }
         await vm.loadInitial()
