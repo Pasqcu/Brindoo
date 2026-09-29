@@ -171,6 +171,8 @@ struct PortfolioPagerView: View {
                                 .font(.system(size: 28))
                                 .symbolRenderingMode(.palette)
                                 .foregroundStyle(.white, .black.opacity(0.5))
+                                .frame(width: 44, height: 44)
+                                .contentShape(Rectangle())
                         }
                         .accessibilityLabel("Altre azioni")
                     }
@@ -182,6 +184,8 @@ struct PortfolioPagerView: View {
                             .font(.system(size: 32))
                             .symbolRenderingMode(.palette)
                             .foregroundStyle(.white, .black.opacity(0.5))
+                            .frame(width: 44, height: 44)
+                            .contentShape(Rectangle())
                     }
                     .accessibilityLabel("Chiudi")
                 }

@@ -90,13 +90,18 @@ struct BrindooTextField: View {
                         Image(systemName: isPasswordVisible ? "eye.slash.fill" : "eye.fill")
                             .font(.system(size: 16))
                             .foregroundStyle(Color.brindooTextSecondary)
+                            .frame(width: 44, height: 44)
+                            .contentShape(Rectangle())
                     }
                     .buttonStyle(.plain)
                     .accessibilityLabel(isPasswordVisible ? "Nascondi la password" : "Mostra la password")
                 }
             }
             .padding(.horizontal, BrindooSpacing.md)
-            .frame(height: 52)
+            // Altezza minima, non fissa: con il testo più grande il campo
+            // cresce invece di tagliare le lettere.
+            .padding(.vertical, BrindooSpacing.xxs)
+            .frame(minHeight: 52)
             .background(Color.brindooSurface)
             .overlay(
                 RoundedRectangle(cornerRadius: BrindooRadius.md)
@@ -232,7 +237,10 @@ struct BrindooPhoneTextField: View {
                     }
             }
             .padding(.horizontal, BrindooSpacing.md)
-            .frame(height: 52)
+            // Altezza minima, non fissa: con il testo più grande il campo
+            // cresce invece di tagliare le lettere.
+            .padding(.vertical, BrindooSpacing.xxs)
+            .frame(minHeight: 52)
             .background(Color.brindooSurface)
             .overlay(
                 RoundedRectangle(cornerRadius: BrindooRadius.md)

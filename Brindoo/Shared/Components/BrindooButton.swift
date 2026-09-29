@@ -97,11 +97,15 @@ struct BrindooButton: View {
                     }
                     Text(title)
                         .font(size.font)
+                        .multilineTextAlignment(.center)
                 }
             }
             .foregroundStyle(foregroundColor)
             .frame(maxWidth: .infinity)
-            .frame(height: size.height)
+            // Altezza minima: con il testo più grande un titolo lungo va a
+            // capo e il bottone cresce, invece di tagliarlo.
+            .padding(.vertical, BrindooSpacing.xs)
+            .frame(minHeight: size.height)
             .padding(.horizontal, size.horizontalPadding)
             .background(backgroundView)
             .overlay(

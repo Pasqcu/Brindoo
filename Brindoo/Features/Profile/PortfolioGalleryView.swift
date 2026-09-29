@@ -170,7 +170,8 @@ struct PortfolioGalleryView: View {
                     }
                     .font(BrindooFont.button)
                     .foregroundStyle(.white)
-                    .frame(height: 56)
+                    .padding(.vertical, BrindooSpacing.xs)
+                    .frame(minHeight: 56)
                     .padding(.horizontal, BrindooSpacing.xl)
                     .background(Color.brindooCoralFill)
                     .clipShape(RoundedRectangle(cornerRadius: BrindooRadius.md))

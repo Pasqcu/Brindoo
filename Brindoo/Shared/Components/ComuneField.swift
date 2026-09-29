@@ -47,7 +47,8 @@ struct ComuneField: View {
                         .foregroundStyle(Color.brindooTextSecondary)
                 }
                 .padding(.horizontal, BrindooSpacing.md)
-                .frame(height: 52)
+                .padding(.vertical, BrindooSpacing.xxs)
+                .frame(minHeight: 52)
                 .background(Color.brindooSurface)
                 .overlay(
                     RoundedRectangle(cornerRadius: BrindooRadius.md)
@@ -57,6 +58,8 @@ struct ComuneField: View {
             }
             .buttonStyle(.plain)
             .disabled(isDisabled)
+            .accessibilityLabel("Città")
+            .accessibilityValue(city.isEmpty ? "Da scegliere" : city)
 
             if let error {
                 Text(error)

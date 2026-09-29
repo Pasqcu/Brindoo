@@ -236,7 +236,7 @@ struct BoardFiltersBar: View {
             }
         }
         .padding(.horizontal, BrindooSpacing.md)
-        .frame(height: 44)
+        .frame(minHeight: 44)
         .brindooSurfaceBackground()
     }
 }
