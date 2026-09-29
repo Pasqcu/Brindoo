@@ -250,10 +250,10 @@
 				};
 			};
 			buildConfigurationList = 0E1B10D82FAA98BC0069427E /* Build configuration list for PBXProject "Brindoo" */;
-			developmentRegion = en;
+			developmentRegion = it;
 			hasScannedForEncodings = 0;
 			knownRegions = (
-				en,
+				it,
 				Base,
 			);
 			mainGroup = 0E1B10D42FAA98BC0069427E;
