@@ -22,6 +22,9 @@ struct AvailabilityView: View {
     @State private var isImporting: Bool = false
     @State private var importedCount: Int?
     @State private var error: String?
+    /// I giorni già segnati non sono arrivati: salvare ora li cancellerebbe
+    /// tutti tranne quelli toccati, quindi prima si riprova a caricarli.
+    @State private var loadFailed: Bool = false
     /// Eventi saltati perché il cliente ha eliminato l'account.
     @State private var notices: [AvailabilityService.CancellationNotice] = []
     @State private var noticeToResolve: AvailabilityService.CancellationNotice?
@@ -53,6 +56,11 @@ struct AvailabilityView: View {
                         ProgressView().tint(.brindooCoral)
                             .frame(maxWidth: .infinity)
                             .padding(.vertical, BrindooSpacing.xl)
+                    } else if loadFailed {
+                        BrindooErrorState(message: BrindooText.loadError("il calendario")) {
+                            Task { await load() }
+                        }
+                        .padding(.vertical, BrindooSpacing.lg)
                     } else {
                         MultiDatePicker("Giorni non disponibili", selection: $selected, in: Date()...)
                             .tint(Color.brindooCoral)
@@ -109,7 +117,7 @@ struct AvailabilityView: View {
                 ToolbarItem(placement: .topBarTrailing) {
                     Button("Salva") { Task { await save() } }
                         .font(BrindooFont.bodyMedium.weight(.semibold))
-                        .disabled(isSaving || isLoading)
+                        .disabled(isSaving || isLoading || loadFailed)
                 }
             }
             .task { await load() }
@@ -230,16 +238,18 @@ struct AvailabilityView: View {
     private func load() async {
         isLoading = true
         defer { isLoading = false }
+        error = nil
         do {
             notices = (try? await AvailabilityService.shared.fetchMyCancellationNotices()) ?? []
             let dates = try await AvailabilityService.shared.fetchMyUnavailableDays()
             selected = Set(dates.map { calendar.dateComponents([.year, .month, .day], from: $0) })
+            loadFailed = false
             let today = calendar.startOfDay(for: Date())
             booked = ((try? await AvailabilityService.shared.fetchMyBookedDays()) ?? [])
                 .filter { $0 >= today }
                 .sorted()
         } catch {
-            self.error = BrindooText.loadError("il calendario.")
+            loadFailed = true
             BrindooLog.error("\(error)")
         }
     }

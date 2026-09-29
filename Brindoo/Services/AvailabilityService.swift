@@ -124,22 +124,28 @@ final class AvailabilityService {
     /// Sovrascrive l'insieme dei giorni non disponibili dell'utente corrente.
     func setMyUnavailableDays(_ dates: Set<Date>) async throws {
         guard let userId = SupabaseManager.shared.currentUserID else { return }
+        let days = Set(dates.map { BrindooFormat.dayString(from: $0) })
 
-        // Cancella tutto e reinserisce (insieme piccolo: semplice e robusto).
-        try await client
+        // Prima si aggiunge, poi si toglie. Prima era "cancella tutto e
+        // reinserisci": se la seconda richiesta cadeva, il calendario restava
+        // vuoto. Così, al peggio, resta qualche giorno in più.
+        if !days.isEmpty {
+            struct Insert: Encodable { let organizer_id: UUID; let day: String }
+            try await client
+                .from("organizer_unavailable_dates")
+                .upsert(days.map { Insert(organizer_id: userId, day: $0) },
+                        onConflict: "organizer_id,day", ignoreDuplicates: true)
+                .execute()
+        }
+
+        var removal = client
             .from("organizer_unavailable_dates")
             .delete()
             .eq("organizer_id", value: userId)
-            .execute()
-
-        guard !dates.isEmpty else { return }
-
-        struct Insert: Encodable { let organizer_id: UUID; let day: String }
-        let payload = dates.map { Insert(organizer_id: userId, day: BrindooFormat.dayString(from: $0)) }
-        try await client
-            .from("organizer_unavailable_dates")
-            .insert(payload)
-            .execute()
+        if !days.isEmpty {
+            removal = removal.not("day", operator: .in, value: "(\(days.sorted().joined(separator: ",")))")
+        }
+        try await removal.execute()
     }
 
     // MARK: - Eventi saltati per account eliminati
