@@ -215,7 +215,8 @@ struct LoginView: View {
         } catch let error as BrindooAuthError {
             generalError = error.errorDescription
         } catch {
-            generalError = error.localizedDescription
+            BrindooLog.error("\(error)")
+            generalError = BrindooErrorText.message(for: error, fallback: "Qualcosa non ha funzionato. Riprova tra poco.")
         }
     }
 }
@@ -309,7 +310,8 @@ struct ForgotPasswordView: View {
         } catch let error as BrindooAuthError {
             generalError = error.errorDescription
         } catch {
-            generalError = error.localizedDescription
+            BrindooLog.error("\(error)")
+            generalError = BrindooErrorText.message(for: error, fallback: "Qualcosa non ha funzionato. Riprova tra poco.")
         }
     }
 }

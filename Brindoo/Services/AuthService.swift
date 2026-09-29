@@ -34,6 +34,12 @@ enum BrindooAuthError: LocalizedError, Equatable {
     case googleSignInFailed
     case googleSignInExpired
     case samePassword
+    /// Troppe richieste ravvicinate (limite del server).
+    case tooManyAttempts
+    /// Il server non è riuscito a spedire l'email (conferma, reset...).
+    case emailNotSent
+    /// Errore non riconosciuto: il testo tecnico resta nei log, a schermo va
+    /// una frase italiana (prima compariva l'inglese del server).
     case unknown(String)
 
     var errorDescription: String? {
@@ -70,8 +76,12 @@ enum BrindooAuthError: LocalizedError, Equatable {
             return "L'accesso ha impiegato troppo tempo ed è scaduto. Tocca di nuovo \"Continua con Google\": stavolta sarà più rapido."
         case .samePassword:
             return "La nuova password deve essere diversa da quella attuale"
-        case .unknown(let message):
-            return message
+        case .tooManyAttempts:
+            return "Troppi tentativi in poco tempo. Aspetta qualche minuto e riprova."
+        case .emailNotSent:
+            return "Non siamo riusciti a inviare l'email. Riprova più tardi o scrivici dall'assistenza."
+        case .unknown:
+            return "Qualcosa non ha funzionato. Riprova tra poco."
         }
     }
 
@@ -93,7 +103,9 @@ enum BrindooAuthError: LocalizedError, Equatable {
              (.appleSignInFailed, .appleSignInFailed),
              (.googleSignInCancelled, .googleSignInCancelled),
              (.googleSignInFailed, .googleSignInFailed),
-             (.googleSignInExpired, .googleSignInExpired):
+             (.googleSignInExpired, .googleSignInExpired),
+             (.tooManyAttempts, .tooManyAttempts),
+             (.emailNotSent, .emailNotSent):
             return true
         case (.unknown(let a), .unknown(let b)):
             return a == b
@@ -469,7 +481,7 @@ final class AuthService {
 
     // MARK: - Mapping errori
 
-    private func mapError(_ error: Error) -> BrindooAuthError {
+    func mapError(_ error: Error) -> BrindooAuthError {
         let description = error.localizedDescription.lowercased()
 
         if description.contains("invalid login credentials") ||
@@ -506,6 +518,14 @@ final class AuthService {
            description.contains("offline") ||
            description.contains("internet") {
             return .networkError
+        }
+        if description.contains("rate limit") ||
+           description.contains("rate_limit") ||
+           description.contains("for security purposes") {
+            return .tooManyAttempts
+        }
+        if description.contains("error sending") {
+            return .emailNotSent
         }
 
         return .unknown(error.localizedDescription)
