@@ -100,6 +100,7 @@ struct AreaPickerSheet: View {
                     .frame(width: 28, height: 28)
                     .background(isOn ? Color.brindooCoralFill : Color.brindooCoral.opacity(0.1))
                     .clipShape(Circle())
+                    .accessibilityHidden(true)
 
                 Text(area.name)
                     .font(BrindooFont.bodyMedium.weight(.medium))
@@ -110,6 +111,8 @@ struct AreaPickerSheet: View {
                 Image(systemName: isOn ? "checkmark.circle.fill" : "circle")
                     .font(.system(size: 18))
                     .foregroundStyle(isOn ? Color.brindooCoral : Color.brindooTextSecondary)
+                    // Lo stato lo dice il tratto "selezionato", non il nome dell'icona.
+                    .accessibilityHidden(true)
             }
             .padding(.horizontal, BrindooSpacing.sm)
             .padding(.vertical, BrindooSpacing.xs)
@@ -117,6 +120,7 @@ struct AreaPickerSheet: View {
             .clipShape(RoundedRectangle(cornerRadius: BrindooRadius.sm))
         }
         .buttonStyle(.plain)
+        .accessibilityAddTraits(isOn ? [.isSelected] : [])
     }
 }
 

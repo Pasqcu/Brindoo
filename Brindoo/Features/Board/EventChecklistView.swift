@@ -138,6 +138,7 @@ struct EventChecklistView: View {
                 Image(systemName: isDone ? "checkmark.circle.fill" : "circle")
                     .font(.system(size: 22))
                     .foregroundStyle(isDone ? Color.brindooSuccess : Color.brindooBorder)
+                    .accessibilityHidden(true)
 
                 VStack(alignment: .leading, spacing: 2) {
                     Text(task.title)
@@ -156,6 +157,8 @@ struct EventChecklistView: View {
             .brindooSurfaceBackground()
         }
         .buttonStyle(.plain)
+        // VoiceOver: voce fatta o da fare, come per le altre caselle dell'app.
+        .accessibilityAddTraits(isDone ? [.isSelected] : [])
     }
 
     // MARK: - Scadenze
