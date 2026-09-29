@@ -17,6 +17,7 @@ struct ActivityView: View {
     @State private var unreadCount: Int = 0
     @State private var recentReviews: [Review] = []
     @State private var isLoading: Bool = true
+    @State private var loadFailed: Bool = false
 
     // Novità dai preferiti (lato cliente)
     @State private var favoriteNews: [ServiceOffer] = []
@@ -50,6 +51,11 @@ struct ActivityView: View {
                     .padding(BrindooSpacing.md)
                 }
                 .disabled(true)
+            } else if loadFailed {
+                // Senza rete non è "Tutto tranquillo": si dice e si riprova.
+                BrindooErrorState(message: BrindooText.loadError("le attività")) {
+                    Task { await load() }
+                }
             } else if isEmptyState {
                 emptyView
             } else {
@@ -211,7 +217,13 @@ struct ActivityView: View {
         async let propsTask = OfferProposalService.shared.fetchMyOngoingProposals()
         async let unreadTask = ConversationService.shared.fetchUnreadCounts()
 
-        proposals = (try? await propsTask) ?? []
+        do {
+            proposals = try await propsTask
+            loadFailed = false
+        } catch {
+            BrindooLog.error("Attività: \(error)")
+            loadFailed = proposals.isEmpty
+        }
         unreadCount = ((try? await unreadTask) ?? [:]).values.reduce(0, +)
 
         // Titoli offerte coinvolte (una sola richiesta).
