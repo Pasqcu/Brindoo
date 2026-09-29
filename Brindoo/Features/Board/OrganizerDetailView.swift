@@ -49,6 +49,13 @@ struct OrganizerDetailView: View {
         session.userID == organizer.id
     }
 
+    /// La stessa scheda si apre anche sul profilo di un cliente (dalla chat
+    /// o dall'elenco chat). Lì portfolio, recensioni, zone e preferiti non
+    /// hanno senso: prima comparivano vuoti con frasi da professionista.
+    private var isClientProfile: Bool {
+        organizer.role == .client
+    }
+
     private var badges: [AchievementBadge] {
         AchievementBadge.earned(
             reviewCount: reviewSummary?.reviewCount ?? 0,
@@ -68,15 +75,19 @@ struct OrganizerDetailView: View {
                 VStack(alignment: .leading, spacing: BrindooSpacing.lg) {
                     OrganizerTitleSection(organizer: organizer)
 
-                    AchievementBadgeRow(badges: badges)
-                        .padding(.horizontal, -BrindooSpacing.md)
+                    if isClientProfile {
+                        clientAbout
+                    } else {
+                        AchievementBadgeRow(badges: badges)
+                            .padding(.horizontal, -BrindooSpacing.md)
 
-                    tabPicker
+                        tabPicker
 
-                    switch selectedTab {
-                    case .about:     aboutTab
-                    case .portfolio: portfolioTab
-                    case .reviews:   reviewsTab
+                        switch selectedTab {
+                        case .about:     aboutTab
+                        case .portfolio: portfolioTab
+                        case .reviews:   reviewsTab
+                        }
                     }
 
                     if !isViewingOwn && !isPreview {
@@ -96,7 +107,7 @@ struct OrganizerDetailView: View {
         .background(Color.brindooBackground)
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
-            if !isPreview {
+            if !isPreview && !isClientProfile {
                 ToolbarItem(placement: .topBarTrailing) {
                     Button {
                         Task { await prepareShareCard() }
@@ -114,18 +125,20 @@ struct OrganizerDetailView: View {
                 }
             }
             if !isPreview && !isViewingOwn {
-                ToolbarItem(placement: .topBarTrailing) {
-                    Button {
-                        Task { await toggleFavorite() }
-                    } label: {
-                        Image(systemName: isFavorite ? BrindooIcon.heartFilled : BrindooIcon.heart)
-                            .font(.system(size: 18, weight: .semibold))
-                            .foregroundStyle(isFavorite ? Color.brindooCoral : Color.brindooTextSecondary)
-                            .scaleEffect(isFavorite ? 1.1 : 1.0)
-                            .animation(BrindooAnimation.bouncy, value: isFavorite)
+                if !isClientProfile {
+                    ToolbarItem(placement: .topBarTrailing) {
+                        Button {
+                            Task { await toggleFavorite() }
+                        } label: {
+                            Image(systemName: isFavorite ? BrindooIcon.heartFilled : BrindooIcon.heart)
+                                .font(.system(size: 18, weight: .semibold))
+                                .foregroundStyle(isFavorite ? Color.brindooCoral : Color.brindooTextSecondary)
+                                .scaleEffect(isFavorite ? 1.1 : 1.0)
+                                .animation(BrindooAnimation.bouncy, value: isFavorite)
+                        }
+                        .disabled(isFavoriteSaving)
+                        .accessibilityLabel(isFavorite ? "Rimuovi dai preferiti" : "Aggiungi ai preferiti")
                     }
-                    .disabled(isFavoriteSaving)
-                    .accessibilityLabel(isFavorite ? "Rimuovi dai preferiti" : "Aggiungi ai preferiti")
                 }
                 ToolbarItem(placement: .topBarTrailing) {
                     Menu {
@@ -162,7 +175,7 @@ struct OrganizerDetailView: View {
             await loadData()
             isBlocked = BlockService.shared.isBlockingOrBlocked(organizer.id)
             blockedByMe = BlockService.shared.haveIBlocked(organizer.id)
-            if !isViewingOwn && !isPreview {
+            if !isViewingOwn && !isPreview && !isClientProfile {
                 await AnalyticsService.shared.trackProfileView(profileId: organizer.id)
                 isFavorite = (try? await OrganizerFavoriteService.shared.isFavorite(organizerId: organizer.id)) ?? false
             }
@@ -215,6 +228,16 @@ struct OrganizerDetailView: View {
     }
 
     /// Scheda "Presentazione": bio, servizi e zone coperte.
+    /// Profilo di un cliente: solo la presentazione, se l'ha scritta.
+    @ViewBuilder
+    private var clientAbout: some View {
+        if let bio = organizer.bio, !bio.isEmpty {
+            OrganizerBioSection(bio: bio)
+        } else {
+            OrganizerTabEmptyHint(icon: "person.text.rectangle", text: "Nessuna presentazione, per ora.")
+        }
+    }
+
     @ViewBuilder
     private var aboutTab: some View {
         if organizer.isOnVacation {
@@ -409,6 +432,8 @@ struct OrganizerDetailView: View {
     // MARK: - Actions
 
     private func loadData() async {
+        // Portfolio, recensioni e calendario esistono solo per i professionisti.
+        guard !isClientProfile else { return }
         do {
             categories = try await OrganizerCategoriesService.shared.fetchDetailed(organizerId: organizer.id)
         } catch { BrindooLog.error("\(error)") }
