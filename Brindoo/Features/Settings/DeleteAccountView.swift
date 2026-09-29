@@ -66,7 +66,7 @@ struct DeleteAccountView: View {
                     }
                     
                     deletionItem(icon: "star.fill", text: "Tutte le recensioni che hai scritto")
-                    deletionItem(icon: "envelope", text: "L'accesso a questa email")
+                    deletionItem(icon: "envelope", text: "L'accesso con questo account")
                 }
                 .padding(BrindooSpacing.md)
                 .frame(maxWidth: .infinity, alignment: .leading)
@@ -153,13 +153,13 @@ struct DeleteAccountView: View {
             subscriptionWillRenew = await PurchaseService.shared.proSubscriptionState()?.willAutoRenew ?? false
         }
         .manageSubscriptionsSheet(isPresented: $showManageSubscriptions)
-        .alert("Sei davvero sicuro?", isPresented: $showFinalConfirm) {
+        .alert("Vuoi davvero eliminare l'account?", isPresented: $showFinalConfirm) {
             Button("Annulla", role: .cancel) {}
             Button("Sì, elimina tutto", role: .destructive) {
                 Task { await performDeletion() }
             }
         } message: {
-            Text("Quest'azione non può essere annullata. Una volta eliminato l'account dovrai registrarti di nuovo per usare Brindoo.")
+            Text("Questa azione non può essere annullata. Una volta eliminato l'account dovrai registrarti di nuovo per usare Brindoo.")
         }
     }
     

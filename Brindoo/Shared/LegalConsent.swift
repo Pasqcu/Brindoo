@@ -93,7 +93,7 @@ struct LegalConsentGate: View {
                     .tint(Color.brindooCoral)
 
                     Toggle(isOn: $accepted) {
-                        Text("Ho letto e accetto i Termini di servizio e la Privacy Policy.")
+                        Text("Ho letto e accetto i Termini di Servizio e la Privacy Policy.")
                             .font(BrindooFont.bodySmall)
                     }
                     .tint(Color.brindooCoral)

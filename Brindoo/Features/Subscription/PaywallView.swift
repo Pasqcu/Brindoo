@@ -408,7 +408,7 @@ struct PaywallView: View {
             break
 
         case .pending:
-            errorMessage = "Acquisto in attesa di approvazione (es. parental controls)"
+            errorMessage = "Acquisto in attesa di approvazione (es. «Chiedi di acquistare» in Famiglia)"
             
         case .failed(let error):
             errorMessage = "Acquisto fallito: \(error.localizedDescription)"

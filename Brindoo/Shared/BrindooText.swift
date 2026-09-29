@@ -37,7 +37,7 @@ nonisolated enum BrindooText {
     static let retryHint = "Controlla la connessione e riprova."
 
     /// Errore quando manca la sessione (non dovrebbe capitare a schermo).
-    static let loginRequired = "Devi essere loggato"
+    static let loginRequired = "Accedi al tuo account per continuare"
 
     /// BrindooText.loadError("le offerte"), "…le recensioni", …
     static func loadError(_ what: String) -> String {

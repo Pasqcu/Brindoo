@@ -141,7 +141,7 @@ final class ReviewService {
         }
 
         guard userId != organizerId else {
-            throw BrindooServiceError.invalidInput("Non puoi recensire te stesso")
+            throw BrindooServiceError.invalidInput("Non puoi recensire il tuo profilo")
         }
 
         guard (1...5).contains(rating) else {

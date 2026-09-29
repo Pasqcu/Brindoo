@@ -132,7 +132,7 @@ struct OrganizerStatsView: View {
         if minutes < 60 { return "Risposta veloce, ottimo!" }
         if minutes < 60 * 6 { return "Risposta in poche ore" }
         if minutes < 60 * 24 { return "Risposta entro 24h" }
-        return "Risposta lenta: prova a essere più reattivo"
+        return "Risposta lenta: prova a rispondere prima"
     }
 
     private func load() async {

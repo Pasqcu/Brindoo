@@ -357,7 +357,7 @@ struct SettingsView: View {
                             NavigationLink {
                                 TermsOfServiceView()
                             } label: {
-                                SettingsRow(icon: "doc.text", iconColor: .brindooTextSecondary, title: "Termini di servizio")
+                                SettingsRow(icon: "doc.text", iconColor: .brindooTextSecondary, title: "Termini di Servizio")
                             }
                             .buttonStyle(.plain)
 

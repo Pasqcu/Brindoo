@@ -40,7 +40,7 @@ struct CompleteProfileHint: View {
                     Text("Completa il tuo profilo Professionista")
                         .font(BrindooFont.bodyMedium.weight(.semibold))
                         .foregroundStyle(Color.brindooTextPrimary)
-                    Text("Aggiungi le categorie di servizio per essere trovato dai clienti.")
+                    Text("Aggiungi le categorie di servizio per farti trovare dai clienti.")
                         .font(BrindooFont.caption)
                         .foregroundStyle(Color.brindooTextSecondary)
                         .lineLimit(2)

@@ -40,7 +40,7 @@ enum ReportReason: String, Codable, CaseIterable, Identifiable {
         case .inappropriate:  return "Contenuto inappropriato o offensivo"
         case .harassment:     return "Molestie o minacce"
         case .fake:           return "Informazioni false o ingannevoli"
-        case .impersonation:  return "Impersonificazione di altri"
+        case .impersonation:  return "Si spaccia per qualcun altro"
         case .illegal:        return "Attività illegale"
         case .other:          return "Altro"
         }
@@ -83,7 +83,7 @@ final class ReportService {
             throw NSError(
                 domain: "ReportService",
                 code: 401,
-                userInfo: [NSLocalizedDescriptionKey: "Devi essere loggato per segnalare"]
+                userInfo: [NSLocalizedDescriptionKey: "Accedi al tuo account per segnalare"]
             )
         }
 
@@ -92,7 +92,7 @@ final class ReportService {
             throw NSError(
                 domain: "ReportService",
                 code: 400,
-                userInfo: [NSLocalizedDescriptionKey: "Non puoi segnalare te stesso"]
+                userInfo: [NSLocalizedDescriptionKey: "Non puoi segnalare il tuo profilo"]
             )
         }
 

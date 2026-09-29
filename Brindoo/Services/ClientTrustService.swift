@@ -26,7 +26,7 @@ enum ClientOutcome: String, Codable, CaseIterable, Identifiable {
         switch self {
         case .honored:       return "Tutto regolare"
         case .cancelledLate: return "Ha annullato all'ultimo"
-        case .noShow:        return "Non si è presentato"
+        case .noShow:        return "Assente all'evento"
         }
     }
 

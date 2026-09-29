@@ -516,7 +516,7 @@ struct EditProfileView: View {
             let reverted = try await ProfileService.shared.setRole(.client)
             session.updateLocalProfile(reverted)
             ProfessionalOnboardingHint.clear()
-            toasts.show(BrindooToast("Sei tornato cliente", style: .info))
+            toasts.show(BrindooToast("Ora sei di nuovo cliente", style: .info))
             onPostUpgradeExit?(true)
         } catch {
             generalError = "Impossibile annullare l'operazione. Riprova."

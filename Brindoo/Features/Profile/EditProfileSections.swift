@@ -224,7 +224,7 @@ struct PostUpgradeBanner: View {
             VStack(alignment: .leading, spacing: 2) {
                 Text("Benvenuto tra i Professionisti!")
                     .font(BrindooFont.bodyMedium.weight(.semibold))
-                Text("Completa categorie, descrizione e aree di copertura per essere trovato dai clienti. Se cambi idea, tocca \"Annulla operazione\" in alto.")
+                Text("Completa categorie, descrizione e aree di copertura per farti trovare dai clienti. Se cambi idea, tocca \"Annulla operazione\" in alto.")
                     .font(BrindooFont.caption)
                     .foregroundStyle(Color.brindooTextSecondary)
                     .fixedSize(horizontal: false, vertical: true)

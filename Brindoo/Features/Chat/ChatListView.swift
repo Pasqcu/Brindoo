@@ -75,7 +75,7 @@ struct ChatListView: View {
                 } message: {
                     Text("La conversazione verrà rimossa solo per te. L'altro utente continuerà a vederla.")
                 }
-                .alert("Bloccare il profilo?", isPresented: Binding(
+                .alert("Bloccare l'utente?", isPresented: Binding(
                     get: { conversationToBlock != nil },
                     set: { if !$0 { conversationToBlock = nil } }
                 )) {
@@ -241,7 +241,7 @@ struct ChatListView: View {
             Button(role: .destructive) {
                 conversationToBlock = (conv, otherProfile.id)
             } label: {
-                Label("Blocca profilo", systemImage: "hand.raised.slash")
+                Label("Blocca utente", systemImage: "hand.raised.slash")
             }
         }
     }
