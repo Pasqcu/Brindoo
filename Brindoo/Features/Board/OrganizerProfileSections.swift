@@ -50,12 +50,14 @@ struct OrganizerTitleSection: View {
                 .padding(.top, 2)
             }
 
+            // Dato di anzianità, non una verifica: niente scudo verde, che
+            // accanto a "Identità verificata" si leggeva come un controllo.
             HStack(spacing: 4) {
-                Image(systemName: "checkmark.shield.fill").font(.system(size: 11))
+                Image(systemName: BrindooIcon.calendar).font(.system(size: 11))
                 Text("Su Brindoo dal \(memberSinceYear)")
                     .font(BrindooFont.caption)
             }
-            .foregroundStyle(Color.brindooSuccess)
+            .foregroundStyle(Color.brindooTextSecondary)
             .padding(.top, 2)
 
             if let speed = organizer.responseSpeed {
@@ -290,11 +292,11 @@ struct OrganizerPreviewBanner: View {
 
             HStack(spacing: 3) {
                 Image(systemName: "chevron.down")
-                    .font(.system(size: 8, weight: .semibold))
+                    .font(.system(size: 10, weight: .semibold))
                 Text("Scorri giù per chiudere")
-                    .font(BrindooFont.scaled(9, weight: .medium, relativeTo: .caption2))
+                    .font(BrindooFont.caption)
             }
-            .foregroundStyle(Color.brindooTextSecondary.opacity(0.7))
+            .foregroundStyle(Color.brindooTextSecondary)
         }
         .frame(maxWidth: .infinity)
         .padding(BrindooSpacing.md)

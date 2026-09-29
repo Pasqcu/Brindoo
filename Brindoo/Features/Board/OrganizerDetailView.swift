@@ -28,6 +28,8 @@ struct OrganizerDetailView: View {
     @State private var showReport: Bool = false
     @State private var isFavorite: Bool = false
     @State private var isFavoriteSaving: Bool = false
+    /// Errore di un'azione (chat, blocco): prima il tocco non diceva nulla.
+    @State private var actionError: String?
 
     // Profilo a schede
     private enum ProfileTab: String, CaseIterable, Identifiable {
@@ -183,12 +185,20 @@ struct OrganizerDetailView: View {
             ReportSheet(
                 targetType: .user,
                 targetId: organizer.id,
-                targetLabel: organizer.fullName ?? "questo profilo"
+                targetLabel: organizer.displayName
             )
         }
         .sheet(item: $shareItems) { payload in
             ActivityShareSheet(items: payload.items)
                 .presentationDetents([.medium, .large])
+        }
+        .alert(
+            "Non riuscito",
+            isPresented: Binding(get: { actionError != nil }, set: { if !$0 { actionError = nil } })
+        ) {
+            Button("OK", role: .cancel) { actionError = nil }
+        } message: {
+            Text(actionError ?? "")
         }
     }
 
@@ -434,7 +444,10 @@ struct OrganizerDetailView: View {
                 conv = try await ConversationService.shared.findOrCreateConversationAsOrganizer(clientId: organizer.id)
             }
             navigateToChat = conv
-        } catch { BrindooLog.error("\(error)") }
+        } catch {
+            BrindooLog.error("\(error)")
+            actionError = BrindooErrorText.message(for: error, fallback: "Impossibile aprire la chat. \(BrindooText.retryHint)")
+        }
     }
 
     private func block() async {
@@ -443,7 +456,10 @@ struct OrganizerDetailView: View {
             isBlocked = true
             blockedByMe = true
             dismiss()
-        } catch { BrindooLog.error("\(error)") }
+        } catch {
+            BrindooLog.error("\(error)")
+            actionError = BrindooErrorText.message(for: error, fallback: "Blocco non riuscito. \(BrindooText.retryHint)")
+        }
     }
 
     private func unblock() async {
@@ -451,7 +467,10 @@ struct OrganizerDetailView: View {
             try await BlockService.shared.unblock(userId: organizer.id)
             blockedByMe = false
             isBlocked = BlockService.shared.isBlockingOrBlocked(organizer.id)
-        } catch { BrindooLog.error("\(error)") }
+        } catch {
+            BrindooLog.error("\(error)")
+            actionError = BrindooErrorText.message(for: error, fallback: "Sblocco non riuscito. \(BrindooText.retryHint)")
+        }
     }
 
     private func toggleFavorite() async {
@@ -469,6 +488,7 @@ struct OrganizerDetailView: View {
             BrindooHaptics.impact(willBeFavorite ? .medium : .light)
         } catch {
             BrindooLog.error("toggleFavorite: \(error)")
+            actionError = BrindooErrorText.message(for: error, fallback: "Preferiti non aggiornati. \(BrindooText.retryHint)")
         }
     }
 }
