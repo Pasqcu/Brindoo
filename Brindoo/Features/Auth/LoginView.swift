@@ -19,6 +19,14 @@ struct LoginView: View {
     @State private var navigateToSignUp: Bool = false
 
     @State private var legalDocument: LegalDocument?
+
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+
+    private var signUpRowLayout: AnyLayout {
+        dynamicTypeSize.isAccessibilitySize
+            ? AnyLayout(VStackLayout(spacing: BrindooSpacing.xxs))
+            : AnyLayout(HStackLayout(spacing: BrindooSpacing.xxs))
+    }
     
     var body: some View {
         ScrollView {
@@ -102,7 +110,9 @@ struct LoginView: View {
                     .padding(.top, BrindooSpacing.xxs)
                 }
 
-                HStack(spacing: BrindooSpacing.xxs) {
+                // Col testo grande (Accessibilità) la riga va a capo invece
+                // di troncare la domanda.
+                signUpRowLayout {
                     Text("Non hai un account?")
                         .font(BrindooFont.bodyMedium)
                         .foregroundStyle(Color.brindooTextSecondary)

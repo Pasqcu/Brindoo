@@ -23,6 +23,22 @@ struct OnboardingView: View {
     @State private var acceptedTermsAndAge: Bool = false
     @State private var legalDocument: LegalDocument?
 
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+
+    /// Spazio tenuto per spunta e "Accedi" anche sulle prime slide, così il
+    /// layout non salta. Con il testo grande (Accessibilità) quello spazio
+    /// vuoto schiacciava la slide fino a nasconderne la descrizione: lì si
+    /// accetta il salto e le due righe compaiono solo all'ultima slide.
+    private var reservesLastSlideRows: Bool {
+        !dynamicTypeSize.isAccessibilitySize
+    }
+
+    private var accountRowLayout: AnyLayout {
+        dynamicTypeSize.isAccessibilitySize
+            ? AnyLayout(VStackLayout(spacing: BrindooSpacing.xxs))
+            : AnyLayout(HStackLayout(spacing: BrindooSpacing.xxs))
+    }
+
     private var isLastSlide: Bool {
         currentSlide >= slides.count - 1
     }
@@ -108,10 +124,12 @@ struct OnboardingView: View {
                     VStack(spacing: BrindooSpacing.sm) {
                         // Checkbox di accettazione visibile solo nell'ultima slide.
                         // Mantiene comunque spazio per non far saltare il layout.
-                        consentCheckbox
-                            .opacity(isLastSlide ? 1 : 0)
-                            .allowsHitTesting(isLastSlide)
-                            .animation(BrindooAnimation.standardEase, value: isLastSlide)
+                        if isLastSlide || reservesLastSlideRows {
+                            consentCheckbox
+                                .opacity(isLastSlide ? 1 : 0)
+                                .allowsHitTesting(isLastSlide)
+                                .animation(BrindooAnimation.standardEase, value: isLastSlide)
+                        }
 
                         BrindooButton(
                             isLastSlide ? "Inizia ora" : "Continua",
@@ -130,30 +148,33 @@ struct OnboardingView: View {
 
                         // "Hai già un account?" sempre presente per mantenere altezza
                         // costante; visibile solo nell'ultima slide.
-                        HStack(spacing: BrindooSpacing.xxs) {
-                            Text("Hai già un account?")
-                                .font(BrindooFont.bodyMedium)
-                                .foregroundStyle(Color.brindooTextSecondary)
+                        if isLastSlide || reservesLastSlideRows {
+                            // Col testo grande la riga non ci sta: va a capo.
+                            accountRowLayout {
+                                Text("Hai già un account?")
+                                    .font(BrindooFont.bodyMedium)
+                                    .foregroundStyle(Color.brindooTextSecondary)
 
-                            Button {
-                                navigateToLogin = true
-                            } label: {
-                                Text("Accedi")
-                                    .font(BrindooFont.bodyMedium.weight(.semibold))
-                                    .foregroundStyle(Color.brindooCoral)
+                                Button {
+                                    navigateToLogin = true
+                                } label: {
+                                    Text("Accedi")
+                                        .font(BrindooFont.bodyMedium.weight(.semibold))
+                                        .foregroundStyle(Color.brindooCoral)
+                                }
+                                // Chi ha già un account i Termini li ha già
+                                // accettati: tenerlo fuori finché non rispunta la
+                                // casella è solo un ostacolo, per giunta sulla
+                                // strada di chi vuole rientrare. La spunta resta
+                                // obbligatoria per creare l'account, e se i
+                                // Termini cambiano ci pensa LegalConsentGate a
+                                // farli rifirmare dentro l'app.
+                                .disabled(!isLastSlide)
                             }
-                            // Chi ha già un account i Termini li ha già
-                            // accettati: tenerlo fuori finché non rispunta la
-                            // casella è solo un ostacolo, per giunta sulla
-                            // strada di chi vuole rientrare. La spunta resta
-                            // obbligatoria per creare l'account, e se i
-                            // Termini cambiano ci pensa LegalConsentGate a
-                            // farli rifirmare dentro l'app.
-                            .disabled(!isLastSlide)
+                            .opacity(isLastSlide ? 1 : 0)
+                            .allowsHitTesting(isLastSlide)
+                            .animation(BrindooAnimation.standardEase, value: isLastSlide)
                         }
-                        .opacity(isLastSlide ? 1 : 0)
-                        .allowsHitTesting(isLastSlide)
-                        .animation(BrindooAnimation.standardEase, value: isLastSlide)
                     }
                     .padding(.horizontal, BrindooSpacing.lg)
                     .padding(.bottom, BrindooSpacing.xl)
