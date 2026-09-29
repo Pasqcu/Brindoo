@@ -57,7 +57,7 @@ enum BrindooAuthError: LocalizedError, Equatable {
         case .networkError:
             return "Connessione assente. Controlla la rete e riprova."
         case .emailNotConfirmed:
-            return "Conferma prima la tua email cliccando sul link che ti abbiamo inviato"
+            return "Conferma prima la tua email aprendo il link che ti abbiamo inviato"
         case .appleSignInCancelled:
             return "Accesso con Apple annullato"
         case .appleSignInFailed:

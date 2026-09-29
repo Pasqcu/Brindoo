@@ -277,7 +277,7 @@ struct SignUpView: View {
             Text("Controlla la tua email")
                 .font(BrindooFont.titleLarge)
             
-            Text("Ti abbiamo inviato un link di conferma a:\n\(email)\n\nClicca sul link per attivare il tuo account.")
+            Text("Ti abbiamo inviato un link di conferma a:\n\(email)\n\nApri il link per attivare il tuo account.")
                 .font(BrindooFont.bodyLarge)
                 .foregroundStyle(Color.brindooTextSecondary)
                 .multilineTextAlignment(.center)

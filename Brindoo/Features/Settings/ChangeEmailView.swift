@@ -79,7 +79,7 @@ struct ChangeEmailView: View {
             HStack(alignment: .top, spacing: BrindooSpacing.xs) {
                 Image(systemName: "info.circle")
                     .foregroundStyle(Color.brindooCoral)
-                Text("Ti invieremo un link di conferma al nuovo indirizzo. Il cambio sarà effettivo solo dopo aver cliccato sul link.")
+                Text("Ti invieremo un link di conferma al nuovo indirizzo. Il cambio vale solo dopo che avrai aperto il link.")
                     .font(BrindooFont.caption)
                     .foregroundStyle(Color.brindooTextSecondary)
             }
@@ -109,7 +109,7 @@ struct ChangeEmailView: View {
             }
             Button("Annulla", role: .cancel) {}
         } message: {
-            Text("Riceverai un'email a \(newEmail.trimmingCharacters(in: .whitespaces).lowercased()). Il cambio sarà effettivo solo dopo aver cliccato sul link.")
+            Text("Riceverai un'email a \(newEmail.trimmingCharacters(in: .whitespaces).lowercased()). Il cambio vale solo dopo che avrai aperto il link.")
         }
     }
 
@@ -129,7 +129,7 @@ struct ChangeEmailView: View {
             Text("Controlla la tua email")
                 .font(BrindooFont.titleLarge)
 
-            Text("Ti abbiamo inviato un link di conferma a:\n\(newEmail)\n\nClicca sul link per attivare il cambio.")
+            Text("Ti abbiamo inviato un link di conferma a:\n\(newEmail.trimmingCharacters(in: .whitespaces).lowercased())\n\nApri il link per attivare il cambio.")
                 .font(BrindooFont.bodyLarge)
                 .foregroundStyle(Color.brindooTextSecondary)
                 .multilineTextAlignment(.center)
