@@ -34,7 +34,7 @@ enum UserRole: String, Codable, CaseIterable, Identifiable {
     var description: String {
         switch self {
         case .client:
-            return "Sfoglia i professionisti, confronta le offerte e contatta quello giusto in pochi tap."
+            return "Sfoglia i professionisti, confronta le offerte e contatta quello giusto in pochi tocchi."
         case .organizer:
             return "Pubblica i tuoi servizi in bacheca e fatti scegliere dai clienti."
         }

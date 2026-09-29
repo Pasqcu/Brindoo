@@ -50,7 +50,7 @@ enum ProBenefits {
         ProBenefit(
             icon: "infinity",
             title: "Offerte illimitate",
-            description: "Pubblica tutti i pacchetti che vuoi (free: max 1)"
+            description: "Pubblica tutte le offerte che vuoi (piano gratuito: 1)"
         ),
         ProBenefit(
             icon: "star.bubble.fill",
@@ -75,7 +75,7 @@ enum ProBenefits {
         ProBenefit(
             icon: "photo.on.rectangle.angled",
             title: "Portfolio fino a 50 foto",
-            description: "Free: 5 foto. Pro: 50 foto."
+            description: "Piano gratuito: 5 foto. Pro: 50."
         ),
         ProBenefit(
             icon: "app.gift",
@@ -90,7 +90,7 @@ enum ProBenefits {
         ProBenefit(
             icon: "infinity",
             title: "Richieste illimitate",
-            description: "Tieni aperte tutte le richieste che vuoi (free: max \(ClientRequestService.maxOpenRequestsFree))"
+            description: "Tieni aperte tutte le richieste che vuoi (piano gratuito: \(ClientRequestService.maxOpenRequestsFree))"
         ),
         ProBenefit(
             icon: "star.bubble.fill",

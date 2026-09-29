@@ -54,7 +54,7 @@ enum ReferralError: LocalizedError {
     var errorDescription: String? {
         switch self {
         case .invalidCode: return "Codice non valido."
-        case .alreadyRedeemed: return "Hai già usato un codice referral."
+        case .alreadyRedeemed: return "Hai già usato un codice invito."
         case .selfReferral: return "Non puoi usare il tuo stesso codice."
         case .notFound: return "Codice non trovato."
         case .tooLate: return "Il codice invito si usa entro 30 giorni dall'iscrizione."
