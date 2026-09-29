@@ -239,6 +239,10 @@ final class ChatViewModel {
             await data.clearDraft(conversation.id)
         } catch {
             BrindooLog.error("chat edit: \(error)")
+            sendErrorMessage = BrindooErrorText.message(
+                for: error,
+                fallback: "Modifica non salvata. \(BrindooText.retryHint)"
+            )
         }
     }
 
@@ -303,6 +307,10 @@ final class ChatViewModel {
             try await data.deleteMessage(message.id)
         } catch {
             BrindooLog.error("chat deleteMessage: \(error)")
+            sendErrorMessage = BrindooErrorText.message(
+                for: error,
+                fallback: "Messaggio non eliminato. \(BrindooText.retryHint)"
+            )
         }
     }
 
@@ -313,22 +321,36 @@ final class ChatViewModel {
             return true
         } catch {
             BrindooLog.error("chat deleteConversation: \(error)")
+            sendErrorMessage = BrindooErrorText.message(
+                for: error,
+                fallback: "Conversazione non eliminata. \(BrindooText.retryHint)"
+            )
             return false
         }
     }
 
     /// True se il blocco è andato a buon fine (la vista può chiudersi).
+    /// Conta il blocco: se poi la conversazione non sparisce dall'elenco,
+    /// l'utente resta comunque bloccato e lo schermo non deve dire il contrario.
     func blockUser() async -> Bool {
         do {
             try await data.block(otherUser.id)
-            try await data.softDeleteConversation(conversation)
-            isBlocked = true
-            blockedByMe = true
-            return true
         } catch {
             BrindooLog.error("chat blockUser: \(error)")
+            sendErrorMessage = BrindooErrorText.message(
+                for: error,
+                fallback: "Blocco non riuscito. \(BrindooText.retryHint)"
+            )
             return false
         }
+        isBlocked = true
+        blockedByMe = true
+        do {
+            try await data.softDeleteConversation(conversation)
+        } catch {
+            BrindooLog.error("chat blockUser, conversazione non nascosta: \(error)")
+        }
+        return true
     }
 
     func unblock() async {
@@ -337,6 +359,10 @@ final class ChatViewModel {
             checkBlocked()
         } catch {
             BrindooLog.error("chat unblock: \(error)")
+            sendErrorMessage = BrindooErrorText.message(
+                for: error,
+                fallback: "Sblocco non riuscito. \(BrindooText.retryHint)"
+            )
         }
     }
 

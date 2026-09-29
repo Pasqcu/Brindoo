@@ -55,7 +55,7 @@ struct ChatReplyBanner: View {
                 Text("Rispondi a \(replyToName)")
                     .font(BrindooFont.caption.weight(.semibold))
                     .foregroundStyle(Color.brindooCoral)
-                Text(message.messageType == .image ? "📷 Foto" : message.content)
+                Text(message.previewText)
                     .font(BrindooFont.caption)
                     .foregroundStyle(Color.brindooTextSecondary)
                     .lineLimit(1)

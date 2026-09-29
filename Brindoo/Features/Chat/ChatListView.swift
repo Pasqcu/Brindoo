@@ -11,6 +11,7 @@ import SwiftUI
 struct ChatListView: View {
 
     @Environment(SessionStore.self) private var session
+    @EnvironmentObject private var toastCenter: BrindooToastCenter
 
     @State private var state: LoadState<[Conversation]> = .loading
     @State private var otherProfiles: [UUID: Profile] = [:]
@@ -46,7 +47,10 @@ struct ChatListView: View {
                 .navigationDestination(item: $navigateToProfile) { profile in
                     OrganizerDetailView(organizer: profile)
                 }
-                .alert("Eliminare la conversazione?", isPresented: .constant(conversationToDelete != nil)) {
+                .alert("Eliminare la conversazione?", isPresented: Binding(
+                    get: { conversationToDelete != nil },
+                    set: { if !$0 { conversationToDelete = nil } }
+                )) {
                     Button("Annulla", role: .cancel) { conversationToDelete = nil }
                     Button("Elimina", role: .destructive) {
                         if let conv = conversationToDelete {
@@ -57,7 +61,10 @@ struct ChatListView: View {
                 } message: {
                     Text("La conversazione verrà rimossa solo per te. L'altro utente continuerà a vederla.")
                 }
-                .alert("Bloccare il profilo?", isPresented: .constant(conversationToBlock != nil)) {
+                .alert("Bloccare il profilo?", isPresented: Binding(
+                    get: { conversationToBlock != nil },
+                    set: { if !$0 { conversationToBlock = nil } }
+                )) {
                     Button("Annulla", role: .cancel) { conversationToBlock = nil }
                     Button("Blocca", role: .destructive) {
                         if let item = conversationToBlock {
@@ -136,7 +143,7 @@ struct ChatListView: View {
                             } label: {
                                 let pinned = currentUserId.map { conv.isPinned(by: $0) } ?? false
                                 Label(
-                                    pinned ? "Sblocca" : "Fissa",
+                                    pinned ? "Non fissare" : "Fissa",
                                     systemImage: pinned ? "pin.slash.fill" : "pin.fill"
                                 )
                             }
@@ -196,7 +203,7 @@ struct ChatListView: View {
                 Task { await togglePin(conv) }
             } label: {
                 Label(
-                    pinned ? "Sblocca dall'alto" : "Fissa in alto",
+                    pinned ? "Non fissare in alto" : "Fissa in alto",
                     systemImage: pinned ? "pin.slash" : "pin"
                 )
             }
@@ -268,18 +275,27 @@ struct ChatListView: View {
             conversations.removeAll { $0.id == conversation.id }
         } catch {
             BrindooLog.error("\(error)")
+            toastCenter.show(BrindooToast(BrindooText.deleteError("la conversazione"), message: BrindooText.retryHint, style: .error))
         }
     }
 
     private func blockUser(_ userId: UUID) async {
         do {
             try await BlockService.shared.block(userId: userId)
-            if let conv = conversations.first(where: { $0.clientId == userId || $0.organizerId == userId }) {
-                try await ConversationService.shared.softDelete(conversation: conv)
-                conversations.removeAll { $0.id == conv.id }
-            }
         } catch {
             BrindooLog.error("\(error)")
+            toastCenter.show(BrindooToast("Blocco non riuscito", message: BrindooText.retryHint, style: .error))
+            return
+        }
+        // Bloccato: la conversazione sparisce dall'elenco anche se il server
+        // non riesce a nasconderla (riapparirebbe, ma il blocco resta).
+        if let conv = conversations.first(where: { $0.clientId == userId || $0.organizerId == userId }) {
+            conversations.removeAll { $0.id == conv.id }
+            do {
+                try await ConversationService.shared.softDelete(conversation: conv)
+            } catch {
+                BrindooLog.error("Conversazione del bloccato non nascosta: \(error)")
+            }
         }
     }
 

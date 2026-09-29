@@ -164,7 +164,7 @@ struct MessageBubble: View {
                 Text("Risposta")
                     .font(BrindooFont.scaled(11, weight: .semibold, relativeTo: .caption1))
                     .foregroundStyle(isOwn ? .white.opacity(0.9) : Color.brindooCoral)
-                Text(quotePreview(replied))
+                Text(replied.previewText)
                     .font(BrindooFont.scaled(12, relativeTo: .caption1))
                     .foregroundStyle(isOwn ? .white.opacity(0.85) : Color.brindooTextSecondary)
                     .lineLimit(1)
@@ -175,15 +175,6 @@ struct MessageBubble: View {
         .padding(.vertical, 6)
         .background(isOwn ? Color.white.opacity(0.15) : Color.brindooBackground)
         .clipShape(RoundedRectangle(cornerRadius: 8))
-    }
-    
-    private func quotePreview(_ replied: Message) -> String {
-        if replied.isDeleted { return "Messaggio eliminato" }
-        switch replied.messageType {
-        case .image: return VoiceMessage.isVoiceURL(replied.imageUrl) ? "🎤 Vocale" : "📷 Foto"
-        case .bombImage: return "💣 Foto bomba"
-        default: return replied.content
-        }
     }
     
     // MARK: - Image content
@@ -263,5 +254,21 @@ struct MessageBubble: View {
         }
         .disabled(alreadyViewed || isOwn)
         .buttonStyle(.plain)
+    }
+}
+
+// MARK: - Anteprima di una riga
+
+extension Message {
+    /// Il messaggio in una riga, per la citazione nella bolla e per la
+    /// striscia "Rispondi a": un vocale non è una foto, anche se viaggia
+    /// con lo stesso tipo.
+    var previewText: String {
+        if isDeleted { return "Messaggio eliminato" }
+        switch messageType {
+        case .image: return VoiceMessage.isVoiceURL(imageUrl) ? "🎤 Vocale" : "📷 Foto"
+        case .bombImage: return "💣 Foto bomba"
+        default: return content
+        }
     }
 }

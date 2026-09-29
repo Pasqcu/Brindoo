@@ -165,7 +165,7 @@ struct ChatView: View {
                 }
             )
         }
-        .alert("Errore invio foto", isPresented: Binding(
+        .alert("Non riuscito", isPresented: Binding(
             get: { vm.sendErrorMessage != nil },
             set: { if !$0 { vm.sendErrorMessage = nil } }
         )) {
@@ -196,7 +196,10 @@ struct ChatView: View {
         } message: {
             Text("Solo per te. L'altro utente continuerà a vederla.")
         }
-        .alert("Eliminare il messaggio?", isPresented: .constant(messageToDelete != nil)) {
+        .alert("Eliminare il messaggio?", isPresented: Binding(
+            get: { messageToDelete != nil },
+            set: { if !$0 { messageToDelete = nil } }
+        )) {
             Button("Annulla", role: .cancel) { messageToDelete = nil }
             Button("Elimina", role: .destructive) {
                 if let msg = messageToDelete {
@@ -212,7 +215,7 @@ struct ChatView: View {
             ReportSheet(
                 targetType: .user,
                 targetId: otherUser.id,
-                targetLabel: otherUser.fullName ?? "questo utente"
+                targetLabel: otherUser.displayName
             )
         }
         .sheet(item: $messageToReport) { message in

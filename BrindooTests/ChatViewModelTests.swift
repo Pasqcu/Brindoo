@@ -306,6 +306,18 @@ final class ChatViewModelTests: XCTestCase {
         XCTAssertFalse(chiudi)
         XCTAssertFalse(vm.isBlocked)
         XCTAssertEqual(spia.conversazioniEliminate, 0)
+        XCTAssertNotNil(vm.sendErrorMessage, "chi tocca Blocca deve sapere che non è andata")
+    }
+
+    func test_bloccoRiuscito_maConversazioneNonNascosta_restaBloccato() async throws {
+        let spia = Spia()
+        let vm = try modello(spia: spia, eliminazioneFallisce: true)
+
+        let chiudi = await vm.blockUser()
+
+        XCTAssertTrue(chiudi, "il blocco c'è: la schermata può chiudersi")
+        XCTAssertTrue(vm.isBlocked)
+        XCTAssertEqual(spia.bloccati, [organizerId])
     }
 
     func test_eliminazioneFallita_nonChiudeLaSchermata() async throws {
@@ -315,6 +327,7 @@ final class ChatViewModelTests: XCTestCase {
         let chiudi = await vm.deleteConversation()
 
         XCTAssertFalse(chiudi)
+        XCTAssertNotNil(vm.sendErrorMessage)
     }
 
     // MARK: - Bozza e risposte rapide
