@@ -24,6 +24,12 @@ nonisolated extension Color {
     // impossibile usare un colore dentro una closure Sendable, cioe' in
     // mezzo alle etichette di PhotosPicker. Il valore resta quello degli
     // Asset: cambia solo chi lo dichiara.
+    //
+    // Contrasto: in modalità chiara corallo, verde, rosso e giallo sono
+    // scuri quanto basta per restare leggibili come testo (almeno 4,5:1,
+    // WCAG AA) sia sul bianco sia sulle card grigie, e per reggere una
+    // scritta bianca sopra. I toni più accesi di prima (#D85A30 e simili)
+    // scendevano fino a 1,9:1: il giallo "in attesa" quasi spariva.
 
     /// Corallo del marchio.
     static let brindooCoral = Color("BrindooCoral", bundle: .main)
@@ -59,14 +65,14 @@ nonisolated extension Color {
     static let brindooSuccess = Color(UIColor { trait in
         trait.userInterfaceStyle == .dark
             ? UIColor(red: 0.30, green: 0.80, blue: 0.55, alpha: 1)
-            : UIColor(red: 0.20, green: 0.70, blue: 0.45, alpha: 1)
+            : UIColor(red: 0.14, green: 0.49, blue: 0.32, alpha: 1)
     })
 
     /// Rosso errore (rifiuto, cancellazione). Più luminoso in modalità scura.
     static let brindooError = Color(UIColor { trait in
         trait.userInterfaceStyle == .dark
             ? UIColor(red: 1.00, green: 0.45, blue: 0.45, alpha: 1)
-            : UIColor(red: 0.90, green: 0.30, blue: 0.30, alpha: 1)
+            : UIColor(red: 0.85, green: 0.12, blue: 0.12, alpha: 1)
     })
 
     /// Oro/arancio del piano Pro (corona e accenti premium).
@@ -78,29 +84,42 @@ nonisolated extension Color {
     static let brindooProGoldDeep = Color(red: 0.93, green: 0.50, blue: 0.20)
 
     /// Testo/icona su fondo oro chiaro (contrasto sufficiente sul badge Pro).
-    static let brindooProGoldInk = Color(red: 0.78, green: 0.45, blue: 0.10)
+    static let brindooProGoldInk = Color(red: 0.64, green: 0.37, blue: 0.08)
 
     /// Giallo warning (in attesa, pending). Più luminoso in modalità scura.
     static let brindooWarning = Color(UIColor { trait in
         trait.userInterfaceStyle == .dark
             ? UIColor(red: 1.00, green: 0.78, blue: 0.35, alpha: 1)
-            : UIColor(red: 0.95, green: 0.70, blue: 0.20, alpha: 1)
+            : UIColor(red: 0.58, green: 0.40, blue: 0.04, alpha: 1)
     })
 
     /// Colore distintivo per una categoria di servizio (in base allo slug).
     /// Aiuta a orientare l'occhio nella bacheca senza appiattire tutto sul corallo.
+    /// In modalità chiara il tono è scurito per restare leggibile come testo
+    /// (etichette e pillole): i colori pieni di prima scendevano a 2,3:1.
     static func brindooCategory(_ slug: String) -> Color {
         switch slug.lowercased() {
-        case "animation", "animazione":            return Color(red: 0.95, green: 0.45, blue: 0.35) // corallo caldo
-        case "photo", "foto", "video", "foto-video": return Color(red: 0.40, green: 0.50, blue: 0.85) // blu/indaco
-        case "catering", "food":                    return Color(red: 0.90, green: 0.60, blue: 0.20) // ambra
-        case "music", "musica", "dj", "music-dj":   return Color(red: 0.55, green: 0.40, blue: 0.80) // viola
-        case "location", "venue", "sale":           return Color(red: 0.20, green: 0.65, blue: 0.55) // verde acqua
-        case "decor", "decorazioni", "allestimenti": return Color(red: 0.85, green: 0.40, blue: 0.60) // rosa
-        case "cake", "torte", "pasticceria":        return Color(red: 0.80, green: 0.50, blue: 0.45) // terracotta
-        case "transport", "trasporti", "noleggio":  return Color(red: 0.35, green: 0.55, blue: 0.70) // azzurro
-        default:                                     return .brindooCoral
+        case "animation", "animazione":             return adaptive(light: (0.74, 0.28, 0.18), dark: (0.95, 0.45, 0.35)) // corallo caldo
+        case "photo", "foto", "video", "foto-video": return adaptive(light: (0.28, 0.40, 0.82), dark: (0.40, 0.50, 0.85)) // blu/indaco
+        case "catering", "food":                     return adaptive(light: (0.61, 0.38, 0.07), dark: (0.90, 0.60, 0.20)) // ambra
+        case "music", "musica", "dj", "music-dj":    return adaptive(light: (0.51, 0.35, 0.78), dark: (0.55, 0.40, 0.80)) // viola
+        case "location", "venue", "sale":            return adaptive(light: (0.15, 0.49, 0.41), dark: (0.20, 0.65, 0.55)) // verde acqua
+        case "decor", "decorazioni", "allestimenti": return adaptive(light: (0.78, 0.20, 0.45), dark: (0.85, 0.40, 0.60)) // rosa
+        case "cake", "torte", "pasticceria":         return adaptive(light: (0.70, 0.32, 0.25), dark: (0.80, 0.50, 0.45)) // terracotta
+        case "transport", "trasporti", "noleggio":   return adaptive(light: (0.27, 0.45, 0.59), dark: (0.35, 0.55, 0.70)) // azzurro
+        default:                                      return .brindooCoral
         }
+    }
+
+    /// Colore che cambia con il tema chiaro/scuro.
+    private static func adaptive(
+        light: (CGFloat, CGFloat, CGFloat),
+        dark: (CGFloat, CGFloat, CGFloat)
+    ) -> Color {
+        Color(UIColor { trait in
+            let c = trait.userInterfaceStyle == .dark ? dark : light
+            return UIColor(red: c.0, green: c.1, blue: c.2, alpha: 1)
+        })
     }
 }
 

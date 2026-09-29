@@ -17,7 +17,9 @@ struct NewOfferBadge: View {
             .foregroundStyle(.white)
             .padding(.horizontal, 6)
             .padding(.vertical, 3)
-            .background(BrindooGradient.coralSoft)
+            // Pieno, non sfumato: la scritta bianca così piccola ha bisogno
+            // di tutto il contrasto del corallo.
+            .background(BrindooGradient.coral)
             .clipShape(Capsule())
             .accessibilityLabel("Offerta nuova")
     }
