@@ -70,7 +70,7 @@ c) Dati di portfolio (solo Organizzatori)
 
 d) Dati di interazione
 • Offerte di servizio pubblicate e trattative (proposte e controproposte)
-• Conversazioni, messaggi e relativi allegati
+• Conversazioni, messaggi e relativi allegati (foto e messaggi vocali)
 • Recensioni rilasciate o ricevute
 • Lista degli utenti bloccati
 
