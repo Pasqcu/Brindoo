@@ -30,7 +30,7 @@ struct BrindooNegotiationLiveActivity: Widget {
                 DynamicIslandExpandedRegion(.leading) {
                     HStack(spacing: 4) {
                         Image(systemName: "tag.fill")
-                            .foregroundStyle(.orange)
+                            .foregroundStyle(Self.coral)
                         Text(context.attributes.offerTitle)
                             .font(.caption).bold()
                             .lineLimit(1)
@@ -39,7 +39,7 @@ struct BrindooNegotiationLiveActivity: Widget {
                 DynamicIslandExpandedRegion(.trailing) {
                     Text(Self.euro(context.state.currentPrice))
                         .font(.system(size: 18, weight: .bold))
-                        .foregroundStyle(.orange)
+                        .foregroundStyle(Self.coral)
                 }
                 DynamicIslandExpandedRegion(.bottom) {
                     HStack {
@@ -54,13 +54,13 @@ struct BrindooNegotiationLiveActivity: Widget {
                 }
             } compactLeading: {
                 Image(systemName: "tag.fill")
-                    .foregroundStyle(.orange)
+                    .foregroundStyle(Self.coral)
             } compactTrailing: {
                 Text(Self.euro(context.state.currentPrice))
                     .font(.caption2).bold()
             } minimal: {
                 Image(systemName: "tag.fill")
-                    .foregroundStyle(.orange)
+                    .foregroundStyle(Self.coral)
             }
         }
     }
@@ -69,14 +69,14 @@ struct BrindooNegotiationLiveActivity: Widget {
     private func lockScreenView(_ context: ActivityViewContext<NegotiationActivityAttributes>) -> some View {
         VStack(alignment: .leading, spacing: 6) {
             HStack {
-                Image(systemName: "tag.fill").foregroundStyle(.orange)
+                Image(systemName: "tag.fill").foregroundStyle(Self.coral)
                 Text(context.attributes.offerTitle)
                     .font(.subheadline).bold()
                     .lineLimit(1)
                 Spacer()
                 Text(Self.euro(context.state.currentPrice))
                     .font(.title3).bold()
-                    .foregroundStyle(.orange)
+                    .foregroundStyle(Self.coral)
             }
             HStack(spacing: 6) {
                 Image(systemName: statusIcon(context.state.status))
@@ -105,6 +105,14 @@ struct BrindooNegotiationLiveActivity: Widget {
         }
     }
 
+    /// Corallo del tema (l'estensione non vede i colori dell'app). L'arancione
+    /// di sistema sulla schermata di blocco chiara dava 2,2:1 al prezzo.
+    private static let coral = Color(UIColor { trait in
+        trait.userInterfaceStyle == .dark
+            ? UIColor(red: 0.85, green: 0.38, blue: 0.23, alpha: 1)
+            : UIColor(red: 0.74, green: 0.29, blue: 0.14, alpha: 1)
+    })
+
     /// Prezzo all'italiana come nell'app ("1.500 €"), non "€1500".
     private static func euro(_ value: Int) -> String {
         value.formatted(.number.locale(Locale(identifier: "it_IT"))) + " €"
@@ -120,7 +128,9 @@ struct BrindooNegotiationLiveActivity: Widget {
         case .rejected:  return "Rifiutata"
         case .withdrawn: return "Ritirata"
         case .pending:
-            return last == viewer ? "In attesa di risposta" : "Hai una controproposta"
+            // Stesse parole della schermata Trattative. "Controproposta" era
+            // sbagliato quando arrivava la prima proposta del cliente.
+            return last == viewer ? "In attesa dell'altra parte" : "Tocca a te rispondere"
         }
     }
 }
