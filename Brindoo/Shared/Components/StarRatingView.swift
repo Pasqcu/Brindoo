@@ -29,10 +29,22 @@ struct StarRatingView: View {
     @State private var bouncingIndex: Int? = nil
 
     var body: some View {
-        HStack(spacing: spacing) {
-            ForEach(1...maxRating, id: \.self) { index in
-                starView(for: index)
+        if mode == .input {
+            HStack(spacing: spacing) {
+                ForEach(1...maxRating, id: \.self) { index in
+                    starView(for: index)
+                }
             }
+        } else {
+            // In sola lettura VoiceOver legge il voto una volta, non cinque
+            // "stella" di fila.
+            HStack(spacing: spacing) {
+                ForEach(1...maxRating, id: \.self) { index in
+                    starView(for: index)
+                }
+            }
+            .accessibilityElement(children: .ignore)
+            .accessibilityLabel("Valutazione \(BrindooFormat.rating(rating)) su \(maxRating)")
         }
     }
 
@@ -59,6 +71,8 @@ struct StarRatingView: View {
                         .animation(.spring(response: 0.25, dampingFraction: 0.45), value: bouncingIndex)
                 }
                 .buttonStyle(.plain)
+                .accessibilityLabel(index == 1 ? "1 stella" : "\(index) stelle")
+                .accessibilityAddTraits(Int(rating) == index ? [.isSelected] : [])
             } else {
                 starImage(filled: isFilled, half: isHalf)
             }
@@ -73,43 +87,11 @@ struct StarRatingView: View {
     }
 }
 
-// MARK: - Compact rating (stella + numero)
-
-/// Mostra rating compatto: "★ 4.7 (12)"
-struct CompactRatingView: View {
-    let rating: OrganizerRating
-    var size: CGFloat = 14
-    
-    var body: some View {
-        HStack(spacing: 4) {
-            Image(systemName: BrindooIcon.starFilled)
-                .font(BrindooFont.scaled(size - 2, relativeTo: .footnote))
-                .foregroundStyle(rating.reviewCount > 0 ? Color.brindooCoral : Color.brindooBorder)
-
-            if rating.reviewCount > 0 {
-                Text(rating.displayRating)
-                    .font(BrindooFont.scaled(size, weight: .semibold, relativeTo: .footnote))
-                    .foregroundStyle(Color.brindooTextPrimary)
-
-                Text("(\(rating.reviewCount))")
-                    .font(BrindooFont.scaled(size - 1, relativeTo: .footnote))
-                    .foregroundStyle(Color.brindooTextSecondary)
-            } else {
-                Text("Nuovo")
-                    .font(BrindooFont.scaled(size - 1, relativeTo: .footnote))
-                    .foregroundStyle(Color.brindooTextSecondary)
-            }
-        }
-    }
-}
-
 #Preview {
     VStack(spacing: 20) {
         StarRatingView(rating: 4.5, mode: .display, size: 20)
         StarRatingView(rating: 3.0, mode: .input, size: 28) { newValue in
         }
-        CompactRatingView(rating: OrganizerRating(organizerId: UUID(), avgRating: 4.7, reviewCount: 23))
-        CompactRatingView(rating: OrganizerRating(organizerId: UUID(), avgRating: 0, reviewCount: 0))
     }
     .padding()
 }

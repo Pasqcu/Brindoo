@@ -41,6 +41,8 @@ struct AvailabilityCalendarView: View {
                     Image(systemName: BrindooIcon.back)
                         .font(.system(size: 14, weight: .semibold))
                         .foregroundStyle(monthOffset > 0 ? Color.brindooCoral : Color.brindooTextTertiary)
+                        .frame(width: BrindooLayout.minimumTapTarget, height: BrindooLayout.minimumTapTarget)
+                        .contentShape(Rectangle())
                 }
                 .disabled(monthOffset <= 0)
                 .accessibilityLabel("Mese precedente")
@@ -58,6 +60,8 @@ struct AvailabilityCalendarView: View {
                     Image(systemName: BrindooIcon.forward)
                         .font(.system(size: 14, weight: .semibold))
                         .foregroundStyle(monthOffset < maxMonthsAhead ? Color.brindooCoral : Color.brindooTextTertiary)
+                        .frame(width: BrindooLayout.minimumTapTarget, height: BrindooLayout.minimumTapTarget)
+                        .contentShape(Rectangle())
                 }
                 .disabled(monthOffset >= maxMonthsAhead)
                 .accessibilityLabel("Mese successivo")
@@ -87,14 +91,18 @@ struct AvailabilityCalendarView: View {
 
             // Legenda
             HStack(spacing: BrindooSpacing.md) {
+                // Solo quello che si vede davvero: i giorni liberi non hanno
+                // un colore loro, il pallino verde "Libero" non trovava riscontro.
                 legendDot(color: .brindooError, label: "Occupato")
-                legendDot(color: .brindooSuccess, label: "Libero")
+                legendDot(color: Color.brindooCoral.opacity(0.35), label: "Oggi")
                 Spacer()
             }
             .padding(.top, BrindooSpacing.xxs)
         }
         .padding(BrindooSpacing.md)
         .brindooSurfaceBackground()
+        // Contenitore con nome: i giorni restano leggibili uno per uno.
+        .accessibilityElement(children: .contain)
         .accessibilityLabel("Calendario disponibilità del professionista")
     }
 
@@ -122,7 +130,7 @@ struct AvailabilityCalendarView: View {
                           : isToday ? Color.brindooCoral.opacity(0.12)
                           : Color.clear)
             )
-            .accessibilityLabel(isBusy ? "Giorno occupato" : "Giorno libero")
+            .accessibilityLabel("\(BrindooFormat.italianDate(from: date)), \(isBusy ? "occupato" : "libero")")
     }
 
     @ViewBuilder
