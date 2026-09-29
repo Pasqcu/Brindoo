@@ -42,7 +42,14 @@ struct ChatComposerView: View {
         // né file orfani né sessione audio lasciata accesa.
         .onDisappear { recorder.cancel() }
         .alert("Microfono non disponibile", isPresented: $micDenied) {
-            Button("OK", role: .cancel) {}
+            // Dopo il primo no iOS non richiede più: l'unica strada è
+            // Impostazioni, quindi ci si porta direttamente lì.
+            Button("Apri Impostazioni") {
+                if let url = URL(string: UIApplication.openSettingsURLString) {
+                    UIApplication.shared.open(url)
+                }
+            }
+            Button("Annulla", role: .cancel) {}
         } message: {
             Text("Consenti l'accesso al microfono dalle Impostazioni di iOS per mandare vocali.")
         }
