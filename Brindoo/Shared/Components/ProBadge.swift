@@ -18,7 +18,10 @@ struct ProBadge: View {
             Text("PRO")
                 .font(BrindooFont.scaled(10, weight: .bold, rounded: true, relativeTo: .caption2))
         }
-        .foregroundStyle(.white)
+        // Scritta bruna sull'oro: il bianco sull'oro chiaro restava a 2:1 e
+        // "PRO" a 10 punti non si leggeva. Il marrone scuro supera 4:1 su
+        // tutto il gradiente e non cambia tra chiaro e scuro, come l'oro.
+        .foregroundStyle(Color(red: 0.30, green: 0.17, blue: 0.0))
         .padding(.horizontal, 6)
         .padding(.vertical, 2)
         .background(BrindooGradient.pro)
