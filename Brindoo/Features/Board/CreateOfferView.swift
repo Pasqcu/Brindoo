@@ -43,6 +43,7 @@ struct CreateOfferView: View {
     @State private var categoryError: String?
     @State private var generalError: String?
     @State private var isLoading: Bool = false
+    @State private var packagesNotSaved: Bool = false
     @State private var showSuccess: Bool = false
     @State private var showLimitPaywall: Bool = false
     @State private var limitMessage: String = ""
@@ -185,7 +186,11 @@ struct CreateOfferView: View {
             .alert("Offerta pubblicata!", isPresented: $showSuccess) {
                 Button("OK") { dismiss() }
             } message: {
-                Text("La tua offerta è ora visibile ai clienti nella bacheca.")
+                // L'offerta c'è comunque; i pacchetti persi vanno detti, non
+                // lasciati scoprire al cliente.
+                Text(packagesNotSaved
+                     ? "La tua offerta è visibile ai clienti, ma i pacchetti di prezzo non sono stati salvati per un problema di connessione: per ora i clienti vedono il prezzo base."
+                     : "La tua offerta è ora visibile ai clienti nella bacheca.")
             }
             .alert("Limite raggiunto", isPresented: $showLimitPaywall) {
                 Button("Annulla", role: .cancel) {}
@@ -294,8 +299,8 @@ struct CreateOfferView: View {
         titleError = nil; descError = nil
         priceError = nil; categoryError = nil; generalError = nil
 
-        let tTitle = title.trimmingCharacters(in: .whitespaces)
-        let tDesc = description.trimmingCharacters(in: .whitespaces)
+        let tTitle = title.trimmingCharacters(in: .whitespacesAndNewlines)
+        let tDesc = description.trimmingCharacters(in: .whitespacesAndNewlines)
         let priceVal = BrindooFormat.price(from: price)
 
         var hasError = false
@@ -320,7 +325,7 @@ struct CreateOfferView: View {
                 hasError = true
                 break
             }
-            let desc = draft.description.trimmingCharacters(in: .whitespaces)
+            let desc = draft.description.trimmingCharacters(in: .whitespacesAndNewlines)
             validPackages.append((name: name, description: desc.isEmpty ? nil : desc, price: value!))
         }
         if hasError { return }
@@ -356,6 +361,7 @@ struct CreateOfferView: View {
                     try await OfferPackageService.shared.savePackages(offerId: created.id, packages: sorted)
                 } catch {
                     BrindooLog.error("Salvataggio pacchetti: \(error)")
+                    packagesNotSaved = true
                 }
             }
 
