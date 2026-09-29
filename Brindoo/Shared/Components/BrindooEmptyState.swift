@@ -58,6 +58,8 @@ struct BrindooEmptyState: View {
                         .multilineTextAlignment(.center)
                 }
             }
+            // Margine ai lati: un messaggio lungo arrivava a filo dello schermo.
+            .padding(.horizontal, BrindooSpacing.xl)
             if let actionTitle, let action {
                 BrindooButton(actionTitle, style: .primary, size: .medium, action: action)
                     .padding(.top, BrindooSpacing.xs)
