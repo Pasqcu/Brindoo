@@ -281,11 +281,15 @@ final class MessageService {
             edited_at: BrindooFormat.isoNow
         )
         
-        try await client
+        let row: ConversationRef = try await client
             .from("messages")
             .update(payload)
             .eq("id", value: messageId)
+            .select("conversation_id")
+            .single()
             .execute()
+            .value
+        await refreshPreviewIfLatest(messageId: messageId, conversationId: row.conversationId, preview: newContent)
     }
     
     // MARK: - Mark bomb as viewed
@@ -329,7 +333,7 @@ final class MessageService {
             let image_url: String?
         }
         
-        try await client
+        let row: ConversationRef = try await client
             .from("messages")
             .update(Payload(
                 deleted_at: BrindooFormat.isoNow,
@@ -337,6 +341,30 @@ final class MessageService {
                 image_url: nil
             ))
             .eq("id", value: messageId)
+            .select("conversation_id")
+            .single()
+            .execute()
+            .value
+        await refreshPreviewIfLatest(messageId: messageId, conversationId: row.conversationId, preview: "Messaggio eliminato")
+    }
+
+    private struct ConversationRef: Decodable {
+        let conversationId: UUID
+        enum CodingKeys: String, CodingKey { case conversationId = "conversation_id" }
+    }
+
+    /// Se il messaggio cambiato è l'ultimo della conversazione, l'anteprima
+    /// nell'elenco chat va rifatta: prima un messaggio eliminato restava
+    /// leggibile lì, per tutti e due. La data non si tocca: modificare o
+    /// eliminare non deve riportare la chat in cima.
+    private func refreshPreviewIfLatest(messageId: UUID, conversationId: UUID, preview: String) async {
+        guard let latest = try? await fetchMessages(conversationId: conversationId, limit: 1).last,
+              latest.id == messageId else { return }
+        struct Payload: Encodable { let last_message_preview: String }
+        _ = try? await client
+            .from("conversations")
+            .update(Payload(last_message_preview: String(preview.prefix(100))))
+            .eq("id", value: conversationId)
             .execute()
     }
     
