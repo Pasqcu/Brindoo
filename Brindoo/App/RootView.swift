@@ -116,21 +116,15 @@ struct RootView: View {
         }
         .animation(BrindooAnimation.standardEase, value: displayedState)
         .animation(BrindooAnimation.smooth, value: network.isOnline)
-        .sheet(isPresented: $showNotificationPrePrompt) {
-            NotificationPrePromptView(
-                onAccept: {
-                    showNotificationPrePrompt = false
-                    Task {
-                        await NotificationService.shared.requestAuthorization()
-                    }
-                },
-                onSkip: {
-                    showNotificationPrePrompt = false
-                    // Non chiediamo il prompt iOS adesso: l'utente potrà
-                    // riprovare da Impostazioni → Notifiche push.
-                }
-            )
-            .interactiveDismissDisabled(false)
+        // Qualunque uscita dal foglio porta al dialogo di sistema, dove si
+        // sceglie davvero: le regole di Apple (5.1.1) non ammettono una
+        // spiegazione che si chiuda con "Non adesso" saltando la domanda.
+        .sheet(isPresented: $showNotificationPrePrompt, onDismiss: {
+            Task { await NotificationService.shared.requestAuthorization() }
+        }) {
+            NotificationPrePromptView {
+                showNotificationPrePrompt = false
+            }
         }
     }
 
@@ -167,12 +161,11 @@ struct RootView: View {
 // MARK: - Pre-prompt notifiche
 
 /// Sheet informativo mostrato PRIMA del dialog di sistema iOS, per spiegare
-/// all'utente perché Brindoo vuole inviargli notifiche. Pattern raccomandato
-/// da Apple e dalle linee guida UX delle Human Interface Guidelines.
+/// all'utente perché Brindoo vuole inviargli notifiche. Un solo pulsante,
+/// "Continua": la scelta (consenti o no) si fa nel dialogo di iOS.
 private struct NotificationPrePromptView: View {
 
-    let onAccept: () -> Void
-    let onSkip: () -> Void
+    let onContinue: () -> Void
 
     var body: some View {
         VStack(spacing: BrindooSpacing.lg) {
@@ -215,15 +208,14 @@ private struct NotificationPrePromptView: View {
             Spacer()
 
             VStack(spacing: BrindooSpacing.sm) {
-                BrindooButton("Attiva notifiche", style: .primary, size: .large) {
-                    onAccept()
+                BrindooButton("Continua", style: .primary, size: .large) {
+                    onContinue()
                 }
 
-                Button("Non adesso") {
-                    onSkip()
-                }
-                .font(BrindooFont.bodyMedium.weight(.medium))
-                .foregroundStyle(Color.brindooTextSecondary)
+                Text("Potrai cambiare idea quando vuoi da Impostazioni.")
+                    .font(BrindooFont.caption)
+                    .foregroundStyle(Color.brindooTextSecondary)
+                    .multilineTextAlignment(.center)
             }
             .padding(.horizontal, BrindooSpacing.lg)
             .padding(.bottom, BrindooSpacing.md)
