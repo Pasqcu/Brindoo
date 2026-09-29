@@ -25,6 +25,9 @@ struct ChatListView: View {
     @State private var conversationToDelete: Conversation?
     @State private var conversationToBlock: (conversation: Conversation, otherUserId: UUID)?
     @State private var navigateToProfile: Profile?
+    /// Chat aperta dal tocco su una notifica di messaggio.
+    @State private var openedConversationId: UUID?
+    @State private var router = DeepLinkRouter.shared
 
     private var currentUserId: UUID? { session.userID }
 
@@ -46,6 +49,17 @@ struct ChatListView: View {
                 .refreshable { await refresh() }
                 .navigationDestination(item: $navigateToProfile) { profile in
                     OrganizerDetailView(organizer: profile)
+                }
+                .navigationDestination(item: $openedConversationId) { id in
+                    if let conv = conversations.first(where: { $0.id == id }),
+                       let other = otherProfile(for: conv) {
+                        ChatView(conversation: conv, otherUser: other)
+                    }
+                }
+                // Il tocco sulla notifica porta qui con l'id della chat: prima
+                // si fermava alla lista e l'id restava inutilizzato.
+                .onChange(of: router.pendingConversationId, initial: true) { _, _ in
+                    openPendingConversation()
                 }
                 .alert("Eliminare la conversazione?", isPresented: Binding(
                     get: { conversationToDelete != nil },
@@ -249,11 +263,21 @@ struct ChatListView: View {
             unreadCounts = try await ConversationService.shared.fetchUnreadCounts()
             await loadOtherProfiles(for: convs)
             conversations = convs
+            openPendingConversation()
         } catch {
             BrindooLog.error("Errore caricamento chat: \(error)")
             // Se una lista è già a schermo non la copriamo con l'errore.
             if state.value == nil { state = .error(BrindooText.loadError("le chat")) }
         }
+    }
+
+    /// Apre la chat indicata dalla notifica appena è nella lista.
+    private func openPendingConversation() {
+        guard let id = router.pendingConversationId,
+              let conv = conversations.first(where: { $0.id == id }),
+              otherProfile(for: conv) != nil else { return }
+        router.clearPendingConversation()
+        openedConversationId = id
     }
 
     private func loadOtherProfiles(for conversations: [Conversation]) async {
