@@ -24,6 +24,7 @@ struct GuidedQuoteView: View {
     /// Valutazioni dei professionisti dei risultati: senza, l'unico dato
     /// visibile è il prezzo e la scelta diventa una gara al ribasso.
     @State private var resultRatings: [UUID: OrganizerRating] = [:]
+    @State private var categoriesLoadFailed = false
 
     /// `prefilledDate`: data già nota (es. arrivando da "Completa il tuo evento").
     init(prefilledDate: Date? = nil) {
@@ -65,9 +66,7 @@ struct GuidedQuoteView: View {
         .background(Color.brindooBackground)
         .navigationTitle("Preventivo guidato")
         .navigationBarTitleDisplayMode(.inline)
-        .task {
-            categories = (try? await CategoryService.shared.fetchCategories()) ?? []
-        }
+        .task { await loadCategories() }
     }
 
     // MARK: - Passi
@@ -76,6 +75,18 @@ struct GuidedQuoteView: View {
     private var stepCategory: some View {
         VStack(alignment: .leading, spacing: BrindooSpacing.xs) {
             stepTitle(number: 1, text: "Che cosa ti serve?")
+            // Senza categorie non si parte: se non arrivano lo si dice.
+            if categoriesLoadFailed {
+                HStack(spacing: BrindooSpacing.sm) {
+                    Text(BrindooText.loadError("le categorie"))
+                        .font(BrindooFont.bodySmall)
+                        .foregroundStyle(Color.brindooError)
+                    Spacer()
+                    Button(BrindooText.retry) { Task { await loadCategories() } }
+                        .font(BrindooFont.bodySmall.weight(.semibold))
+                        .foregroundStyle(Color.brindooCoral)
+                }
+            }
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: BrindooSpacing.xs) {
                     ForEach(categories) { cat in
@@ -261,6 +272,16 @@ struct GuidedQuoteView: View {
     }
 
     // MARK: - Ricerca
+
+    private func loadCategories() async {
+        do {
+            categories = try await CategoryService.shared.fetchCategories()
+            categoriesLoadFailed = false
+        } catch {
+            BrindooLog.error("Categorie preventivo: \(error)")
+            categoriesLoadFailed = categories.isEmpty
+        }
+    }
 
     private func search() async {
         guard let catId = selectedCategoryId else { return }

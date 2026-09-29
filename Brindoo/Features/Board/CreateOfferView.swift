@@ -44,6 +44,7 @@ struct CreateOfferView: View {
     @State private var generalError: String?
     @State private var isLoading: Bool = false
     @State private var packagesNotSaved: Bool = false
+    @State private var categoriesLoadFailed: Bool = false
     @State private var showDiscardConfirm: Bool = false
 
     /// C'è qualcosa di scritto: chiudere per sbaglio non deve buttarlo via.
@@ -104,6 +105,20 @@ struct CreateOfferView: View {
                         Text("Puoi selezionarne più di una")
                             .font(BrindooFont.caption)
                             .foregroundStyle(Color.brindooTextSecondary)
+
+                        // Senza categorie l'offerta non si pubblica: se non
+                        // arrivano lo si dice e si può riprovare.
+                        if categoriesLoadFailed {
+                            HStack(spacing: BrindooSpacing.sm) {
+                                Text(BrindooText.loadError("le categorie"))
+                                    .font(BrindooFont.bodySmall)
+                                    .foregroundStyle(Color.brindooError)
+                                Spacer()
+                                Button(BrindooText.retry) { Task { await loadCategories() } }
+                                    .font(BrindooFont.bodySmall.weight(.semibold))
+                                    .foregroundStyle(Color.brindooCoral)
+                            }
+                        }
 
                         FlowLayoutView(spacing: BrindooSpacing.xs) {
                             ForEach(allCategories) { cat in
@@ -179,11 +194,7 @@ struct CreateOfferView: View {
                         .ignoresSafeArea(edges: .bottom)
                 )
             }
-            .task {
-                do {
-                    allCategories = try await CategoryService.shared.fetchCategories()
-                } catch { BrindooLog.error("\(error)") }
-            }
+            .task { await loadCategories() }
             .onChange(of: coverPickerItem) { _, item in
                 guard let item else { return }
                 Task {
@@ -315,6 +326,16 @@ struct CreateOfferView: View {
     }
 
     // MARK: - Submit
+
+    private func loadCategories() async {
+        do {
+            allCategories = try await CategoryService.shared.fetchCategories()
+            categoriesLoadFailed = false
+        } catch {
+            BrindooLog.error("\(error)")
+            categoriesLoadFailed = allCategories.isEmpty
+        }
+    }
 
     private func submit() async {
         titleError = nil; descError = nil

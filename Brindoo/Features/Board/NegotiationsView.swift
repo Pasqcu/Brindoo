@@ -312,6 +312,11 @@ struct NegotiationsView: View {
             chatTarget = ChatTarget(id: conv.id, conversation: conv, other: other)
         } catch {
             BrindooLog.error("\(error)")
+            toastCenter.show(BrindooToast(
+                "Impossibile aprire la chat",
+                message: BrindooErrorText.message(for: error, fallback: BrindooText.retryHint),
+                style: .error
+            ))
         }
     }
 

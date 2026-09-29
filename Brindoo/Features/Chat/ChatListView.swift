@@ -307,6 +307,7 @@ struct ChatListView: View {
             await refresh()
         } catch {
             BrindooLog.error("\(error)")
+            toastCenter.show(BrindooToast(BrindooText.updateError("la chat"), message: BrindooText.retryHint, style: .error))
         }
     }
 
@@ -330,6 +331,7 @@ struct ChatListView: View {
             await refresh()
         } catch {
             BrindooLog.error("\(error)")
+            toastCenter.show(BrindooToast(BrindooText.updateError("la chat"), message: BrindooText.retryHint, style: .error))
         }
     }
 }

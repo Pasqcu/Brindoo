@@ -19,6 +19,10 @@ struct SettingsView: View {
     @State private var showUpgradeToPro: Bool = false
     @State private var showChangeEmail: Bool = false
     @State private var readReceiptsEnabled: Bool = true
+    /// Ultimo valore salvato davvero: se il server non risponde l'interruttore
+    /// torna qui invece di mostrare una scelta mai registrata.
+    @State private var readReceiptsConfirmed: Bool = true
+    @State private var readReceiptsSaveFailed: Bool = false
     @State private var pushEnabled: Bool = true
     // Quali notifiche ricevere: prima era tutto-o-niente.
     @State private var notifyMessages: Bool = true
@@ -159,6 +163,7 @@ struct SettingsView: View {
                                 isOn: $readReceiptsEnabled
                             )
                             .onChange(of: readReceiptsEnabled) { _, newValue in
+                                guard newValue != readReceiptsConfirmed else { return }
                                 Task { await updateReadReceipts(newValue) }
                             }
 
@@ -465,6 +470,11 @@ struct SettingsView: View {
             } message: {
                 Text("Non ci sono ancora errori registrati da inviare. Se hai un problema, scrivici da «Segnala un problema».")
             }
+            .alert("Conferma di lettura non salvata", isPresented: $readReceiptsSaveFailed) {
+                Button("OK", role: .cancel) {}
+            } message: {
+                Text(BrindooText.retryHint)
+            }
             .alert("Preferenze non salvate", isPresented: $notifySaveFailed) {
                 Button("Riprova") { scheduleNotificationSave() }
                 Button("Annulla", role: .cancel) {}
@@ -507,6 +517,7 @@ struct SettingsView: View {
 
     private func loadPreferences() async {
         guard let profile = session.currentProfile else { return }
+        readReceiptsConfirmed = profile.readReceiptsEnabled
         readReceiptsEnabled = profile.readReceiptsEnabled
         let pushOn = await NotificationService.shared.isPushEnabled()
         pushConfirmed = pushOn
@@ -525,11 +536,18 @@ struct SettingsView: View {
     }
 
     private func updateReadReceipts(_ enabled: Bool) async {
-        guard session.userID != nil else { return }
+        guard let userId = session.userID else { return }
         do {
             try await ProfileService.shared.updateReadReceipts(enabled: enabled)
+            readReceiptsConfirmed = enabled
+            // La chat legge la scelta dal profilo in memoria: va aggiornato.
+            if let profile = try? await ProfileService.shared.fetchProfile(userID: userId) {
+                session.updateLocalProfile(profile)
+            }
         } catch {
             BrindooLog.error("\(error)")
+            readReceiptsEnabled = readReceiptsConfirmed
+            readReceiptsSaveFailed = true
         }
     }
 
