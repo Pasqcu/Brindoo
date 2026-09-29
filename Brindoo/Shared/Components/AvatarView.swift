@@ -53,6 +53,10 @@ struct AvatarView: View {
         .clipShape(Circle())
         .padding(ringWidth)
         .background(ringColor, in: Circle())
+        // Il nome è sempre scritto accanto: VoiceOver non deve leggere anche
+        // le iniziali ("GM") o "immagine". Dove l'avatar è un bottone, il
+        // bottone porta la sua etichetta.
+        .accessibilityHidden(true)
     }
     
     @ViewBuilder

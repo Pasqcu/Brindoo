@@ -54,6 +54,8 @@ struct AvatarEditSection: View {
                 .frame(width: 110, height: 110)
                 .clipShape(Circle())
                 .onTapGesture { if !isUploading && !isDisabled { onRecrop?() } }
+                .accessibilityElement(children: .ignore)
+                .accessibilityLabel("Foto profilo")
                 .accessibilityAddTraits(onRecrop != nil ? .isButton : [])
                 .accessibilityHint(onRecrop != nil ? "Ritaglia di nuovo la foto" : "")
 
@@ -79,6 +81,7 @@ struct AvatarEditSection: View {
                     .overlay(Circle().strokeBorder(Color.brindooBackground, lineWidth: 3))
                 }
                 .disabled(isUploading || isDisabled)
+                .accessibilityLabel("Cambia foto profilo")
             }
 
             Text(caption)

@@ -403,6 +403,7 @@ struct OrganizerDetailView: View {
                     .overlay(Circle().strokeBorder(Color.brindooBackground, lineWidth: 4))
             }
             .buttonStyle(.plain)
+            .accessibilityLabel("Foto di \(organizer.displayName)")
             .offset(y: 50)
         }
         .padding(.bottom, 50)
