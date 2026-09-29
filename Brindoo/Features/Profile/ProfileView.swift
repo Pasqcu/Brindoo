@@ -96,7 +96,7 @@ struct ProfileView: View {
                                 actionMiniCard(
                                     icon: "photo.stack",
                                     title: "Portfolio",
-                                    subtitle: vm.portfolioCount > 0 ? "\(vm.portfolioCount) elementi" : "Aggiungi foto"
+                                    subtitle: vm.portfolioCount == 0 ? "Aggiungi foto" : (vm.portfolioCount == 1 ? "1 elemento" : "\(vm.portfolioCount) elementi")
                                 ) {
                                     showPortfolio = true
                                 }

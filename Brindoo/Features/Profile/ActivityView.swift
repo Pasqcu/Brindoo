@@ -70,7 +70,7 @@ struct ActivityView: View {
                         if unreadCount > 0 {
                             section(title: "Messaggi", icon: "bubble.left.and.bubble.right.fill", color: .brindooSuccess) {
                                 row(icon: "envelope.badge.fill",
-                                    title: "\(unreadCount) messaggi non letti",
+                                    title: unreadCount == 1 ? "1 messaggio non letto" : "\(unreadCount) messaggi non letti",
                                     subtitle: "Apri la chat per leggerli") {
                                     DeepLinkRouter.shared.selectedTab = 2
                                 }

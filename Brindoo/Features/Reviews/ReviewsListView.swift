@@ -239,7 +239,7 @@ struct ReviewsListView: View {
                             .frame(width: 24, alignment: .trailing)
                     }
                     .accessibilityElement(children: .ignore)
-                    .accessibilityLabel("\(count) recensioni da \(stars) stelle")
+                    .accessibilityLabel("\(count) \(count == 1 ? "recensione" : "recensioni") da \(stars) \(stars == 1 ? "stella" : "stelle")")
                 }
             }
             .padding(BrindooSpacing.md)

@@ -138,6 +138,12 @@ final class DepositAndTrustTests: XCTestCase {
         XCTAssertEqual(trust.badge?.isPositive, true)
     }
 
+    func test_unSoloEventoRegolare_alSingolare() {
+        let trust = ClientTrust(clientId: UUID(), honoredCount: 1, noShowCount: 1,
+                                cancelledLateCount: 0, totalCount: 2)
+        XCTAssertEqual(trust.badge?.label, "1 evento regolare su 2")
+    }
+
     // MARK: - Ricerca salvata
 
     func test_riassuntoRicercaSalvata() {

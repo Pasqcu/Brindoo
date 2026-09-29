@@ -170,7 +170,9 @@ struct GuidedQuoteView: View {
                     message: "Prova ad alzare il budget o a togliere la data."
                 )
             } else {
-                Text("\(results.count) offerte adatte, dalla meno cara")
+                Text(results.count == 1
+                     ? "1 offerta adatta"
+                     : "\(results.count) offerte adatte, dalla meno cara")
                     .font(BrindooFont.titleSmall)
                     .foregroundStyle(Color.brindooTextPrimary)
                 Text("Il prezzo più basso non è sempre la scelta giusta: guarda anche le stelle.")

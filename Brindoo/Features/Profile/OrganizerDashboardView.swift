@@ -191,7 +191,7 @@ struct OrganizerDashboardView: View {
             BrindooStatTile(
                 icon: BrindooIcon.starFilled,
                 value: s.reviewsCount > 0 ? BrindooFormat.rating(s.avgRating) : "—",
-                label: s.reviewsCount > 0 ? "\(s.reviewsCount) recensioni" : "Nessuna recensione",
+                label: s.reviewsCount == 0 ? "Nessuna recensione" : (s.reviewsCount == 1 ? "1 recensione" : "\(s.reviewsCount) recensioni"),
                 tint: .brindooWarning
             )
             BrindooStatTile(

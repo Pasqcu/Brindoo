@@ -49,7 +49,7 @@ struct CompareOrganizersView: View {
                                     Text(BrindooFormat.rating(rating.avgRating))
                                         .font(BrindooFont.bodyMedium.weight(.semibold))
                                 }
-                                Text("\(rating.reviewCount) recensioni")
+                                Text(rating.displayReviewCount)
                                     .font(BrindooFont.caption)
                                     .foregroundStyle(Color.brindooTextSecondary)
                                 if bestRatingId == profile.id {

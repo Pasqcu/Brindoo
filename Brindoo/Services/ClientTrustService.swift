@@ -70,7 +70,7 @@ struct ClientTrust: Codable, Hashable, Equatable {
         if problems >= 2, problems > honoredCount {
             return ("\(problems) impegni non rispettati", "exclamationmark.triangle.fill", false)
         }
-        return ("\(honoredCount) eventi regolari su \(totalCount)", "info.circle", true)
+        return ("\(honoredCount) \(honoredCount == 1 ? "evento regolare" : "eventi regolari") su \(totalCount)", "info.circle", true)
     }
 }
 

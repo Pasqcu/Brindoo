@@ -312,7 +312,7 @@ struct CoverageAreasField: View {
                             .lineLimit(2)
                             .multilineTextAlignment(.leading)
                         if !selectedAreaSlugs.isEmpty {
-                            Text("\(selectedAreaSlugs.count) selezionate")
+                            Text(selectedAreaSlugs.count == 1 ? "1 selezionata" : "\(selectedAreaSlugs.count) selezionate")
                                 .font(BrindooFont.caption)
                                 .foregroundStyle(Color.brindooTextSecondary)
                         } else {
