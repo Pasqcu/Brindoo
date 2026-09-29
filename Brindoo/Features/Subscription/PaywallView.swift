@@ -241,7 +241,7 @@ struct PaywallView: View {
                         .foregroundStyle(Color.brindooTextSecondary)
                 }
                 
-                Text("Cancellabile in qualsiasi momento")
+                Text("Disdici quando vuoi")
                     .font(BrindooFont.caption)
                     .foregroundStyle(Color.brindooTextSecondary)
             }

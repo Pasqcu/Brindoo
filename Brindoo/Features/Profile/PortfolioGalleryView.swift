@@ -93,7 +93,7 @@ struct PortfolioGalleryView: View {
                 isOwner: isOwner
             )
         }
-        .alert("Eliminare foto?", isPresented: $showDeleteAlert) {
+        .alert(itemToDelete?.isVideo == true ? "Eliminare il video?" : "Eliminare la foto?", isPresented: $showDeleteAlert) {
             Button("Annulla", role: .cancel) { itemToDelete = nil }
             Button("Elimina", role: .destructive) {
                 if let item = itemToDelete {
@@ -102,7 +102,9 @@ struct PortfolioGalleryView: View {
                 itemToDelete = nil
             }
         } message: {
-            Text("Questa foto sarà rimossa dal tuo portfolio definitivamente.")
+            Text(itemToDelete?.isVideo == true
+                 ? "Il video sarà rimosso dal tuo portfolio definitivamente."
+                 : "La foto sarà rimossa dal tuo portfolio definitivamente.")
         }
         .alert("Limite raggiunto", isPresented: $showLimitPaywall) {
             Button("Annulla", role: .cancel) {}
@@ -339,7 +341,7 @@ struct PortfolioGalleryView: View {
         let total = pickerItems.count
         
         for (index, pickerItem) in pickerItems.enumerated() {
-            uploadProgress = "Caricamento \(index + 1) di \(total)..."
+            uploadProgress = "Caricamento \(index + 1) di \(total)…"
             
             do {
                 let isVideo = pickerItem.supportedContentTypes.contains {
@@ -377,7 +379,7 @@ struct PortfolioGalleryView: View {
         // Il conteggio generico non deve coprire un motivo già spiegato
         // (video troppo lungo, file troppo pesante).
         if uploadedCount < total && !showLimitPaywall && errorMessage == nil {
-            errorMessage = "Caricati \(uploadedCount) elementi su \(total). Alcuni sono falliti."
+            errorMessage = "Caricati \(uploadedCount) su \(total): gli altri non sono riusciti. \(BrindooText.retryHint)"
         }
     }
     

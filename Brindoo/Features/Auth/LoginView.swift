@@ -223,7 +223,7 @@ struct ForgotPasswordView: View {
                                 .foregroundStyle(Color.brindooSuccess)
                             Text("Email inviata")
                                 .font(BrindooFont.titleLarge)
-                            Text("Controlla la tua casella per il link di reset.")
+                            Text("Controlla la tua casella: ti abbiamo mandato il link per scegliere una nuova password.")
                                 .font(BrindooFont.bodyLarge)
                                 .foregroundStyle(Color.brindooTextSecondary)
                                 .multilineTextAlignment(.center)

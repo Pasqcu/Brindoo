@@ -244,7 +244,7 @@ struct MessageBubble: View {
                     Text(alreadyViewed ? "Foto bomba aperta" : "Foto bomba")
                         .font(BrindooFont.bodySmall.weight(.semibold))
                         .foregroundStyle(textColor)
-                    Text(alreadyViewed ? "Non più disponibile" : (isOwn ? "Tap del destinatario per aprirla" : "Tocca per visualizzare"))
+                    Text(alreadyViewed ? "Non più disponibile" : (isOwn ? "Il destinatario potrà aprirla una volta" : "Tocca per visualizzare"))
                         .font(BrindooFont.scaled(11, relativeTo: .caption1))
                         .foregroundStyle(isOwn ? .white.opacity(0.8) : Color.brindooTextSecondary)
                 }

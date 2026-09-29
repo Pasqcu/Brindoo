@@ -289,7 +289,9 @@ struct OfferDetailView: View {
             Button("Annulla", role: .cancel) {}
         } message: {
             Text(vm.openProposalsCount > 0
-                 ? "L'azione non può essere annullata. Verranno chiuse anche \(vm.openProposalsCount) trattative ancora aperte su questa offerta."
+                 ? (vm.openProposalsCount == 1
+                    ? "L'azione non può essere annullata. Verrà chiusa anche la trattativa ancora aperta su questa offerta."
+                    : "L'azione non può essere annullata. Verranno chiuse anche \(vm.openProposalsCount) trattative ancora aperte su questa offerta.")
                  : "L'azione non può essere annullata.")
         }
     }

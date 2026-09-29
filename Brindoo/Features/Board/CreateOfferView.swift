@@ -325,8 +325,8 @@ struct CreateOfferView: View {
         let priceVal = BrindooFormat.price(from: price)
 
         var hasError = false
-        if tTitle.count < 5 { titleError = "Titolo troppo corto (min 5)"; hasError = true }
-        if tDesc.count < 20 { descError = "Descrizione troppo breve (min 20)"; hasError = true }
+        if tTitle.count < 5 { titleError = "Titolo troppo corto (almeno 5 caratteri)"; hasError = true }
+        if tDesc.count < 20 { descError = "Descrizione troppo breve (almeno 20 caratteri)"; hasError = true }
         if selectedCategoryIds.isEmpty { categoryError = "Seleziona almeno una categoria"; hasError = true }
         if priceVal == nil {
             priceError = "Inserisci un prezzo valido (fino a \(BrindooFormat.euro(BrindooFormat.maxPrice)))"
@@ -391,7 +391,7 @@ struct CreateOfferView: View {
             limitMessage = limitError.errorDescription ?? "Limite raggiunto."
             showLimitPaywall = true
         } catch {
-            generalError = "Errore nella pubblicazione. Riprova."
+            generalError = "Impossibile pubblicare l'offerta. \(BrindooText.retryHint)"
             BrindooLog.error("\(error)")
         }
     }

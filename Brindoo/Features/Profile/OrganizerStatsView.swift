@@ -111,7 +111,7 @@ struct OrganizerStatsView: View {
     @ViewBuilder
     private var footer: some View {
         VStack(alignment: .leading, spacing: BrindooSpacing.xs) {
-            Text("Le statistiche si aggiornano in tempo reale e mostrano gli eventi degli ultimi 30 giorni.")
+            Text("Contano gli ultimi 30 giorni e si aggiornano ogni volta che apri questa pagina.")
                 .font(BrindooFont.caption)
                 .foregroundStyle(Color.brindooTextSecondary)
         }

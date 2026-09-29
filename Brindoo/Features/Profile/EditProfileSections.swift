@@ -188,7 +188,7 @@ struct EditCategoryRow: View {
                         set: { descriptions[category.id] = $0 }
                     )
 
-                    TextField("Descrivi questo servizio (es. matrimoni, eventi corporate...)", text: bindingDesc, axis: .vertical)
+                    TextField("Descrivi questo servizio (es. matrimoni, eventi aziendali…)", text: bindingDesc, axis: .vertical)
                         .lineLimit(2...4)
                         .font(BrindooFont.bodyMedium)
                         .padding(BrindooSpacing.sm)

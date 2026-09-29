@@ -60,7 +60,7 @@ struct ChatComposerView: View {
                 .font(BrindooFont.bodyMedium.monospacedDigit())
                 .foregroundStyle(Color.brindooTextPrimary)
 
-            Text(recorder.isRecording ? "Sto registrando..." : "Pronto da inviare")
+            Text(recorder.isRecording ? "Sto registrando…" : "Pronto da inviare")
                 .font(BrindooFont.caption)
                 .foregroundStyle(Color.brindooTextSecondary)
 
@@ -74,7 +74,7 @@ struct ChatComposerView: View {
                     .foregroundStyle(Color.brindooTextSecondary)
                     .frame(width: 40, height: 40)
             }
-            .accessibilityLabel("Butta la registrazione")
+            .accessibilityLabel("Elimina la registrazione")
 
             Button {
                 BrindooHaptics.impact(.light)

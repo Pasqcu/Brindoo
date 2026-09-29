@@ -312,7 +312,7 @@ struct EditProfileView: View {
                 .foregroundStyle(Color.brindooTextSecondary)
 
             TextField(
-                isOrganizer ? "Presentati: anni di esperienza, stile..." : "Racconta qualcosa di te",
+                isOrganizer ? "Presentati: anni di esperienza, stile…" : "Racconta qualcosa di te",
                 text: $bio,
                 axis: .vertical
             )

@@ -152,7 +152,11 @@ struct DepositSheet: View {
                     .brindooSuccess)
         }
         if proposal.isDepositAwaitingConfirmation {
-            let who = proposal.depositDeclaredBy == me ? "Attendi la conferma dell'altra parte" : "Conferma tu che l'hai versato"
+            // Chi conferma è sempre l'altra parte: il professionista conferma
+            // di averlo ricevuto, il cliente di averlo versato.
+            let who = proposal.depositDeclaredBy == me
+                ? "Attendi la conferma dell'altra parte"
+                : (iCollect ? "Conferma tu di averlo ricevuto" : "Conferma tu di averlo versato")
             return ("clock.fill", "Acconto dichiarato, non confermato", who, .brindooWarning)
         }
         return ("eurosign.circle", "Acconto non ancora registrato",
