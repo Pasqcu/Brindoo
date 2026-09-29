@@ -173,16 +173,9 @@ struct DepositSheet: View {
                 .font(BrindooFont.caption)
                 .foregroundStyle(Color.brindooTextSecondary)
 
-            Button {
+            BrindooButton("Salva il modo di pagamento", style: .secondary, size: .medium, isDisabled: saving) {
                 Task { await saveMethods() }
-            } label: {
-                Text("Salva il modo di pagamento")
-                    .font(BrindooFont.buttonSmall)
-                    .frame(maxWidth: .infinity)
             }
-            .buttonStyle(.bordered)
-            .tint(Color.brindooCoral)
-            .disabled(saving)
         }
     }
 
@@ -240,20 +233,9 @@ struct DepositSheet: View {
                 text: $note
             )
 
-            Button {
+            BrindooButton("Registra acconto", style: .primary, size: .medium, isLoading: saving, isDisabled: !canDeclare && !saving) {
                 Task { await declare() }
-            } label: {
-                if saving {
-                    ProgressView().tint(.white).frame(maxWidth: .infinity)
-                } else {
-                    Text("Registra acconto")
-                        .font(BrindooFont.button)
-                        .frame(maxWidth: .infinity)
-                }
             }
-            .buttonStyle(.borderedProminent)
-            .tint(Color.brindooCoral)
-            .disabled(!canDeclare)
         }
     }
 
@@ -285,20 +267,9 @@ struct DepositSheet: View {
                 .font(BrindooFont.caption)
                 .foregroundStyle(Color.brindooTextSecondary)
 
-            Button {
+            BrindooButton("Confermo, l'acconto è stato versato", style: .primary, size: .medium, icon: BrindooIcon.success, isLoading: saving) {
                 showConfirmDeposit = true
-            } label: {
-                if saving {
-                    ProgressView().tint(.white).frame(maxWidth: .infinity)
-                } else {
-                    Label("Confermo, l'acconto è stato versato", systemImage: BrindooIcon.success)
-                        .font(BrindooFont.button)
-                        .frame(maxWidth: .infinity)
-                }
             }
-            .buttonStyle(.borderedProminent)
-            .tint(Color.brindooSuccess)
-            .disabled(saving)
 
             Button("Non risulta: annulla la registrazione") {
                 showClearConfirm = true
