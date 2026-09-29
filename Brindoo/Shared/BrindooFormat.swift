@@ -285,12 +285,18 @@ enum BrindooFormat {
     }()
 
     /// "2 g fa" — forma breve per card e righe compatte.
-    static func timeAgoShort(_ date: Date) -> String {
-        relativeAbbrev.localizedString(for: date, relativeTo: Date())
+    static func timeAgoShort(_ date: Date, now: Date = Date()) -> String {
+        isJustNow(date, now: now) ? "adesso" : relativeAbbrev.localizedString(for: date, relativeTo: now)
     }
 
     /// "2 giorni fa" — forma estesa.
-    static func timeAgo(_ date: Date) -> String {
-        relativeFull.localizedString(for: date, relativeTo: Date())
+    static func timeAgo(_ date: Date, now: Date = Date()) -> String {
+        isJustNow(date, now: now) ? "adesso" : relativeFull.localizedString(for: date, relativeTo: now)
+    }
+
+    /// Meno di un minuto (anche di poco nel futuro, per orologi non allineati
+    /// col server): "adesso" invece di "8 s fa" o "tra 0 s".
+    private static func isJustNow(_ date: Date, now: Date) -> Bool {
+        abs(now.timeIntervalSince(date)) < 60
     }
 }

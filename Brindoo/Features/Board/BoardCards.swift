@@ -99,25 +99,34 @@ struct OrganizerWithOffersCard: View {
                         if organizer.identityVerified {
                             VerifiedCheckIcon()
                         }
-                        if let rating, rating.reviewCount > 0 {
-                            HStack(spacing: 2) {
-                                Image(systemName: BrindooIcon.starFilled).font(.system(size: 10))
-                                Text(BrindooFormat.rating(rating.avgRating))
-                                    .font(BrindooFont.scaled(11, weight: .bold, relativeTo: .caption1))
-                            }
-                            .foregroundStyle(Color.brindooWarning)
-                        }
                     }
 
-                    if let city = organizer.city, !city.isEmpty {
-                        HStack(spacing: 4) {
-                            Image(systemName: BrindooIcon.location)
-                                .font(.system(size: 11))
-                            Text(city)
-                                .font(BrindooFont.caption)
-                                .lineLimit(1)
+                    // Il voto sta sulla riga della città, come nella vetrina:
+                    // accanto al nome, con badge e prezzo, lo troncava a
+                    // poche lettere ("Giulia…").
+                    if organizer.city?.isEmpty == false || (rating?.reviewCount ?? 0) > 0 {
+                        HStack(spacing: BrindooSpacing.xs) {
+                            if let city = organizer.city, !city.isEmpty {
+                                HStack(spacing: 4) {
+                                    Image(systemName: BrindooIcon.location)
+                                        .font(.system(size: 11))
+                                    Text(city)
+                                        .font(BrindooFont.caption)
+                                        .lineLimit(1)
+                                }
+                                .foregroundStyle(Color.brindooTextSecondary)
+                            }
+                            if let rating, rating.reviewCount > 0 {
+                                HStack(spacing: 2) {
+                                    Image(systemName: BrindooIcon.starFilled).font(.system(size: 10))
+                                    Text(BrindooFormat.rating(rating.avgRating))
+                                        .font(BrindooFont.scaled(11, weight: .bold, relativeTo: .caption1))
+                                }
+                                .foregroundStyle(Color.brindooWarning)
+                                .accessibilityElement(children: .ignore)
+                                .accessibilityLabel("Valutazione \(BrindooFormat.rating(rating.avgRating))")
+                            }
                         }
-                        .foregroundStyle(Color.brindooTextSecondary)
                     }
 
                     // In vacanza le offerte non si vedono: la card dice perché.

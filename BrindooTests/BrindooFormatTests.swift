@@ -122,6 +122,22 @@ final class BrindooInitialsTests: XCTestCase {
     }
 }
 
+// MARK: - Tempo trascorso
+
+final class BrindooTimeAgoTests: XCTestCase {
+
+    func test_menoDiUnMinuto_adesso() {
+        let now = Date()
+        XCTAssertEqual(BrindooFormat.timeAgoShort(now.addingTimeInterval(-8), now: now), "adesso")
+        XCTAssertEqual(BrindooFormat.timeAgo(now.addingTimeInterval(2), now: now), "adesso")
+    }
+
+    func test_oltreUnMinuto_formaRelativa() {
+        let now = Date()
+        XCTAssertNotEqual(BrindooFormat.timeAgoShort(now.addingTimeInterval(-3600), now: now), "adesso")
+    }
+}
+
 // MARK: - Voto medio
 
 final class BrindooRatingFormatTests: XCTestCase {
