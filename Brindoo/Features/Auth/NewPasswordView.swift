@@ -22,6 +22,7 @@ struct NewPasswordView: View {
     @State private var confirmError: String?
     @State private var generalError: String?
     @State private var isSaving = false
+    @FocusState private var confirmFocused: Bool
 
     private var validation: PasswordValidation {
         AuthService.shared.validatePassword(password)
@@ -70,7 +71,9 @@ struct NewPasswordView: View {
                 autocapitalization: .never,
                 errorMessage: passwordError,
                 isDisabled: isSaving,
-                showPasswordToggle: true
+                showPasswordToggle: true,
+                submitLabel: .next,
+                onSubmit: { confirmFocused = true }
             )
 
             if !password.isEmpty {
@@ -87,8 +90,15 @@ struct NewPasswordView: View {
                 autocapitalization: .never,
                 errorMessage: confirmError,
                 isDisabled: isSaving,
-                showPasswordToggle: true
+                showPasswordToggle: true,
+                submitLabel: .done,
+                onSubmit: {
+                    if !password.isEmpty && !confirmPassword.isEmpty && !isSaving {
+                        Task { await save() }
+                    }
+                }
             )
+            .focused($confirmFocused)
 
             if let generalError {
                 BrindooInlineError(generalError)
