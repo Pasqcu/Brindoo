@@ -13,6 +13,7 @@
 //
 
 import Foundation
+import Supabase
 
 /// Le cose che un servizio si rifiuta di fare, dette in italiano.
 ///
@@ -47,12 +48,24 @@ nonisolated enum BrindooErrorText {
         if let rule = serverRule(error) {
             return rule
         }
+        // Gli errori delle librerie Supabase portano il testo del server: quelli
+        // nativi di Postgres, Storage e Auth sono in inglese ("new row violates
+        // row-level security policy"...). Le nostre regole sono già tradotte
+        // sopra; per il resto vale la frase della schermata.
+        if isSupabaseError(error) {
+            return fallback
+        }
         if let localized = error as? LocalizedError,
            let description = localized.errorDescription,
            !description.isEmpty {
             return description
         }
         return fallback
+    }
+
+    static func isSupabaseError(_ error: Error) -> Bool {
+        error is PostgrestError || error is StorageError
+            || error is FunctionsError || error is AuthError
     }
 
     /// Rifiuti delle regole del database (trigger `brindoo_guard_*`,
@@ -75,6 +88,12 @@ nonisolated enum BrindooErrorText {
         ("non puoi usare il tuo codice", "Non puoi usare il tuo stesso codice."),
         ("30 giorni dall", "Il codice invito si usa entro 30 giorni dall'iscrizione."),
         ("Puoi rispondere solo", "Puoi rispondere solo alle recensioni che hai ricevuto."),
+        ("Appuntamento chiuso", "Questo appuntamento è chiuso: la data non si può più spostare."),
+        ("Portfolio pieno", "Il portfolio è pieno: elimina qualche foto o video per aggiungerne altri."),
+        ("La conferma dell'acconto", "L'acconto lo conferma l'altra parte, non chi lo ha registrato."),
+        ("La tua proposta si ritira", "La tua proposta puoi ritirarla, non rifiutarla."),
+        ("tua stessa proposta", "Non puoi accettare una proposta fatta da te."),
+        ("supera i 1000 caratteri", "La risposta può avere al massimo 1000 caratteri."),
     ]
 
     /// Vero se l'errore è "non c'è linea" e non un problema dell'app.
