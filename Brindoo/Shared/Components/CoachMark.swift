@@ -108,25 +108,33 @@ struct CoachMarkOverlay: View {
 }
 
 extension View {
-    /// Mostra un coach mark una sola volta. Si attiva al primo `task`.
-    func coachMark(_ id: CoachMarkID, content: CoachMarkContent) -> some View {
-        modifier(CoachMarkModifier(id: id, content: content))
+    /// Mostra un coach mark una sola volta. Si attiva al primo `task`;
+    /// con `deferredWhile` vero aspetta (es. finché c'è sopra un altro foglio).
+    func coachMark(_ id: CoachMarkID, content: CoachMarkContent, deferredWhile isDeferred: Bool = false) -> some View {
+        modifier(CoachMarkModifier(id: id, content: content, isDeferred: isDeferred))
     }
 }
 
 private struct CoachMarkModifier: ViewModifier {
     let id: CoachMarkID
     let content: CoachMarkContent
+    let isDeferred: Bool
     @State private var isVisible: Bool = false
 
     func body(content body: Content) -> some View {
         body.overlay {
             CoachMarkOverlay(id: id, content: content, isVisible: $isVisible)
         }
-        .task {
+        .task(id: isDeferred) {
+            // Un foglio arrivato dopo (es. il benvenuto) lo rimanda: senza
+            // segnarlo come visto, così ricompare quando il foglio si chiude.
+            guard !isDeferred else {
+                isVisible = false
+                return
+            }
             // Aspetta che la view sia disegnata prima di mostrare
             try? await Task.sleep(for: .milliseconds(600))
-            if !CoachMarkTracker.shared.hasSeen(id) {
+            if !Task.isCancelled && !CoachMarkTracker.shared.hasSeen(id) {
                 withAnimation { isVisible = true }
             }
         }

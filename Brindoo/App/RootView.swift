@@ -20,6 +20,8 @@ struct RootView: View {
 
     @State private var hasAskedForNotifications = false
     @State private var showNotificationPrePrompt = false
+    /// La spiegazione è dovuta ma aspetta il suo turno (vedi `canShowPrePrompt`).
+    @State private var wantsNotificationPrePrompt = false
 
     /// La schermata di avvio si toglie da sola: resta finché la prima schermata
     /// non ha i suoi dati e finché la sua animazione di uscita non è finita.
@@ -119,7 +121,13 @@ struct RootView: View {
         // Qualunque uscita dal foglio porta al dialogo di sistema, dove si
         // sceglie davvero: le regole di Apple (5.1.1) non ammettono una
         // spiegazione che si chiuda con "Non adesso" saltando la domanda.
+        .onChange(of: canShowPrePrompt, initial: true) { _, canShow in
+            guard canShow, launchGate.claimLaunchSheet(.notifications) else { return }
+            wantsNotificationPrePrompt = false
+            showNotificationPrePrompt = true
+        }
         .sheet(isPresented: $showNotificationPrePrompt, onDismiss: {
+            launchGate.releaseLaunchSheet(.notifications)
             Task { await NotificationService.shared.requestAuthorization() }
         }) {
             NotificationPrePromptView {
@@ -129,6 +137,15 @@ struct RootView: View {
     }
 
     // MARK: - Permessi notifiche
+
+    /// La spiegazione esce ad app visibile (splash finita, bacheca pronta) e
+    /// solo se non c'è già aperto il benvenuto: quello ha la precedenza.
+    private var canShowPrePrompt: Bool {
+        wantsNotificationPrePrompt
+            && splashFinished
+            && launchGate.isFirstScreenReady
+            && launchGate.launchSheet == nil
+    }
 
     private func preparePushPermissionFlow() async {
         guard !hasAskedForNotifications else { return }
@@ -143,7 +160,7 @@ struct RootView: View {
             // Apple raccomanda di NON mostrare subito il dialog di sistema:
             // un utente informato dà permesso molto più spesso.
             try? await Task.sleep(for: .milliseconds(600))
-            await MainActor.run { showNotificationPrePrompt = true }
+            wantsNotificationPrePrompt = true
 
         case .authorized, .provisional:
             await NotificationService.shared.registerForRemoteNotificationsIfAuthorized()

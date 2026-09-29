@@ -32,6 +32,10 @@ struct BoardView: View {
     @State private var showCompleteProfile: Bool = false
     @AppStorage("brindoo.client.welcomeSeen") private var welcomeSeen: Bool = false
     @State private var showWelcome: Bool = false
+    /// Il benvenuto è dovuto ma aspetta che si liberi il turno dei fogli
+    /// del primo avvio (vedi `AppLaunchGate.launchSheet`).
+    @State private var welcomeWanted: Bool = false
+    @State private var launchGate = AppLaunchGate.shared
     @State private var showFilters: Bool = false
     @State private var showClientRequests: Bool = false
     /// Barra filtri ridotta: si attiva quando l'utente scorre la bacheca.
@@ -213,7 +217,13 @@ struct BoardView: View {
             }
             // Chiuso anche col trascinamento, il benvenuto conta come visto:
             // prima tornava a ogni avvio finché non si toccava "Salta".
-            .sheet(isPresented: $showWelcome, onDismiss: { welcomeSeen = true }) {
+            .onChange(of: launchGate.launchSheet == nil) { _, isFree in
+                if isFree { presentWelcomeIfPossible() }
+            }
+            .sheet(isPresented: $showWelcome, onDismiss: {
+                welcomeSeen = true
+                launchGate.releaseLaunchSheet(.welcome)
+            }) {
                 ClientWelcomeSheet(categories: vm.categories) { chosen in
                     welcomeSeen = true
                     if !chosen.isEmpty {
@@ -249,7 +259,9 @@ struct BoardView: View {
                         icon: "tag",
                         title: "Le tue offerte",
                         message: "Pubblica i servizi che offri ai clienti. Tocca il + per crearne una nuova."
-                    )
+                    ),
+                // Dopo i fogli del primo avvio, non sotto.
+                deferredWhile: showWelcome || welcomeWanted || launchGate.launchSheet != nil
             )
     }
 
@@ -482,8 +494,15 @@ struct BoardView: View {
 
         // Primo passo guidato per il cliente (una sola volta).
         if isClient && !clientPreview && !welcomeSeen && !vm.categories.isEmpty {
-            showWelcome = true
+            welcomeWanted = true
+            presentWelcomeIfPossible()
         }
+    }
+
+    private func presentWelcomeIfPossible() {
+        guard welcomeWanted, !showWelcome, launchGate.claimLaunchSheet(.welcome) else { return }
+        welcomeWanted = false
+        showWelcome = true
     }
 
     private func checkOrganizerCategoriesIfNeeded() async { await vm.checkOrganizerCategoriesIfNeeded() }
