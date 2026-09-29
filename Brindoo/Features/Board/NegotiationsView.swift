@@ -328,7 +328,7 @@ struct NegotiationsView: View {
                 Text(offer.title)
                     .font(BrindooFont.bodyMedium.weight(.semibold))
                     .lineLimit(1)
-                Text(other?.fullName ?? "Utente")
+                Text(other?.displayName ?? "Utente")
                     .font(BrindooFont.caption)
                     .foregroundStyle(Color.brindooTextSecondary)
                 // Il professionista vede com'è andata in passato con questo cliente.

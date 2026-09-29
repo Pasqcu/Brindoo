@@ -265,7 +265,7 @@ struct AgendaView: View {
                     .font(BrindooFont.bodyMedium.weight(.semibold))
                     .foregroundStyle(Color.brindooTextPrimary)
                     .lineLimit(1)
-                Text("con \(other?.fullName ?? "utente")")
+                Text("con \(other?.displayName ?? "l'altra parte")")
                     .font(BrindooFont.caption)
                     .foregroundStyle(Color.brindooTextSecondary)
                 HStack(spacing: 3) {

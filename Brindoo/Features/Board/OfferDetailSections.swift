@@ -300,7 +300,7 @@ struct ReceivedProposalsSection: View {
             HStack(spacing: BrindooSpacing.sm) {
                 AvatarView(url: client?.avatarUrl, name: client?.fullName, size: 40)
                 VStack(alignment: .leading, spacing: 2) {
-                    Text(client?.fullName ?? "Cliente")
+                    Text(client?.displayName ?? "Cliente")
                         .font(BrindooFont.bodyMedium.weight(.semibold))
                     Text(proposal.updatedAtDisplay)
                         .font(BrindooFont.caption)
