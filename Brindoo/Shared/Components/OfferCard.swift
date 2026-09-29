@@ -5,7 +5,6 @@
 //  Card di un'offerta di servizio. Mostra:
 //  - intestazione organizzatore (opzionale, lato cliente)
 //  - titolo, descrizione, categorie, copertura, prezzo
-//  - eventuale badge della trattativa attiva del cliente
 //
 
 import SwiftUI
@@ -15,22 +14,6 @@ struct OfferCard: View {
     let categories: [ServiceCategory]
     let organizer: Profile?
     let showOrganizer: Bool
-    /// Trattativa attiva del cliente corrente su questa offerta (se esiste).
-    let activeProposal: OfferProposal?
-
-    init(
-        offer: ServiceOffer,
-        categories: [ServiceCategory],
-        organizer: Profile?,
-        showOrganizer: Bool,
-        activeProposal: OfferProposal? = nil
-    ) {
-        self.offer = offer
-        self.categories = categories
-        self.organizer = organizer
-        self.showOrganizer = showOrganizer
-        self.activeProposal = activeProposal
-    }
 
     var body: some View {
         VStack(alignment: .leading, spacing: BrindooSpacing.sm) {
@@ -143,55 +126,13 @@ struct OfferCard: View {
                     .foregroundStyle(Color.brindooCoral)
             }
             .foregroundStyle(Color.brindooTextSecondary)
-
-            if let proposal = activeProposal {
-                proposalBadge(proposal)
-            }
         }
         .padding(BrindooSpacing.md)
         .brindooSurfaceBackground()
         .overlay(
             RoundedRectangle(cornerRadius: BrindooRadius.md)
-                .strokeBorder(
-                    activeProposal != nil ? Color.brindooCoral.opacity(0.4) : Color.brindooBorder,
-                    lineWidth: activeProposal != nil ? 1.5 : 1
-                )
+                .strokeBorder(Color.brindooBorder, lineWidth: 1)
         )
-    }
-
-    @ViewBuilder
-    private func proposalBadge(_ proposal: OfferProposal) -> some View {
-        let userIsClient = true
-        let waitingForMe = proposal.lastProposer == .organizer && userIsClient
-        let label: String = {
-            switch proposal.status {
-            case .accepted: return "Accettata"
-            case .rejected: return "Rifiutata"
-            case .withdrawn: return "Ritirata"
-            case .pending:
-                return waitingForMe
-                    ? "Controproposta del professionista"
-                    : "Tua proposta in attesa"
-            }
-        }()
-        let color: Color = waitingForMe ? .brindooCoral : .brindooWarning
-
-        HStack(spacing: 6) {
-            Image(systemName: waitingForMe ? "exclamationmark.bubble.fill" : "arrow.left.arrow.right")
-                .font(.system(size: 11, weight: .semibold))
-            VStack(alignment: .leading, spacing: 0) {
-                Text(label)
-                    .font(BrindooFont.caption.weight(.semibold))
-                Text(proposal.currentPriceDisplay)
-                    .font(BrindooFont.scaled(11, relativeTo: .caption1))
-            }
-            Spacer()
-        }
-        .foregroundStyle(color)
-        .padding(.vertical, BrindooSpacing.xxs)
-        .padding(.horizontal, BrindooSpacing.sm)
-        .background(color.opacity(0.1))
-        .clipShape(RoundedRectangle(cornerRadius: BrindooRadius.sm))
     }
 
     private var statusBadge: some View {

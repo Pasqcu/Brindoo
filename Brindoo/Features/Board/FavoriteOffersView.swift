@@ -61,8 +61,7 @@ struct FavoriteOffersView: View {
                             offer: offer,
                             categories: categories[offer.id] ?? [],
                             organizer: organizers[offer.organizerId],
-                            showOrganizer: true,
-                            activeProposal: nil
+                            showOrganizer: true
                         )
                     }
                     .buttonStyle(.plain)
