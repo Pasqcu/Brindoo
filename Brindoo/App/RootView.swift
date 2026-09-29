@@ -283,6 +283,11 @@ struct LoadingView: View {
     @State private var spinnerIn = false
     @State private var pulsing = false
     @State private var breathing = false
+    /// La rete non risponde da un po': lo si dice, invece di lasciare il
+    /// logo muto (con la linea che si pianta si arrivava a un minuto).
+    @State private var isSlow = false
+    private let slowAfter: Duration = .seconds(8)
+    private static let slowMessage = "La connessione è lenta, ancora un momento…"
 
     // Uscita: icona e scritte svaniscono, poi il logo si svuota e la fascia
     // corallo esce dai bordi. Sfondo e logo condividono lo stesso buco.
@@ -350,9 +355,19 @@ struct LoadingView: View {
                     .offset(y: textIn ? 0 : 10)
                     .opacity(textIn ? 1 : 0)
 
-                ProgressView()
-                    .tint(.brindooCoral)
-                    .opacity(spinnerIn ? 1 : 0)
+                VStack(spacing: BrindooSpacing.sm) {
+                    ProgressView()
+                        .tint(.brindooCoral)
+                        .opacity(spinnerIn ? 1 : 0)
+                    if isSlow {
+                        Text(Self.slowMessage)
+                            .font(BrindooFont.bodySmall)
+                            .foregroundStyle(Color.brindooTextSecondary)
+                            .multilineTextAlignment(.center)
+                            .padding(.horizontal, BrindooSpacing.xl)
+                            .transition(.opacity)
+                    }
+                }
             }
             // Si aggancia il bordo alto (non il centro) sotto al logo: con il
             // testo più grande la scritta cresceva anche verso l'alto e
@@ -362,10 +377,15 @@ struct LoadingView: View {
             .opacity(contentOut ? 0 : 1)
         }
         .accessibilityElement(children: .combine)
-        .accessibilityLabel("Brindoo, caricamento in corso")
+        .accessibilityLabel(isSlow ? "Brindoo, caricamento in corso. \(Self.slowMessage)" : "Brindoo, caricamento in corso")
         .onAppear {
             appearedAt = Date()
             startEntrance()
+        }
+        .task {
+            try? await Task.sleep(for: slowAfter)
+            guard !Task.isCancelled, !isReady else { return }
+            withAnimation(BrindooAnimation.standardEase) { isSlow = true }
         }
         .task(id: isReady) {
             guard isReady else { return }
