@@ -512,9 +512,17 @@ struct ReplyToReviewSheet: View {
         }
     }
 
+    /// Stesso tetto del server (brindoo_reply_to_review): detto prima,
+    /// invece di un "non riuscito" generico dopo l'invio.
+    private static let maxReplyLength = 1000
+
     private func submit() async {
         guard !ContentFilter.containsBlockedWords(text) else {
             error = ContentFilter.message
+            return
+        }
+        guard text.trimmingCharacters(in: .whitespacesAndNewlines).count <= Self.maxReplyLength else {
+            error = "La risposta può avere al massimo \(Self.maxReplyLength) caratteri."
             return
         }
         isLoading = true
