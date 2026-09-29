@@ -19,25 +19,16 @@ struct ChatHeaderView: View {
         Button(action: onTap) {
             HStack(spacing: BrindooSpacing.xs) {
                 AvatarView(url: user.avatarUrl, name: user.fullName, size: 34)
-                VStack(alignment: .leading, spacing: 0) {
-                    HStack(spacing: 4) {
-                        Text(user.displayName)
-                            .font(BrindooFont.bodyMedium.weight(.semibold))
-                            .foregroundStyle(Color.brindooTextPrimary)
-                            .lineLimit(1)
-                        if user.showsProBadge {
-                            Image(systemName: BrindooIcon.crown)
-                                .font(.system(size: 11, weight: .bold))
-                                .foregroundStyle(Color.brindooProGold)
-                        }
-                        if user.identityVerified {
-                            VerifiedCheckIcon(size: 11)
-                        }
-                    }
+                HStack(spacing: 4) {
+                    Text(user.displayName)
+                        .font(BrindooFont.bodyMedium.weight(.semibold))
+                        .foregroundStyle(Color.brindooTextPrimary)
+                        .lineLimit(1)
                     if user.showsProBadge {
-                        Text("Pro")
-                            .font(BrindooFont.caption)
-                            .foregroundStyle(Color.brindooCoral)
+                        ProBadge()
+                    }
+                    if user.identityVerified {
+                        VerifiedCheckIcon(size: 11)
                     }
                 }
             }

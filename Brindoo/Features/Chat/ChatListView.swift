@@ -359,9 +359,7 @@ struct ChatListRow: View {
                         .lineLimit(1)
 
                     if otherUser.showsProBadge {
-                        Image(systemName: BrindooIcon.badge)
-                            .font(.system(size: 13))
-                            .foregroundStyle(Color.brindooCoral)
+                        ProBadge()
                     }
 
                     Spacer()

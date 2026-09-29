@@ -45,7 +45,7 @@ enum ProBenefits {
         ProBenefit(
             icon: "checkmark.seal.fill",
             title: "Badge Pro",
-            description: "Sigillo di trust accanto al tuo nome ovunque"
+            description: "Il segno PRO accanto al tuo nome, ovunque"
         ),
         ProBenefit(
             icon: "infinity",

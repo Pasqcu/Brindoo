@@ -73,9 +73,7 @@ struct OfferCard: View {
                                 .font(BrindooFont.bodyMedium.weight(.semibold))
                                 .lineLimit(1)
                             if organizer.showsProBadge {
-                                Image(systemName: BrindooIcon.badge)
-                                    .font(.system(size: 11))
-                                    .foregroundStyle(Color.brindooCoral)
+                                ProBadge()
                             }
                             if organizer.identityVerified {
                                 VerifiedCheckIcon(size: 11)

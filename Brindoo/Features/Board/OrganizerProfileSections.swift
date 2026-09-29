@@ -20,8 +20,7 @@ struct OrganizerTitleSection: View {
                 Text(organizer.displayName)
                     .font(BrindooFont.titleLarge)
                 if organizer.showsProBadge {
-                    Image(systemName: BrindooIcon.badge)
-                        .foregroundStyle(Color.brindooCoral)
+                    ProBadge()
                 }
             }
 

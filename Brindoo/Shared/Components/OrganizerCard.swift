@@ -123,5 +123,7 @@ struct ProBadge: View {
         .background(BrindooGradient.pro)
         .clipShape(Capsule())
         .shadow(color: Color.brindooProGoldDeep.opacity(0.4), radius: 3, x: 0, y: 1)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel("Brindoo Pro")
     }
 }

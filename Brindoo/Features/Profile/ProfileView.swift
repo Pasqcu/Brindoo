@@ -236,8 +236,7 @@ struct ProfileView: View {
                     Text(profile.displayName)
                         .font(BrindooFont.titleLarge)
                     if profile.showsProBadge {
-                        Image(systemName: BrindooIcon.badge)
-                            .foregroundStyle(Color.brindooCoral)
+                        ProBadge()
                     }
                 }
 

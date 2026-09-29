@@ -68,9 +68,7 @@ struct OfferHeaderSection: View {
                                 Text(profile.displayName)
                                     .font(BrindooFont.bodyMedium.weight(.medium))
                                 if profile.showsProBadge {
-                                    Image(systemName: BrindooIcon.badge)
-                                        .font(.system(size: 11))
-                                        .foregroundStyle(Color.brindooCoral)
+                                    ProBadge()
                                 }
                                 if profile.identityVerified {
                                     VerifiedCheckIcon(size: 11)
