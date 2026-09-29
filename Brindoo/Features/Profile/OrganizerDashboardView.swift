@@ -250,13 +250,15 @@ struct OrganizerDashboardView: View {
             BrindooBanner(
                 style: .warning,
                 title: "Poche trattative chiuse",
-                message: "Prova a personalizzare di più le tue offerte: chi riceve un messaggio dedicato accetta il doppio delle volte."
+                message: "Prova a personalizzare di più le tue offerte e a rispondere presto in chat: un messaggio dedicato convince più di un prezzo."
             )
         } else if s.sentOffers == 0 {
+            // Conta le trattative, non le offerte: chi ha già pubblicato
+            // si sentiva dire "pubblica la tua prima offerta".
             BrindooBanner(
                 style: .info,
-                title: "Pubblica la tua prima offerta",
-                message: "Crea un'offerta dalla bacheca per farti trovare dai clienti."
+                title: "Ancora nessuna trattativa",
+                message: "Quando un cliente ti fa una proposta la trovi qui. Offerte con foto e un profilo completo aiutano a farsi scegliere."
             )
         } else if s.reviewsCount >= 3 && s.avgRating >= 4.5 {
             BrindooBanner(

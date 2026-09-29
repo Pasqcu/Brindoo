@@ -40,7 +40,7 @@ struct EventChecklistView: View {
     }
 
     private static let tasks: [ChecklistTask] = [
-        .init(key: "conferma-dettagli", title: "Conferma i dettagli con il professionista", daysBefore: 30),
+        .init(key: "conferma-dettagli", title: "Conferma in chat i dettagli dell'evento", daysBefore: 30),
         .init(key: "luogo-orari", title: "Ricontrolla luogo e orari", daysBefore: 14),
         .init(key: "ospiti", title: "Conferma il numero di ospiti", daysBefore: 7),
         .init(key: "acconto", title: "Accordati su acconto e pagamento", daysBefore: 7),

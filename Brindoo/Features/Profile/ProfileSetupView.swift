@@ -117,7 +117,7 @@ struct ProfileSetupView: View {
                     .font(BrindooFont.displayMedium)
                     .foregroundStyle(Color.brindooTextPrimary)
 
-                Text("Potrai cambiare scelta in qualsiasi momento dalle impostazioni")
+                Text("Da cliente potrai diventare professionista quando vuoi, dalle Impostazioni")
                     .font(BrindooFont.bodyLarge)
                     .foregroundStyle(Color.brindooTextSecondary)
             }

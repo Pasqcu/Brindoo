@@ -23,13 +23,13 @@ struct HelpView: View {
         FAQ(q: "Come funziona la trattativa?",
             a: "Sull'offerta puoi accettare il prezzo o fare una proposta. Il professionista può accettare, rifiutare o fare una controproposta. Quando vi accordate, l'appuntamento è confermato."),
         FAQ(q: "Le recensioni sono affidabili?",
-            a: "Sì: si può recensire solo dopo una trattativa realmente conclusa. Le recensioni verificate hanno un apposito contrassegno."),
+            a: "Sì: si può recensire un professionista solo dopo un evento davvero svolto con lui, non basta l'accordo. Queste recensioni hanno il contrassegno «Verificata»."),
         FAQ(q: "Come divento professionista?",
-            a: "Dal tuo profilo tocca «Diventa Professionista», completa categorie, descrizione e aree di copertura, poi pubblica la tua prima offerta."),
+            a: "Da Profilo → Impostazioni tocca «Diventa Professionista», completa categorie, descrizione e aree di copertura, poi pubblica la tua prima offerta."),
         FAQ(q: "Cos'è Brindoo Pro?",
             a: "È l'abbonamento di Brindoo, e cambia con quello che fai. Da professionista: offerte illimitate, priorità in bacheca, statistiche, modalità vacanza e portfolio ampliato. Da cliente: richieste aperte illimitate e le tue richieste in cima a quelle che i professionisti sfogliano."),
         FAQ(q: "Come segnalo un utente o un contenuto?",
-            a: "Apri il profilo, l'offerta o la chat, tocca il menu «…» e scegli «Segnala». Le segnalazioni vengono esaminate dal nostro team.")
+            a: "Apri il profilo, l'offerta, la richiesta o la chat e tocca «…» → «Segnala». Un messaggio si segnala tenendolo premuto, una recensione dal suo «…». Il nostro team esamina ogni segnalazione entro 24 ore.")
     ]
 
     var body: some View {

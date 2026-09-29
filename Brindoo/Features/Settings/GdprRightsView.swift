@@ -34,7 +34,7 @@ struct GdprRightsView: View {
         Right(icon: "trash", title: "Cancellazione",
               text: "Da Impostazioni → Elimina account rimuovi profilo, foto e contenuti. L'operazione è definitiva."),
         Right(icon: "hand.raised", title: "Opposizione e limitazione",
-              text: "Puoi bloccare utenti, disattivare le ricevute di lettura e gestire le notifiche dalle impostazioni di iPhone."),
+              text: "Da Profilo → Impostazioni puoi bloccare utenti, disattivare le conferme di lettura e scegliere quali notifiche ricevere."),
         Right(icon: "building.columns", title: "Reclamo",
               text: "Se ritieni che i tuoi dati siano trattati in modo scorretto puoi rivolgerti al Garante per la protezione dei dati personali (gpdp.it).")
     ]
