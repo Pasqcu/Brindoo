@@ -190,7 +190,7 @@ struct OrganizerDashboardView: View {
             // che manca, e va scritto che manca.
             BrindooStatTile(
                 icon: BrindooIcon.starFilled,
-                value: s.reviewsCount > 0 ? String(format: "%.1f", s.avgRating) : "—",
+                value: s.reviewsCount > 0 ? BrindooFormat.rating(s.avgRating) : "—",
                 label: s.reviewsCount > 0 ? "\(s.reviewsCount) recensioni" : "Nessuna recensione",
                 tint: .brindooWarning
             )

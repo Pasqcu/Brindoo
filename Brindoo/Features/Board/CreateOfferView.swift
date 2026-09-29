@@ -26,7 +26,7 @@ struct CreateOfferView: View {
     init(template: ServiceOffer? = nil, templateCategoryIds: [UUID] = []) {
         _title = State(initialValue: template?.title ?? "")
         _description = State(initialValue: template?.description ?? "")
-        _price = State(initialValue: template.map { String(Int($0.price)) } ?? "")
+        _price = State(initialValue: template.map { BrindooFormat.priceInput($0.price) } ?? "")
         _selectedCategoryIds = State(initialValue: Set(templateCategoryIds))
         _templateImageUrl = State(initialValue: template?.imageUrl)
     }

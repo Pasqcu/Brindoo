@@ -465,7 +465,7 @@ struct ProfileView: View {
 
             HStack(spacing: BrindooSpacing.md) {
                 VStack(spacing: 2) {
-                    Text(String(format: "%.1f", summary.averageRating))
+                    Text(BrindooFormat.rating(summary.averageRating))
                         .font(BrindooFont.displayMedium)
                         .foregroundStyle(Color.brindooCoral)
                     StarRatingView(rating: summary.averageRating, size: 14)

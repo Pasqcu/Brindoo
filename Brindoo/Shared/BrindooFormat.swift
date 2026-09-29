@@ -28,6 +28,32 @@ enum BrindooFormat {
         return euroFormatter.string(from: NSNumber(value: value)) ?? "\(Int(value)) €"
     }
 
+    /// Il prezzo come si riscrive in un campo da modificare: "350" oppure
+    /// "99,50". Niente simbolo né punto delle migliaia, così `price(from:)`
+    /// lo rilegge identico. Prima "Duplica offerta" scriveva `Int(prezzo)`
+    /// e 99,50 € diventava 99 €.
+    static func priceInput(_ value: Double) -> String {
+        value.truncatingRemainder(dividingBy: 1) == 0
+            ? String(Int(value))
+            : String(format: "%.2f", value).replacingOccurrences(of: ".", with: ",")
+    }
+
+    // MARK: - Voto
+
+    private static let ratingFormatter: NumberFormatter = {
+        let f = NumberFormatter()
+        f.locale = Locale(identifier: "it_IT")
+        f.minimumFractionDigits = 1
+        f.maximumFractionDigits = 1
+        return f
+    }()
+
+    /// Media delle recensioni all'italiana, con la virgola: "4,7".
+    /// Prima era "4.7", l'unico numero dell'app scritto all'inglese.
+    static func rating(_ value: Double) -> String {
+        ratingFormatter.string(from: NSNumber(value: value)) ?? String(format: "%.1f", value)
+    }
+
     /// Tetto di buon senso per un servizio per eventi. Non è un limite di
     /// mercato: serve a fermare gli zeri di troppo battuti per sbaglio,
     /// che in trattativa fanno perdere tempo a tutti e due.

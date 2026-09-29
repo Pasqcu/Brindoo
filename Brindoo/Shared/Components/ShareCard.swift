@@ -76,7 +76,7 @@ struct ProfileShareCard: View {
                             Image(systemName: Double(i) < rating.avgRating.rounded() ? "star.fill" : "star")
                                 .font(.system(size: 15))
                         }
-                        Text(String(format: "%.1f", rating.avgRating))
+                        Text(BrindooFormat.rating(rating.avgRating))
                             .font(.system(size: 16, weight: .bold, design: .rounded))
                         Text("(\(rating.reviewCount))")
                             .font(.system(size: 14, weight: .medium, design: .rounded))

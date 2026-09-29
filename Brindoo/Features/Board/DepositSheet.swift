@@ -41,7 +41,7 @@ struct DepositSheet: View {
         self.onChange = onChange
         _depositMethod = State(initialValue: proposal.depositMethod ?? .cash)
         _balanceMethod = State(initialValue: proposal.balanceMethod ?? .cash)
-        _amountText = State(initialValue: proposal.depositAmount.map { String(format: "%.2f", $0).replacingOccurrences(of: ".", with: ",") } ?? "")
+        _amountText = State(initialValue: proposal.depositAmount.map { BrindooFormat.priceInput($0) } ?? "")
         _note = State(initialValue: proposal.depositNote ?? "")
     }
 
@@ -322,7 +322,7 @@ struct DepositSheet: View {
             recapRow("Modo acconto", proposal.depositMethod?.shortLabel ?? "-")
             recapRow("Modo saldo", proposal.balanceMethod?.shortLabel ?? "-")
             if let date = proposal.depositConfirmedAt {
-                recapRow("Confermato il", date.formatted(date: .abbreviated, time: .omitted))
+                recapRow("Confermato il", BrindooFormat.italianDate(from: date))
             }
 
             Button("Annulla la registrazione dell'acconto") {

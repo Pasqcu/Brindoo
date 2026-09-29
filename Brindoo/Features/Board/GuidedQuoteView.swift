@@ -205,7 +205,7 @@ struct GuidedQuoteView: View {
                         HStack(spacing: 3) {
                             Image(systemName: BrindooIcon.starFilled)
                                 .font(.system(size: 9))
-                            Text(String(format: "%.1f", rating.avgRating))
+                            Text(BrindooFormat.rating(rating.avgRating))
                                 .font(BrindooFont.caption.weight(.semibold))
                             Text("(\(rating.reviewCount))")
                                 .font(BrindooFont.caption)

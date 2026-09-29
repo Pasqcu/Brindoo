@@ -102,7 +102,7 @@ struct OrganizerWithOffersCard: View {
                         if let rating, rating.reviewCount > 0 {
                             HStack(spacing: 2) {
                                 Image(systemName: BrindooIcon.starFilled).font(.system(size: 10))
-                                Text(String(format: "%.1f", rating.avgRating))
+                                Text(BrindooFormat.rating(rating.avgRating))
                                     .font(BrindooFont.scaled(11, weight: .bold, relativeTo: .caption1))
                             }
                             .foregroundStyle(Color.brindooWarning)
@@ -308,7 +308,7 @@ struct FeaturedOrganizerCard: View {
                     if let rating, rating.reviewCount > 0 {
                         HStack(spacing: 2) {
                             Image(systemName: BrindooIcon.starFilled).font(.system(size: 9))
-                            Text(String(format: "%.1f", rating.avgRating)).font(BrindooFont.scaled(11, weight: .bold, relativeTo: .caption1))
+                            Text(BrindooFormat.rating(rating.avgRating)).font(BrindooFont.scaled(11, weight: .bold, relativeTo: .caption1))
                         }
                         .foregroundStyle(Color.brindooWarning)
                     }

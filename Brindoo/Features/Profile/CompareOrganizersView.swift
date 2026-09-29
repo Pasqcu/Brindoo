@@ -46,7 +46,7 @@ struct CompareOrganizersView: View {
                                     Image(systemName: BrindooIcon.starFilled)
                                         .font(.system(size: 11))
                                         .foregroundStyle(Color.brindooWarning)
-                                    Text(String(format: "%.1f", rating.avgRating))
+                                    Text(BrindooFormat.rating(rating.avgRating))
                                         .font(BrindooFont.bodyMedium.weight(.semibold))
                                 }
                                 Text("\(rating.reviewCount) recensioni")

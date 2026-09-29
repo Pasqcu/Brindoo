@@ -67,10 +67,10 @@ struct OrganizerRating: Codable, Equatable, Hashable {
         case reviewCount = "review_count"
     }
 
-    /// Stringa formattata: "4.7" oppure "—" se non ci sono recensioni
+    /// Stringa formattata: "4,7" oppure "—" se non ci sono recensioni
     var displayRating: String {
         guard reviewCount > 0 else { return "—" }
-        return String(format: "%.1f", avgRating)
+        return BrindooFormat.rating(avgRating)
     }
 
     /// "12 recensioni" / "1 recensione" / "Nessuna recensione"

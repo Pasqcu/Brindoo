@@ -121,3 +121,39 @@ final class BrindooInitialsTests: XCTestCase {
         XCTAssertEqual(BrindooText.initials(from: "anna verdi"), "AV")
     }
 }
+
+// MARK: - Voto medio
+
+final class BrindooRatingFormatTests: XCTestCase {
+
+    func test_voto_conLaVirgola() {
+        XCTAssertEqual(BrindooFormat.rating(4.7), "4,7")
+    }
+
+    func test_voto_intero_mostraComunqueIlDecimale() {
+        XCTAssertEqual(BrindooFormat.rating(5), "5,0")
+    }
+
+    func test_voto_arrotondatoAUnaCifra() {
+        XCTAssertEqual(BrindooFormat.rating(4.66), "4,7")
+    }
+}
+
+// MARK: - Prezzo da riscrivere in un campo
+
+final class BrindooPriceInputTests: XCTestCase {
+
+    func test_intero_senzaDecimali() {
+        XCTAssertEqual(BrindooFormat.priceInput(350), "350")
+    }
+
+    func test_conCentesimi_restanoTutti() {
+        XCTAssertEqual(BrindooFormat.priceInput(99.5), "99,50")
+    }
+
+    func test_andataERitorno_stessoPrezzo() {
+        for value in [99.5, 1200, 0.99, 450.25] {
+            XCTAssertEqual(BrindooFormat.price(from: BrindooFormat.priceInput(value)), value)
+        }
+    }
+}

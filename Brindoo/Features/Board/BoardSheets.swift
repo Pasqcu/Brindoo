@@ -183,7 +183,7 @@ struct BoardFiltersSheet: View {
                             Text("Prezzo massimo")
                                 .font(BrindooFont.titleSmall)
                             Spacer()
-                            Text(maxPrice > 0 ? "€\(Int(maxPrice))" : "Nessun limite")
+                            Text(maxPrice > 0 ? BrindooFormat.euro(maxPrice) : "Nessun limite")
                                 .font(BrindooFont.bodyMedium.weight(.semibold))
                                 .foregroundStyle(Color.brindooCoral)
                         }
