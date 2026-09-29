@@ -43,7 +43,9 @@ struct OfferPackagesEditor: View {
                             .font(BrindooFont.bodyMedium)
                         TextField("€", text: $package.price)
                             .font(BrindooFont.bodyMedium)
-                            .keyboardType(.numberPad)
+                            // Come ogni altro prezzo dell'app: con la virgola
+                            // per i centesimi, che il tastierino numerico non ha.
+                            .keyboardType(.decimalPad)
                             .frame(width: 80)
                             .multilineTextAlignment(.trailing)
                         Button {
@@ -51,7 +53,10 @@ struct OfferPackagesEditor: View {
                         } label: {
                             Image(systemName: "xmark.circle.fill")
                                 .foregroundStyle(Color.brindooTextSecondary)
+                                .frame(width: BrindooLayout.minimumTapTarget, height: BrindooLayout.minimumTapTarget)
+                                .contentShape(Rectangle())
                         }
+                        .buttonStyle(.plain)
                         .disabled(isDisabled)
                         .accessibilityLabel("Rimuovi pacchetto")
                     }

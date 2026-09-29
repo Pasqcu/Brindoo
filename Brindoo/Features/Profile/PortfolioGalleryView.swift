@@ -116,6 +116,16 @@ struct PortfolioGalleryView: View {
         .sheet(isPresented: $showPaywallSheet) {
             PaywallView()
         }
+        // Caricamenti ed eliminazioni falliti: prima il messaggio veniva
+        // preparato ma nessuna vista lo mostrava.
+        .alert(
+            "Non riuscito",
+            isPresented: Binding(get: { errorMessage != nil }, set: { if !$0 { errorMessage = nil } })
+        ) {
+            Button("OK", role: .cancel) { errorMessage = nil }
+        } message: {
+            Text(errorMessage ?? "")
+        }
     }
     
     // MARK: - Empty
@@ -276,8 +286,11 @@ struct PortfolioGalleryView: View {
                             .font(.system(size: 12, weight: .bold))
                             .foregroundStyle(.white)
                     }
+                    .frame(width: BrindooLayout.minimumTapTarget, height: BrindooLayout.minimumTapTarget)
+                    .contentShape(Rectangle())
                 }
-                .padding(6)
+                .buttonStyle(.plain)
+                .accessibilityLabel(item.isVideo ? "Elimina video" : "Elimina foto")
             }
         }
         .frame(width: size, height: size)
@@ -315,6 +328,7 @@ struct PortfolioGalleryView: View {
     }
     
     private func uploadSelectedPhotos(_ pickerItems: [PhotosPickerItem]) async {
+        errorMessage = nil
         isUploading = true
         defer {
             isUploading = false

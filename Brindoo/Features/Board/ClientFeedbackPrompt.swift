@@ -55,7 +55,7 @@ struct ClientFeedbackPrompt: View {
                             .foregroundStyle(outcome == .honored ? Color.brindooSuccess : Color.brindooTextPrimary)
                             .padding(.horizontal, BrindooSpacing.sm)
                             .padding(.vertical, BrindooSpacing.xs)
-                            .frame(maxWidth: .infinity)
+                            .frame(maxWidth: .infinity, minHeight: BrindooLayout.minimumTapTarget)
                             .background(Color.brindooSurfaceElevated)
                             .clipShape(RoundedRectangle(cornerRadius: BrindooRadius.sm))
                         }
