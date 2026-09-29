@@ -287,6 +287,8 @@ struct GuidedQuoteView: View {
                 let onVacation = Set(profiles.filter { $0.isOnVacation(on: eventDate) }.map(\.id))
                 offers.removeAll { onVacation.contains($0.organizerId) }
             }
+            // Come in bacheca: chi è bloccato (in un senso o nell'altro) non compare.
+            offers.removeAll { BlockService.shared.isBlockingOrBlocked($0.organizerId) }
 
             if let max = BrindooFormat.price(from: budget) {
                 offers.removeAll { $0.price > max }

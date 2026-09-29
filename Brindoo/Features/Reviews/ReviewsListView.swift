@@ -429,7 +429,10 @@ struct ReviewsListView: View {
 
         do {
             self.rating = try await ratingTask
+            // Chi è bloccato (in un senso o nell'altro) non si vede, come
+            // promettono i Termini: il voto medio resta quello del server.
             self.reviews = try await reviewsTask
+                .filter { !BlockService.shared.isBlockingOrBlocked($0.clientId) }
             self.myReview = try await myReviewTask
 
             // Verifica se il cliente può lasciare una recensione (trattativa conclusa).
