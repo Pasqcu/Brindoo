@@ -19,6 +19,10 @@ struct SignUpView: View {
     @AppStorage("brindoo.legal.acceptedTermsAt") private var acceptedTermsAt: String = ""
     @State private var legalDocument: LegalDocument?
 
+    /// Invio sulla tastiera: email → password → conferma → crea account.
+    private enum Field { case password, confirm }
+    @FocusState private var focusedField: Field?
+
     private var acceptedTermsAndAge: Bool {
         !acceptedTermsAt.isEmpty
     }
@@ -122,7 +126,9 @@ struct SignUpView: View {
             BrindooEmailField(
                 text: $email,
                 errorMessage: emailError,
-                isDisabled: isLoading
+                isDisabled: isLoading,
+                submitLabel: .next,
+                onSubmit: { if arePasswordsEnabled { focusedField = .password } }
             )
             
             // Banner che spiega perché le password sono bloccate
@@ -148,8 +154,11 @@ struct SignUpView: View {
                     autocapitalization: .never,
                     errorMessage: passwordError,
                     isDisabled: isLoading || !arePasswordsEnabled,
-                    showPasswordToggle: arePasswordsEnabled
+                    showPasswordToggle: arePasswordsEnabled,
+                    submitLabel: .next,
+                    onSubmit: { focusedField = .confirm }
                 )
+                .focused($focusedField, equals: .password)
                 
                 if !password.isEmpty && arePasswordsEnabled {
                     PasswordStrengthView(validation: passwordValidation)
@@ -166,8 +175,11 @@ struct SignUpView: View {
                 autocapitalization: .never,
                 errorMessage: confirmPasswordError,
                 isDisabled: isLoading || !arePasswordsEnabled,
-                showPasswordToggle: arePasswordsEnabled
+                showPasswordToggle: arePasswordsEnabled,
+                submitLabel: .go,
+                onSubmit: { if canSubmit { Task { await performSignUp() } } }
             )
+            .focused($focusedField, equals: .confirm)
             
             if let generalError {
                 BrindooInlineError(generalError)

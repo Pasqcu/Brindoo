@@ -16,6 +16,9 @@ struct BrindooTextField: View {
     let errorMessage: String?
     let isDisabled: Bool
     let showPasswordToggle: Bool
+    /// Tasto Invio della tastiera ("Avanti", "Vai"...) e cosa fa.
+    let submitLabel: SubmitLabel
+    let onSubmit: (() -> Void)?
     
     @State private var isPasswordVisible: Bool = false
     
@@ -30,7 +33,9 @@ struct BrindooTextField: View {
         autocapitalization: TextInputAutocapitalization = .sentences,
         errorMessage: String? = nil,
         isDisabled: Bool = false,
-        showPasswordToggle: Bool = false
+        showPasswordToggle: Bool = false,
+        submitLabel: SubmitLabel = .return,
+        onSubmit: (() -> Void)? = nil
     ) {
         self.title = title
         self.placeholder = placeholder
@@ -43,6 +48,8 @@ struct BrindooTextField: View {
         self.errorMessage = errorMessage
         self.isDisabled = isDisabled
         self.showPasswordToggle = showPasswordToggle
+        self.submitLabel = submitLabel
+        self.onSubmit = onSubmit
     }
     
     var body: some View {
@@ -73,6 +80,8 @@ struct BrindooTextField: View {
                 .textContentType(textContentType)
                 .textInputAutocapitalization(autocapitalization)
                 .autocorrectionDisabled(shouldDisableAutocorrection)
+                .submitLabel(submitLabel)
+                .onSubmit { onSubmit?() }
                 
                 if showPasswordToggle {
                     Button {
@@ -134,19 +143,25 @@ struct BrindooEmailField: View {
     @Binding var text: String
     let errorMessage: String?
     let isDisabled: Bool
+    let submitLabel: SubmitLabel
+    let onSubmit: (() -> Void)?
 
     init(
         title: String = "Email",
         placeholder: String = "tuo@email.it",
         text: Binding<String>,
         errorMessage: String? = nil,
-        isDisabled: Bool = false
+        isDisabled: Bool = false,
+        submitLabel: SubmitLabel = .return,
+        onSubmit: (() -> Void)? = nil
     ) {
         self.title = title
         self.placeholder = placeholder
         self._text = text
         self.errorMessage = errorMessage
         self.isDisabled = isDisabled
+        self.submitLabel = submitLabel
+        self.onSubmit = onSubmit
     }
 
     var body: some View {
@@ -159,7 +174,9 @@ struct BrindooEmailField: View {
             textContentType: .emailAddress,
             autocapitalization: .never,
             errorMessage: errorMessage,
-            isDisabled: isDisabled
+            isDisabled: isDisabled,
+            submitLabel: submitLabel,
+            onSubmit: onSubmit
         )
     }
 }

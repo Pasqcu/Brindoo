@@ -19,6 +19,7 @@ struct LoginView: View {
     @State private var navigateToSignUp: Bool = false
 
     @State private var legalDocument: LegalDocument?
+    @FocusState private var passwordFocused: Bool
 
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
 
@@ -67,10 +68,14 @@ struct LoginView: View {
                 }
 
                 VStack(spacing: BrindooSpacing.sm) {
+                    // Invio sulla tastiera: dall'email si passa alla password,
+                    // dalla password si accede.
                     BrindooEmailField(
                         text: $email,
                         errorMessage: emailError,
-                        isDisabled: isLoading
+                        isDisabled: isLoading,
+                        submitLabel: .next,
+                        onSubmit: { passwordFocused = true }
                     )
                     
                     BrindooTextField(
@@ -83,8 +88,11 @@ struct LoginView: View {
                         autocapitalization: .never,
                         errorMessage: passwordError,
                         isDisabled: isLoading,
-                        showPasswordToggle: true
+                        showPasswordToggle: true,
+                        submitLabel: .go,
+                        onSubmit: { Task { await performLogin() } }
                     )
+                    .focused($passwordFocused)
                     
                     HStack {
                         Spacer()
@@ -255,7 +263,9 @@ struct ForgotPasswordView: View {
                         BrindooEmailField(
                             text: $email,
                             errorMessage: emailError,
-                            isDisabled: isLoading
+                            isDisabled: isLoading,
+                            submitLabel: .send,
+                            onSubmit: { Task { await sendReset() } }
                         )
                         
                         if let generalError {
