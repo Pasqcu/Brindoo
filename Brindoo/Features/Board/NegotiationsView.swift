@@ -135,7 +135,7 @@ struct NegotiationsView: View {
         BrindooEmptyState(
             icon: "arrow.left.arrow.right",
             title: "Nessuna trattativa",
-            message: "Le proposte e controproposte sulle offerte appariranno qui",
+            message: "Le proposte e le controproposte sulle offerte appariranno qui.",
             actionTitle: "Esplora la bacheca",
             action: { DeepLinkRouter.shared.selectedTab = 0 }
         )

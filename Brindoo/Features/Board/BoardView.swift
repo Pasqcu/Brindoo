@@ -298,8 +298,8 @@ struct BoardView: View {
                 icon: vm.hasActiveFilters ? "magnifyingglass" : "person.2",
                 title: vm.hasActiveFilters ? "Nessun risultato" : "Nessun professionista",
                 subtitle: vm.hasActiveFilters
-                    ? "Nessun professionista con questi filtri"
-                    : "Non ci sono ancora professionisti disponibili",
+                    ? "Nessun professionista con questi filtri."
+                    : "Non ci sono ancora professionisti disponibili.",
                 showClear: vm.hasActiveFilters,
                 onClear: { clearAllFilters() },
                 suggestions: vm.noResultSuggestions,
@@ -324,7 +324,7 @@ struct BoardView: View {
                 BoardEmptyView(
                     icon: "line.3.horizontal.decrease.circle",
                     title: "Nessun risultato",
-                    subtitle: "Nessun profilo rispetta i filtri scelti",
+                    subtitle: "Nessun profilo rispetta i filtri scelti.",
                     showClear: true,
                     onClear: { clearAllFilters() },
                     suggestions: vm.noResultSuggestions,
@@ -418,7 +418,7 @@ struct BoardView: View {
             BrindooEmptyState(
                 icon: "tag",
                 title: "Nessuna offerta",
-                message: "Pubblica la tua prima offerta per farti trovare dai clienti",
+                message: "Pubblica la tua prima offerta per farti trovare dai clienti.",
                 actionTitle: "Crea offerta"
             ) {
                 showCreateOffer = true

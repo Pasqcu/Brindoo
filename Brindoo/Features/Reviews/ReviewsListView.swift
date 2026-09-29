@@ -256,8 +256,8 @@ struct ReviewsListView: View {
             icon: "star",
             title: "Nessuna recensione",
             message: canWriteReview && hasCompletedDeal
-                ? "Sii il primo a recensire questo professionista"
-                : "Le recensioni dei clienti appariranno qui"
+                ? "Scrivi tu la prima recensione per questo professionista."
+                : "Le recensioni dei clienti appariranno qui."
         )
     }
     
