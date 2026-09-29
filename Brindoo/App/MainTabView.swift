@@ -19,6 +19,9 @@ struct MainTabView: View {
     @State private var pendingNegotiations: Int = 0
     @State private var unreadChats: Int = 0
     @State private var linkTarget: LinkTarget?
+    /// Destinazione pronta che aspetta il suo turno fra i fogli automatici.
+    @State private var queuedLinkTarget: LinkTarget?
+    @State private var launchGate = AppLaunchGate.shared
 
     private var isClient: Bool { session.currentProfile?.role == .client }
 
@@ -130,25 +133,34 @@ struct MainTabView: View {
             // mostrata sul profilo pubblico del professionista.
             await ResponseInsightsService.shared.updateIfNeeded(profile: session.currentProfile)
         }
-        .onChange(of: router.pendingProfileId) { _, id in
+        // `initial`: ad app chiusa il link (o il tocco sulla notifica) arriva
+        // prima che questa vista esista. Senza, l'offerta non si apriva e l'id
+        // restava appeso: lo stesso link, riaperto, non faceva più nulla.
+        .onChange(of: router.pendingProfileId, initial: true) { _, id in
             guard let id else { return }
             Task {
                 if let p = try? await ProfileService.shared.fetchProfile(userID: id) {
-                    linkTarget = .profile(p)
+                    queueLink(.profile(p))
                 }
                 router.clearPendingProfile()
             }
         }
-        .onChange(of: router.pendingOfferId) { _, id in
+        .onChange(of: router.pendingOfferId, initial: true) { _, id in
             guard let id else { return }
             Task {
                 if let o = try? await ServiceOfferService.shared.fetchOffer(id: id) {
-                    linkTarget = .offer(o)
+                    queueLink(.offer(o))
                 }
                 router.clearPendingOffer()
             }
         }
-        .sheet(item: $linkTarget) { target in
+        .onChange(of: launchGate.launchSheet == nil && !session.showsLegalGate) { _, isFree in
+            if isFree { presentQueuedLink() }
+        }
+        .sheet(item: $linkTarget, onDismiss: {
+            launchGate.releaseLaunchSheet(.link)
+            presentQueuedLink()
+        }) { target in
             NavigationStack {
                 switch target {
                 case .offer(let offer):
@@ -158,6 +170,20 @@ struct MainTabView: View {
                 }
             }
         }
+    }
+
+    private func queueLink(_ target: LinkTarget) {
+        queuedLinkTarget = target
+        presentQueuedLink()
+    }
+
+    /// Il link si apre appena lo schermo è libero: all'avvio aspetta
+    /// benvenuto, spiegazione delle notifiche e pannelli legali.
+    private func presentQueuedLink() {
+        guard let target = queuedLinkTarget, linkTarget == nil, !session.showsLegalGate,
+              launchGate.claimLaunchSheet(.link) else { return }
+        queuedLinkTarget = nil
+        linkTarget = target
     }
 
     /// Promemoria degli eventi allineati agli accordi, su tutti e due i telefoni.

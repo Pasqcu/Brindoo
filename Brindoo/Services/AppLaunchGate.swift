@@ -23,6 +23,7 @@ final class AppLaunchGate {
     enum LaunchSheet {
         case welcome        // benvenuto del cliente, dalla bacheca
         case notifications  // spiegazione prima del dialogo iOS
+        case link           // offerta o profilo aperti da un link o da una notifica
     }
 
     /// Il foglio del primo avvio aperto adesso. Due insieme non reggono:
