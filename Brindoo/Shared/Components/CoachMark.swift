@@ -59,6 +59,7 @@ struct CoachMarkOverlay: View {
                 Color.black.opacity(0.45)
                     .ignoresSafeArea()
                     .onTapGesture { dismiss() }
+                    .accessibilityHidden(true)
 
                 VStack(spacing: BrindooSpacing.md) {
                     ZStack {
@@ -89,6 +90,10 @@ struct CoachMarkOverlay: View {
                 .background(Color.brindooBackground)
                 .clipShape(RoundedRectangle(cornerRadius: BrindooRadius.lg))
                 .shadow(color: .black.opacity(0.2), radius: 20)
+                // Con VoiceOver il fuoco resta sul suggerimento finché non
+                // si tocca "Ho capito", come per il resto dell'app coperto.
+                .accessibilityElement(children: .contain)
+                .accessibilityAddTraits(.isModal)
                 .padding(.horizontal, BrindooSpacing.xl)
                 .transition(.scale.combined(with: .opacity))
             }

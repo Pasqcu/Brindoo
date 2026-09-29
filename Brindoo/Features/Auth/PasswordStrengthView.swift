@@ -21,6 +21,8 @@ struct PasswordStrengthView: View {
                         .clipShape(Capsule())
                 }
             }
+            // La barra ripete a colori quello che l'elenco dice a parole.
+            .accessibilityHidden(true)
 
             VStack(alignment: .leading, spacing: 4) {
                 requirementRow("Almeno 8 caratteri", met: validation.hasMinLength)
@@ -51,5 +53,9 @@ struct PasswordStrengthView: View {
                 .font(BrindooFont.caption)
                 .foregroundStyle(met ? Color.brindooTextPrimary : Color.brindooTextSecondary)
         }
+        // VoiceOver legge il requisito e se è soddisfatto, non il nome dell'icona.
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(text)
+        .accessibilityValue(met ? "Fatto" : "Da fare")
     }
 }
