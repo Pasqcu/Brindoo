@@ -12,7 +12,7 @@ enum BrindooBannerStyle {
 
     var color: Color {
         switch self {
-        case .info: return .blue
+        case .info: return .brindooInfo
         case .success: return .brindooSuccess
         case .warning: return .brindooWarning
         case .error: return .brindooError

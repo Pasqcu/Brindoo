@@ -45,7 +45,7 @@ struct OrganizerTitleSection: View {
                 .foregroundStyle(.white)
                 .padding(.horizontal, BrindooSpacing.sm)
                 .padding(.vertical, 3)
-                .background(Color.blue)
+                .background(Color.brindooInfoFill)
                 .clipShape(Capsule())
                 .padding(.top, 2)
             }

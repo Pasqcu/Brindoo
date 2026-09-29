@@ -22,7 +22,7 @@ enum BrindooBadgeStyle {
         case .success: return Color.brindooSuccess.opacity(0.15)
         case .warning: return Color.brindooWarning.opacity(0.18)
         case .error:   return Color.brindooError.opacity(0.15)
-        case .info:    return Color.blue.opacity(0.14)
+        case .info:    return Color.brindooInfo.opacity(0.14)
         case .coral:   return Color.brindooCoral.opacity(0.14)
         case .pro:     return Color.brindooProGoldLight.opacity(0.18)
         }
@@ -34,7 +34,7 @@ enum BrindooBadgeStyle {
         case .success: return .brindooSuccess
         case .warning: return .brindooWarning
         case .error:   return .brindooError
-        case .info:    return .blue
+        case .info:    return .brindooInfo
         case .coral:   return .brindooCoral
         case .pro:     return Color.brindooProGoldInk
         }

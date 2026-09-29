@@ -219,7 +219,7 @@ struct OrganizerDashboardView: View {
             let ratio = s.benchmarkMedian > 0 ? s.benchmarkMyAvg / s.benchmarkMedian : 1
             let (verdict, tint): (String, Color) =
                 ratio > 1.1 ? ("sopra la mediana", .brindooWarning)
-                : ratio < 0.9 ? ("sotto la mediana", .blue)
+                : ratio < 0.9 ? ("sotto la mediana", .brindooInfo)
                 : ("in linea col mercato", .brindooSuccess)
 
             VStack(alignment: .leading, spacing: BrindooSpacing.xs) {

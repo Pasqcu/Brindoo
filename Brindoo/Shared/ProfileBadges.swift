@@ -60,7 +60,7 @@ struct VerifiedCheckIcon: View {
     var body: some View {
         Image(systemName: "person.badge.shield.checkmark.fill")
             .font(.system(size: size, weight: .semibold))
-            .foregroundStyle(.blue)
+            .foregroundStyle(Color.brindooInfo)
             .accessibilityLabel(BrindooText.verifiedIdentity)
     }
 }

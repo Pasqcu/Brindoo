@@ -66,6 +66,17 @@ nonisolated extension Color {
             : UIColor(red: 0.14, green: 0.49, blue: 0.32, alpha: 1)
     })
 
+    /// Blu da usare come fondo pieno (ruolo Cliente, identità verificata):
+    /// il blu di sistema dava alla scritta bianca 4:1, sotto la soglia AA.
+    static let brindooInfoFill = Color(red: 0.0, green: 0.40, blue: 0.85)
+
+    /// Blu per testo e icone informative (5,4:1 su bianco; più chiaro sul nero).
+    static let brindooInfo = Color(UIColor { trait in
+        trait.userInterfaceStyle == .dark
+            ? UIColor(red: 0.40, green: 0.68, blue: 1.0, alpha: 1)
+            : UIColor(red: 0.0, green: 0.40, blue: 0.85, alpha: 1)
+    })
+
     /// Sfondo principale dell'app
     static let brindooBackground = Color(.systemBackground)
     

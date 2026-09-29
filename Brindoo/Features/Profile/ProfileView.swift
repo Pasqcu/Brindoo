@@ -266,7 +266,7 @@ struct ProfileView: View {
         .foregroundStyle(.white)
         .padding(.horizontal, BrindooSpacing.sm)
         .padding(.vertical, 4)
-        .background(role == .organizer ? Color.brindooCoralFill : Color.blue)
+        .background(role == .organizer ? Color.brindooCoralFill : Color.brindooInfoFill)
         .clipShape(Capsule())
     }
 
@@ -363,7 +363,7 @@ struct ProfileView: View {
         } label: {
             navLinkRow(
                 icon: "rectangle.stack.badge.person.crop",
-                background: Color.blue,
+                background: Color.brindooInfoFill,
                 title: "Anteprima bacheca",
                 subtitle: "Vedi come ti vedono i clienti che cercano"
             )
