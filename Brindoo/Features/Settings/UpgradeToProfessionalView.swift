@@ -155,7 +155,7 @@ struct UpgradeToProfessionalView: View {
                 .font(.system(size: 18, weight: .semibold))
                 .foregroundStyle(.white)
                 .frame(width: 40, height: 40)
-                .background(Color.brindooCoral)
+                .background(Color.brindooCoralFill)
                 .clipShape(Circle())
 
             VStack(alignment: .leading, spacing: 2) {

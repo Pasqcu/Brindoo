@@ -278,7 +278,7 @@ struct ClientNegotiationSection: View {
 
                         Button { onAccept(proposal) } label: {
                             Label("Accetta", systemImage: "checkmark")
-                                .brindooCompactAction(tint: .brindooSuccess, filled: true)
+                                .brindooCompactAction(tint: .brindooSuccessFill, filled: true)
                         }
                         .buttonStyle(.plain)
                     }

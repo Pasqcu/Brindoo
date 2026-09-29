@@ -21,7 +21,7 @@ struct MessageBubble: View {
     var onReport: (() -> Void)? = nil
     
     private var bubbleColor: Color {
-        isOwn ? Color.brindooCoral : Color.brindooSurface
+        isOwn ? Color.brindooCoralFill : Color.brindooSurface
     }
     
     private var textColor: Color {

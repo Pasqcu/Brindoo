@@ -144,7 +144,7 @@ struct ProfileSetupView: View {
 
                 ZStack {
                     Circle()
-                        .fill(isSelected ? Color.brindooCoral : Color.brindooSurface)
+                        .fill(isSelected ? Color.brindooCoralFill : Color.brindooSurface)
                         .frame(width: 52, height: 52)
 
                     Image(systemName: role.iconName)
@@ -267,7 +267,7 @@ struct ProfileSetupView: View {
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, BrindooSpacing.xs)
                         .foregroundStyle(isSelected ? .white : Color.brindooCoral)
-                        .background(isSelected ? Color.brindooCoral : Color.brindooCoral.opacity(0.1))
+                        .background(isSelected ? Color.brindooCoralFill : Color.brindooCoral.opacity(0.1))
                         .clipShape(RoundedRectangle(cornerRadius: BrindooRadius.sm))
                     }
                     .disabled(isLoading)

@@ -136,7 +136,7 @@ struct BoardInviteCard: View {
                     .font(.system(size: 18, weight: .semibold))
                     .foregroundStyle(.white)
                     .frame(width: 40, height: 40)
-                    .background(Color.brindooCoral)
+                    .background(Color.brindooCoralFill)
                     .clipShape(Circle())
                 VStack(alignment: .leading, spacing: 2) {
                     Text("Conosci un professionista?")
@@ -250,7 +250,7 @@ struct BoardEmptyView: View {
                     .foregroundStyle(.white)
                     .frame(maxWidth: 260)
                     .padding(.vertical, BrindooSpacing.sm)
-                    .background(Color.brindooCoral)
+                    .background(Color.brindooCoralFill)
                     .clipShape(RoundedRectangle(cornerRadius: BrindooRadius.md))
             }
             .padding(.bottom, BrindooSpacing.xl)

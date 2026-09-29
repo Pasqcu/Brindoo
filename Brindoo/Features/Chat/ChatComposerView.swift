@@ -88,7 +88,7 @@ struct ChatComposerView: View {
                     .foregroundStyle(.white)
             }
             .frame(width: 40, height: 40)
-            .background(Color.brindooCoral)
+            .background(Color.brindooCoralFill)
             .clipShape(Circle())
             .accessibilityLabel("Invia il vocale")
         }
@@ -134,7 +134,7 @@ struct ChatComposerView: View {
                         .foregroundStyle(.white)
                 }
                 .frame(width: 40, height: 40)
-                .background(Color.brindooCoral)
+                .background(Color.brindooCoralFill)
                 .clipShape(Circle())
                 .disabled(isSending)
                 .accessibilityLabel("Registra un messaggio vocale")
@@ -152,7 +152,7 @@ struct ChatComposerView: View {
                     }
                 }
                 .frame(width: 40, height: 40)
-                .background(canSend ? Color.brindooCoral : Color.brindooBorder)
+                .background(canSend ? Color.brindooCoralFill : Color.brindooBorder)
                 .clipShape(Circle())
                 .disabled(!canSend || isSending)
                 .brindooPressEffect(isPressed: isSending)

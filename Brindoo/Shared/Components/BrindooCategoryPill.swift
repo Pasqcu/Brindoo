@@ -28,7 +28,7 @@ struct BrindooCategoryPill: View {
         .padding(.horizontal, BrindooSpacing.sm)
         .padding(.vertical, BrindooSpacing.xs)
         .foregroundStyle(isSelected ? .white : Color.brindooCoral)
-        .background(isSelected ? Color.brindooCoral : Color.brindooCoral.opacity(0.1))
+        .background(isSelected ? Color.brindooCoralFill : Color.brindooCoral.opacity(0.1))
         .clipShape(Capsule())
         .accessibilityAddTraits(isSelected ? [.isSelected] : [])
     }

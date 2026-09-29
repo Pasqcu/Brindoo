@@ -156,7 +156,7 @@ struct ReportSheet: View {
                     .foregroundStyle(isSelected ? .white : Color.brindooCoral)
                     .frame(width: 32, height: 32)
                     .background(
-                        isSelected ? Color.brindooCoral : Color.brindooCoral.opacity(0.12)
+                        isSelected ? Color.brindooCoralFill : Color.brindooCoral.opacity(0.12)
                     )
                     .clipShape(Circle())
 

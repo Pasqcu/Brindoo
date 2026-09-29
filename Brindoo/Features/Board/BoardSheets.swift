@@ -98,7 +98,7 @@ struct AreaPickerSheet: View {
                     .font(.system(size: 14, weight: .medium))
                     .foregroundStyle(isOn ? .white : Color.brindooCoral)
                     .frame(width: 28, height: 28)
-                    .background(isOn ? Color.brindooCoral : Color.brindooCoral.opacity(0.1))
+                    .background(isOn ? Color.brindooCoralFill : Color.brindooCoral.opacity(0.1))
                     .clipShape(Circle())
 
                 Text(area.name)

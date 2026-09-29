@@ -399,7 +399,7 @@ struct ChatListRow: View {
                 if unreadCount > 0 {
                     ZStack {
                         Circle()
-                            .fill(Color.brindooCoral)
+                            .fill(Color.brindooCoralFill)
                             .frame(width: 20, height: 20)
                         Text("\(min(unreadCount, 99))")
                             .font(.system(size: 11, weight: .bold))

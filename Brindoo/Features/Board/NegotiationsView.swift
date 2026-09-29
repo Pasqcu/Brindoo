@@ -236,7 +236,7 @@ struct NegotiationsView: View {
                             .font(.system(size: 16, weight: .semibold))
                             .foregroundStyle(.white)
                             .frame(width: 44, height: 44)
-                            .background(Color.brindooCoral)
+                            .background(Color.brindooCoralFill)
                             .clipShape(RoundedRectangle(cornerRadius: BrindooRadius.md))
                     }
                     .buttonStyle(.plain)

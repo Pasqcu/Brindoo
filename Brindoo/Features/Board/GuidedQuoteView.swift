@@ -157,7 +157,7 @@ struct GuidedQuoteView: View {
                 .font(.system(size: 13, weight: .bold, design: .rounded))
                 .foregroundStyle(.white)
                 .frame(width: 22, height: 22)
-                .background(Color.brindooCoral)
+                .background(Color.brindooCoralFill)
                 .clipShape(Circle())
             Text(text)
                 .font(BrindooFont.titleSmall)

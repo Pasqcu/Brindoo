@@ -338,7 +338,7 @@ struct EditProfileView: View {
         .foregroundStyle(.white)
         .padding(.horizontal, BrindooSpacing.md)
         .padding(.vertical, BrindooSpacing.sm)
-        .background(Color.brindooSuccess)
+        .background(Color.brindooSuccessFill)
         .clipShape(Capsule())
         .shadow(color: .black.opacity(0.15), radius: 8, y: 4)
     }

@@ -21,7 +21,7 @@ struct BrindooIconBadge: View {
     /// impostazioni del telefono.
     @ScaledMetric(relativeTo: .body) private var diameter: CGFloat = 36
 
-    init(_ systemName: String, tint: Color = .brindooCoral) {
+    init(_ systemName: String, tint: Color = .brindooCoralFill) {
         self.systemName = systemName
         self.tint = tint
     }

@@ -272,7 +272,7 @@ struct ReceivedProposalsSection: View {
                         .font(BrindooFont.caption.weight(.semibold))
                         .padding(.horizontal, BrindooSpacing.xs)
                         .padding(.vertical, 3)
-                        .background(Color.brindooCoral)
+                        .background(Color.brindooCoralFill)
                         .foregroundStyle(.white)
                         .clipShape(Capsule())
                 }
@@ -386,7 +386,7 @@ struct ReceivedProposalsSection: View {
 
                     Button { onAccept(proposal) } label: {
                         Label("Accetta", systemImage: "checkmark")
-                            .brindooCompactAction(tint: .brindooSuccess, filled: true)
+                            .brindooCompactAction(tint: .brindooSuccessFill, filled: true)
                     }
                     .buttonStyle(.plain)
                 }

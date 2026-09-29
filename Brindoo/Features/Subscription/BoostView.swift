@@ -226,7 +226,7 @@ struct BoostView: View {
                                 .foregroundStyle(.white)
                                 .padding(.horizontal, 6)
                                 .padding(.vertical, 3)
-                                .background(Color.brindooSuccess)
+                                .background(Color.brindooSuccessFill)
                                 .clipShape(Capsule())
                         }
                     }

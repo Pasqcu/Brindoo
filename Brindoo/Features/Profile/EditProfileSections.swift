@@ -65,7 +65,7 @@ struct AvatarEditSection: View {
                 ) {
                     ZStack {
                         Circle()
-                            .fill(Color.brindooCoral)
+                            .fill(Color.brindooCoralFill)
                             .frame(width: 36, height: 36)
 
                         if isUploading {
@@ -131,7 +131,7 @@ struct EditCategoryRow: View {
                             .font(.system(size: 18, weight: .medium))
                             .foregroundStyle(isSelected ? .white : Color.brindooCoral)
                             .frame(width: 32, height: 32)
-                            .background(isSelected ? Color.brindooCoral : Color.brindooCoral.opacity(0.1))
+                            .background(isSelected ? Color.brindooCoralFill : Color.brindooCoral.opacity(0.1))
                             .clipShape(Circle())
 
                         VStack(alignment: .leading, spacing: 2) {
@@ -303,7 +303,7 @@ struct CoverageAreasField: View {
                         .font(.system(size: 16))
                         .foregroundStyle(.white)
                         .frame(width: 32, height: 32)
-                        .background(Color.brindooCoral)
+                        .background(Color.brindooCoralFill)
                         .clipShape(Circle())
                     VStack(alignment: .leading, spacing: 2) {
                         Text(selectedAreaSlugs.isEmpty ? BrindooText.wholeLazio : LazioArea.displayLabel(forSlugs: Array(selectedAreaSlugs)))
@@ -386,7 +386,7 @@ struct ProvincePickerSection: View {
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, BrindooSpacing.xs)
                         .foregroundStyle(isSelected ? .white : Color.brindooCoral)
-                        .background(isSelected ? Color.brindooCoral : Color.brindooCoral.opacity(0.1))
+                        .background(isSelected ? Color.brindooCoralFill : Color.brindooCoral.opacity(0.1))
                         .clipShape(RoundedRectangle(cornerRadius: BrindooRadius.sm))
                     }
                     .disabled(isDisabled)

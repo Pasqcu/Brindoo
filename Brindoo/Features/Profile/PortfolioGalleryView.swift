@@ -172,7 +172,7 @@ struct PortfolioGalleryView: View {
                     .foregroundStyle(.white)
                     .frame(height: 56)
                     .padding(.horizontal, BrindooSpacing.xl)
-                    .background(Color.brindooCoral)
+                    .background(Color.brindooCoralFill)
                     .clipShape(RoundedRectangle(cornerRadius: BrindooRadius.md))
                 }
                 .padding(.top, BrindooSpacing.md)

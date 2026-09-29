@@ -245,7 +245,7 @@ struct AgendaView: View {
                     .foregroundStyle(.white)
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 3)
-                    .background(Color.brindooCoral)
+                    .background(Color.brindooCoralFill)
                 Text(BrindooFormat.dayOfMonth(from: entry.date))
                     .font(BrindooFont.scaled(22, weight: .bold, rounded: true, relativeTo: .title2))
                     .foregroundStyle(Color.brindooTextPrimary)

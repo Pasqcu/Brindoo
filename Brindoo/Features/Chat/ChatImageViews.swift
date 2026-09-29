@@ -130,7 +130,7 @@ struct PhotoPreviewSendView: View {
                     .foregroundStyle(.white)
                     .padding(.horizontal, BrindooSpacing.lg)
                     .padding(.vertical, BrindooSpacing.sm)
-                    .background(Color.brindooCoral)
+                    .background(Color.brindooCoralFill)
                     .clipShape(Capsule())
                 }
                 .buttonStyle(.plain)

@@ -22,7 +22,7 @@ struct BrindooNetworkBar: View {
             .foregroundStyle(.white)
             .padding(.horizontal, BrindooSpacing.md)
             .padding(.vertical, BrindooSpacing.xs)
-            .background(Color.brindooError)
+            .background(Color.brindooErrorFill)
             .transition(.move(edge: .top).combined(with: .opacity))
         }
     }

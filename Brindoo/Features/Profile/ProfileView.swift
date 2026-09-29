@@ -266,7 +266,7 @@ struct ProfileView: View {
         .foregroundStyle(.white)
         .padding(.horizontal, BrindooSpacing.sm)
         .padding(.vertical, 4)
-        .background(role == .organizer ? Color.brindooCoral : Color.blue)
+        .background(role == .organizer ? Color.brindooCoralFill : Color.blue)
         .clipShape(Capsule())
     }
 
@@ -277,7 +277,7 @@ struct ProfileView: View {
         } label: {
             navLinkRow(
                 icon: "heart.fill",
-                background: Color.brindooCoral,
+                background: Color.brindooCoralFill,
                 title: "Offerte salvate",
                 subtitle: "Le offerte che hai aggiunto ai preferiti"
             )

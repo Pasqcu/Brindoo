@@ -154,7 +154,7 @@ struct SettingsPromoCard: View {
                             .font(BrindooFont.scaled(9, weight: .bold, relativeTo: .caption2))
                             .padding(.horizontal, 6)
                             .padding(.vertical, 2)
-                            .background(Color.brindooSuccess)
+                            .background(Color.brindooSuccessFill)
                             .foregroundStyle(.white)
                             .clipShape(Capsule())
                     }
@@ -246,7 +246,7 @@ struct SettingsVacationCard: View {
                             .foregroundStyle(.white)
                             .padding(.horizontal, BrindooSpacing.sm)
                             .padding(.vertical, 6)
-                            .background(Color.brindooCoral)
+                            .background(Color.brindooCoralFill)
                             .clipShape(Capsule())
                     }
                     .buttonStyle(.plain)

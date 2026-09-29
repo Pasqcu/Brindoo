@@ -52,7 +52,7 @@ struct GdprRightsView: View {
                             .font(.system(size: 15, weight: .semibold))
                             .foregroundStyle(.white)
                             .frame(width: 32, height: 32)
-                            .background(Color.brindooCoral)
+                            .background(Color.brindooCoralFill)
                             .clipShape(Circle())
                         VStack(alignment: .leading, spacing: 2) {
                             Text(right.title)

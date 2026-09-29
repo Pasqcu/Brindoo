@@ -40,6 +40,32 @@ nonisolated extension Color {
     /// Corallo scuro (fine dei gradienti, stati premuti).
     static let brindooCoralDark = Color("BrindooCoralDark", bundle: .main)
 
+    // Riempimenti con scritta bianca sopra (bottoni, bolle, pastiglie piene).
+    // In modalità chiara coincidono con i colori del testo; in quella scura
+    // i toni chiari che si leggono bene come testo sul nero tenevano la
+    // scritta bianca a 2-2,9:1, quindi per i fondi pieni si scende di tono.
+
+    /// Corallo da usare come fondo pieno sotto testo bianco.
+    static let brindooCoralFill = Color(UIColor { trait in
+        trait.userInterfaceStyle == .dark
+            ? UIColor(red: 0.77, green: 0.31, blue: 0.17, alpha: 1)
+            : UIColor(red: 0.74, green: 0.29, blue: 0.14, alpha: 1)
+    })
+
+    /// Rosso da usare come fondo pieno (bottoni distruttivi, avvisi pieni).
+    static let brindooErrorFill = Color(UIColor { trait in
+        trait.userInterfaceStyle == .dark
+            ? UIColor(red: 0.80, green: 0.20, blue: 0.20, alpha: 1)
+            : UIColor(red: 0.85, green: 0.12, blue: 0.12, alpha: 1)
+    })
+
+    /// Verde da usare come fondo pieno (conferme, "Accetta").
+    static let brindooSuccessFill = Color(UIColor { trait in
+        trait.userInterfaceStyle == .dark
+            ? UIColor(red: 0.13, green: 0.52, blue: 0.33, alpha: 1)
+            : UIColor(red: 0.14, green: 0.49, blue: 0.32, alpha: 1)
+    })
+
     /// Sfondo principale dell'app
     static let brindooBackground = Color(.systemBackground)
     

@@ -91,7 +91,7 @@ struct AppGuideView: View {
                         .font(.system(size: 16, weight: .semibold))
                         .foregroundStyle(.white)
                         .frame(width: 34, height: 34)
-                        .background(Color.brindooCoral)
+                        .background(Color.brindooCoralFill)
                         .clipShape(Circle())
 
                     VStack(alignment: .leading, spacing: 2) {

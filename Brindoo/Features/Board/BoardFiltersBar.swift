@@ -180,7 +180,7 @@ struct BoardFiltersBar: View {
                 .foregroundStyle(isOn ? .white : Color.brindooTextSecondary)
                 .padding(.horizontal, BrindooSpacing.md)
                 .padding(.vertical, BrindooSpacing.xs)
-                .background(isOn ? Color.brindooCoral : Color.brindooSurface)
+                .background(isOn ? Color.brindooCoralFill : Color.brindooSurface)
                 .clipShape(Capsule())
                 .overlay(Capsule().strokeBorder(Color.brindooBorder, lineWidth: isOn ? 0 : 1))
         }
@@ -203,7 +203,7 @@ struct BoardFiltersBar: View {
             .foregroundStyle(isActive ? .white : Color.brindooCoral)
             .padding(.horizontal, BrindooSpacing.md)
             .padding(.vertical, BrindooSpacing.xs)
-            .background(isActive ? Color.brindooCoral : Color.brindooCoral.opacity(0.1))
+            .background(isActive ? Color.brindooCoralFill : Color.brindooCoral.opacity(0.1))
             .clipShape(Capsule())
         }
     }

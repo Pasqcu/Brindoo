@@ -124,7 +124,7 @@ struct BrindooButton: View {
         case .secondary:   Color.clear
         case .tertiary:    Color.clear
         case .white:       Color.white
-        case .destructive: Color.brindooError
+        case .destructive: Color.brindooErrorFill
         }
     }
     
