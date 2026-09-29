@@ -64,7 +64,7 @@ struct WriteReviewView: View {
                     
                     // Stelle
                     VStack(spacing: BrindooSpacing.sm) {
-                        Text("Quanti stelle daresti?")
+                        Text("Quante stelle daresti?")
                             .font(BrindooFont.titleSmall)
                             .foregroundStyle(Color.brindooTextSecondary)
                         

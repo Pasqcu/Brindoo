@@ -278,7 +278,7 @@ struct ReviewsListView: View {
 
                 VStack(alignment: .leading, spacing: 2) {
                     HStack(spacing: BrindooSpacing.xxs) {
-                        Text(client?.fullName ?? "Cliente")
+                        Text(client?.displayName ?? "Cliente")
                             .font(BrindooFont.titleSmall)
 
                         if isMine {
@@ -521,7 +521,7 @@ struct ReplyToReviewSheet: View {
             onSuccess()
             dismiss()
         } catch {
-            self.error = "Impossibile pubblicare la risposta. Riprova."
+            self.error = BrindooErrorText.message(for: error, fallback: "Impossibile pubblicare la risposta. Riprova.")
             BrindooLog.error("\(error)")
         }
     }
