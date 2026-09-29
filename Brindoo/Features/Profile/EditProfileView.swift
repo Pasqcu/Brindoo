@@ -62,6 +62,8 @@ struct EditProfileView: View {
     @State private var expandedCategoryId: UUID? = nil
     @State private var showCancelUpgradeConfirm: Bool = false
     @State private var isCancellingUpgrade: Bool = false
+    /// Uscita con modifiche non salvate: prima "Annulla" le buttava via.
+    @State private var showDiscardConfirm: Bool = false
 
 
     private var isOrganizer: Bool {
@@ -92,7 +94,17 @@ struct EditProfileView: View {
             .background(Color.brindooBackground)
             .navigationTitle(isPostUpgrade ? "Completa il tuo profilo" : "Modifica profilo")
             .navigationBarTitleDisplayMode(.inline)
-            .interactiveDismissDisabled(isPostUpgrade)
+            .interactiveDismissDisabled(isPostUpgrade || hasChanges)
+            .confirmationDialog(
+                "Uscire senza salvare?",
+                isPresented: $showDiscardConfirm,
+                titleVisibility: .visible
+            ) {
+                Button("Esci senza salvare", role: .destructive) { dismiss() }
+                Button("Continua a modificare", role: .cancel) {}
+            } message: {
+                Text("Le modifiche al profilo andranno perse.")
+            }
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
                     if isPostUpgrade {
@@ -104,8 +116,10 @@ struct EditProfileView: View {
                         }
                         .disabled(isLoading || isCancellingUpgrade)
                     } else {
-                        Button("Annulla") { dismiss() }
-                            .disabled(isLoading)
+                        Button("Annulla") {
+                            if hasChanges { showDiscardConfirm = true } else { dismiss() }
+                        }
+                        .disabled(isLoading)
                     }
                 }
             }

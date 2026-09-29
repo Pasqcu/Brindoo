@@ -20,6 +20,12 @@ struct EditFAQsView: View {
     @State private var draftQuestion = ""
     @State private var draftAnswer = ""
     @State private var showEditor = false
+    @State private var showDiscardConfirm = false
+
+    /// Modifiche non ancora salvate: chiudere senza chiedere le perdeva.
+    private var hasChanges: Bool {
+        faqs != (session.currentProfile?.faqs ?? [])
+    }
 
     var body: some View {
         NavigationStack {
@@ -65,7 +71,10 @@ struct EditFAQsView: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
-                    Button("Chiudi") { dismiss() }
+                    Button(hasChanges ? "Annulla" : "Chiudi") {
+                        if hasChanges { showDiscardConfirm = true } else { dismiss() }
+                    }
+                    .disabled(isSaving)
                 }
                 ToolbarItem(placement: .topBarTrailing) {
                     Button {
@@ -73,8 +82,19 @@ struct EditFAQsView: View {
                     } label: {
                         if isSaving { ProgressView() } else { Text("Salva").bold() }
                     }
-                    .disabled(isSaving || faqs == (session.currentProfile?.faqs ?? []))
+                    .disabled(isSaving || !hasChanges)
                 }
+            }
+            .interactiveDismissDisabled(hasChanges)
+            .confirmationDialog(
+                "Uscire senza salvare?",
+                isPresented: $showDiscardConfirm,
+                titleVisibility: .visible
+            ) {
+                Button("Esci senza salvare", role: .destructive) { dismiss() }
+                Button("Continua a modificare", role: .cancel) {}
+            } message: {
+                Text("Le domande aggiunte o cambiate andranno perse.")
             }
             .sheet(isPresented: $showEditor) { editorSheet }
             .onAppear { faqs = session.currentProfile?.faqs ?? [] }

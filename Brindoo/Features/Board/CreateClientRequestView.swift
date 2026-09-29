@@ -34,6 +34,15 @@ struct CreateClientRequestView: View {
     @State private var showLimitPaywall: Bool = false
     @State private var limitMessage: String = ""
     @State private var showPaywallSheet: Bool = false
+    @State private var showDiscardConfirm: Bool = false
+
+    /// C'è qualcosa di scritto: chiudere per sbaglio non deve buttarlo via.
+    private var hasDraft: Bool {
+        !title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+            || !description.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+            || !area.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+            || !budget.isEmpty
+    }
 
     var body: some View {
         NavigationStack {
@@ -173,8 +182,10 @@ struct CreateClientRequestView: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
-                    Button("Annulla") { dismiss() }
-                        .disabled(isSaving)
+                    Button("Annulla") {
+                        if hasDraft { showDiscardConfirm = true } else { dismiss() }
+                    }
+                    .disabled(isSaving)
                 }
             }
             .safeAreaInset(edge: .bottom) {
@@ -197,6 +208,17 @@ struct CreateClientRequestView: View {
             }
             .task {
                 allCategories = (try? await CategoryService.shared.fetchCategories()) ?? []
+            }
+            .interactiveDismissDisabled(hasDraft)
+            .confirmationDialog(
+                "Uscire senza salvare?",
+                isPresented: $showDiscardConfirm,
+                titleVisibility: .visible
+            ) {
+                Button("Esci senza salvare", role: .destructive) { dismiss() }
+                Button("Continua a modificare", role: .cancel) {}
+            } message: {
+                Text("La richiesta che stai scrivendo andrà persa.")
             }
             .alert("Limite raggiunto", isPresented: $showLimitPaywall) {
                 Button("Annulla", role: .cancel) {}

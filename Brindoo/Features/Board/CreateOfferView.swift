@@ -44,6 +44,14 @@ struct CreateOfferView: View {
     @State private var generalError: String?
     @State private var isLoading: Bool = false
     @State private var packagesNotSaved: Bool = false
+    @State private var showDiscardConfirm: Bool = false
+
+    /// C'è qualcosa di scritto: chiudere per sbaglio non deve buttarlo via.
+    private var hasDraft: Bool {
+        !title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+            || !description.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+            || !price.isEmpty || coverImage != nil || !packages.isEmpty
+    }
     @State private var showSuccess: Bool = false
     @State private var showLimitPaywall: Bool = false
     @State private var limitMessage: String = ""
@@ -147,8 +155,10 @@ struct CreateOfferView: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
-                    Button("Annulla") { dismiss() }
-                        .disabled(isLoading)
+                    Button("Annulla") {
+                        if hasDraft { showDiscardConfirm = true } else { dismiss() }
+                    }
+                    .disabled(isLoading)
                 }
             }
             .safeAreaInset(edge: .bottom) {
@@ -182,6 +192,17 @@ struct CreateOfferView: View {
                         coverImage = img
                     }
                 }
+            }
+            .interactiveDismissDisabled(hasDraft && !showSuccess)
+            .confirmationDialog(
+                "Uscire senza salvare?",
+                isPresented: $showDiscardConfirm,
+                titleVisibility: .visible
+            ) {
+                Button("Esci senza salvare", role: .destructive) { dismiss() }
+                Button("Continua a modificare", role: .cancel) {}
+            } message: {
+                Text("L'offerta che stai scrivendo andrà persa.")
             }
             .alert("Offerta pubblicata!", isPresented: $showSuccess) {
                 Button("OK") { dismiss() }
