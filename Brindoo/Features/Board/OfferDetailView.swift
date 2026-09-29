@@ -197,16 +197,20 @@ struct OfferDetailView: View {
                 .disabled(isPreparingShare)
                 .accessibilityLabel("Condividi offerta")
             }
-            if isClient && !isOwnOffer {
+            // "Segnala" per chiunque guardi l'offerta di un altro, anche un
+            // professionista: i Termini lo promettono accanto a ogni offerta.
+            if !isOwnOffer {
                 ToolbarItem(placement: .topBarTrailing) {
                     HStack(spacing: BrindooSpacing.sm) {
-                        Button {
-                            Task { await vm.toggleFavorite() }
-                        } label: {
-                            Image(systemName: vm.isFavorite ? "heart.fill" : "heart")
-                                .foregroundStyle(vm.isFavorite ? Color.brindooCoral : Color.brindooTextSecondary)
+                        if isClient {
+                            Button {
+                                Task { await vm.toggleFavorite() }
+                            } label: {
+                                Image(systemName: vm.isFavorite ? "heart.fill" : "heart")
+                                    .foregroundStyle(vm.isFavorite ? Color.brindooCoral : Color.brindooTextSecondary)
+                            }
+                            .accessibilityLabel(vm.isFavorite ? "Rimuovi dai preferiti" : "Salva nei preferiti")
                         }
-                        .accessibilityLabel(vm.isFavorite ? "Rimuovi dai preferiti" : "Salva nei preferiti")
 
                         Menu {
                             Button(role: .destructive) {

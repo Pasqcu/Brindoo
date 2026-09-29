@@ -34,6 +34,9 @@ struct ClientRequestsView: View {
     @State private var showPaywallSheet: Bool = false
     /// Errori che non c'entrano con l'abbonamento: niente invito a Pro.
     @State private var actionError: String?
+    /// Richiesta di un altro da segnalare: si segnala l'autore, perché la
+    /// moderazione agisce sull'account.
+    @State private var reportTarget: ClientRequest?
 
     private var isClient: Bool {
         session.currentProfile?.role == .client
@@ -102,6 +105,13 @@ struct ClientRequestsView: View {
         .sheet(isPresented: $showPaywallSheet) {
             PaywallView()
         }
+        .sheet(item: $reportTarget) { request in
+            ReportSheet(
+                targetType: .user,
+                targetId: request.clientId,
+                targetLabel: "questa richiesta"
+            )
+        }
         .alert(
             "Non riuscito",
             isPresented: Binding(get: { actionError != nil }, set: { if !$0 { actionError = nil } })
@@ -135,8 +145,9 @@ struct ClientRequestsView: View {
         }
     }
 
-    /// Azioni del cliente sulla propria richiesta, condivise dal menu a
-    /// vista e da quello che compare tenendo premuto.
+    /// Azioni su una richiesta, condivise dal menu a vista e da quello che
+    /// compare tenendo premuto: chi l'ha scritta la gestisce, gli altri
+    /// possono segnalarla.
     @ViewBuilder
     private func requestActions(_ request: ClientRequest) -> some View {
         if isMine(request) {
@@ -159,6 +170,12 @@ struct ClientRequestsView: View {
                 Task { await delete(request) }
             } label: {
                 Label("Elimina", systemImage: BrindooIcon.delete)
+            }
+        } else {
+            Button(role: .destructive) {
+                reportTarget = request
+            } label: {
+                Label("Segnala richiesta", systemImage: "exclamationmark.bubble")
             }
         }
     }
@@ -203,13 +220,11 @@ struct ClientRequestsView: View {
                         clientProfile: isMine(request) ? nil : clientProfiles[request.clientId],
                         featured: isFeatured(request),
                         isContacting: contactingId == request.id,
-                        onContact: isMine(request) ? nil : { Task { await contact(request) } }
-                    )
-                    .contextMenu { requestActions(request) }
-                    // Il tenere premuto non lo scopre nessuno: le stesse
-                    // azioni stanno anche dietro un bottone sempre visibile.
-                    .overlay(alignment: .topTrailing) {
-                        if isMine(request) {
+                        onContact: isMine(request) ? nil : { Task { await contact(request) } },
+                        // Il tenere premuto non lo scopre nessuno: le stesse
+                        // azioni stanno anche dietro un bottone sempre visibile,
+                        // in riga col titolo (prima copriva lo stato).
+                        menu: AnyView(
                             Menu {
                                 requestActions(request)
                             } label: {
@@ -217,11 +232,13 @@ struct ClientRequestsView: View {
                                     .font(.system(size: 20))
                                     .symbolRenderingMode(.hierarchical)
                                     .foregroundStyle(Color.brindooTextSecondary)
-                                    .padding(BrindooSpacing.xs)
+                                    .frame(width: 44, height: 44)
+                                    .contentShape(Rectangle())
                             }
-                            .accessibilityLabel("Azioni sulla richiesta")
-                        }
-                    }
+                            .accessibilityLabel(isMine(request) ? "Azioni sulla richiesta" : "Altre opzioni")
+                        )
+                    )
+                    .contextMenu { requestActions(request) }
     }
 
     // MARK: - Dati
@@ -327,6 +344,8 @@ struct ClientRequestCard: View {
     var isContacting: Bool = false
     /// Presente solo lato professionista.
     var onContact: (() -> Void)?
+    /// Bottone "⋯" in riga col titolo (azioni o segnalazione).
+    var menu: AnyView?
 
     var body: some View {
         VStack(alignment: .leading, spacing: BrindooSpacing.sm) {
@@ -337,6 +356,11 @@ struct ClientRequestCard: View {
                     .lineLimit(2)
                     .frame(maxWidth: .infinity, alignment: .leading)
                 statusPill
+                if let menu {
+                    menu
+                        .padding(.top, -BrindooSpacing.sm)
+                        .padding(.trailing, -BrindooSpacing.sm)
+                }
             }
 
             // Le etichette stanno su una riga propria: accanto al titolo, su
