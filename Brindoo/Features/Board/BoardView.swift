@@ -211,7 +211,9 @@ struct BoardView: View {
                     .presentationDetents([.medium, .large])
                     .presentationDragIndicator(.visible)
             }
-            .sheet(isPresented: $showWelcome) {
+            // Chiuso anche col trascinamento, il benvenuto conta come visto:
+            // prima tornava a ogni avvio finché non si toccava "Salta".
+            .sheet(isPresented: $showWelcome, onDismiss: { welcomeSeen = true }) {
                 ClientWelcomeSheet(categories: vm.categories) { chosen in
                     welcomeSeen = true
                     if !chosen.isEmpty {
