@@ -92,7 +92,7 @@ struct SettingsView: View {
                     }
 
                     // MARK: - Abbonamenti & Boost
-                    SettingsSection(title: "Abbonamenti & Visibilità") {
+                    SettingsSection(title: "Abbonamenti e visibilità") {
                         VStack(spacing: BrindooSpacing.xs) {
                             // Pro
                             Button { showPaywall = true } label: {
@@ -144,7 +144,7 @@ struct SettingsView: View {
                     }
 
                     // MARK: - Privacy & Chat
-                    SettingsSection(title: "Privacy & Chat") {
+                    SettingsSection(title: "Privacy e chat") {
                         VStack(spacing: 0) {
                             NavigationLink {
                                 GdprRightsView()
