@@ -69,17 +69,19 @@ struct AvailabilityView: View {
                         // Chi ha il calendario pieno fuori da Brindoo risulterebbe
                         // "libero": un tocco e gli impegni diventano giorni occupati.
                         BrindooButton(
-                            isImporting ? "Importo..." : "Importa impegni dal calendario",
-                            style: .secondary, size: .medium, icon: "calendar.badge.plus"
+                            "Importa impegni dal calendario",
+                            style: .secondary, size: .medium, icon: "calendar.badge.plus",
+                            isLoading: isImporting
                         ) {
                             Task { await importFromDeviceCalendar() }
                         }
-                        .disabled(isImporting)
 
                         if let importedCount {
                             Text(importedCount == 0
                                  ? "Nessun impegno nuovo nei prossimi 6 mesi."
-                                 : "\(importedCount) giorni aggiunti dal calendario. Controlla e salva.")
+                                 : importedCount == 1
+                                    ? "1 giorno aggiunto dal calendario. Controlla e salva."
+                                    : "\(importedCount) giorni aggiunti dal calendario. Controlla e salva.")
                                 .font(BrindooFont.caption)
                                 .foregroundStyle(Color.brindooSuccess)
                         }

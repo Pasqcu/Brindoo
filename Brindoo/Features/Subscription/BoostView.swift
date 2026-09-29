@@ -19,6 +19,8 @@ struct BoostView: View {
     @State private var isLoading: Bool = false
     @State private var errorMessage: String?
     @State private var showSuccessToast: Bool = false
+    /// Il primo caricamento dei prezzi è finito: prima non si parla di errori.
+    @State private var didLoadProducts: Bool = false
     
     var body: some View {
         NavigationStack {
@@ -82,11 +84,26 @@ struct BoostView: View {
                         Text("Scegli la durata")
                             .font(BrindooFont.titleMedium)
                         
-                        if purchaseService.products.isEmpty {
+                        if purchaseService.products.isEmpty && (purchaseService.isLoading || !didLoadProducts) {
                             ProgressView()
                                 .tint(.brindooCoral)
                                 .padding(.vertical, BrindooSpacing.lg)
                                 .frame(maxWidth: .infinity)
+                        } else if purchaseService.products.isEmpty {
+                            // Prima la rotellina girava per sempre se l'App Store
+                            // non rispondeva: ora si dice e si può riprovare.
+                            VStack(spacing: BrindooSpacing.sm) {
+                                Text("Non riusciamo a caricare i prezzi dall'App Store.")
+                                    .font(BrindooFont.bodyMedium)
+                                    .foregroundStyle(Color.brindooTextSecondary)
+                                    .multilineTextAlignment(.center)
+                                BrindooButton(BrindooText.retry, style: .secondary, size: .medium, icon: BrindooIcon.refresh) {
+                                    Task { await purchaseService.loadProducts() }
+                                }
+                                .frame(maxWidth: 220)
+                            }
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, BrindooSpacing.md)
                         } else {
                             VStack(spacing: BrindooSpacing.sm) {
                                 if let dayProduct = purchaseService.product(for: BrindooProduct.boostDay) {
@@ -142,6 +159,7 @@ struct BoostView: View {
             }
             .task {
                 await purchaseService.loadProducts()
+                didLoadProducts = true
             }
             .overlay {
                 if showSuccessToast {

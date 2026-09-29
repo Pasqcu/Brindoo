@@ -48,11 +48,11 @@ struct GuidedQuoteView: View {
                     "Trova professionisti",
                     style: .primary,
                     size: .large,
-                    isLoading: isSearching
+                    isLoading: isSearching,
+                    isDisabled: selectedCategoryId == nil
                 ) {
                     Task { await search() }
                 }
-                .disabled(selectedCategoryId == nil)
 
                 if hasSearched {
                     resultsSection

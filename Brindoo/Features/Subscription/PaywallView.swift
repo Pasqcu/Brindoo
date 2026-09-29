@@ -23,6 +23,8 @@ struct PaywallView: View {
     /// Stato dell'abbonamento Apple (rinnovo automatico, scadenza).
     @State private var subscriptionState: PurchaseService.SubscriptionState?
     @State private var showManageSubscriptions: Bool = false
+    /// Il primo caricamento del prezzo è finito: prima non si parla di errori.
+    @State private var didLoadProducts: Bool = false
     
     var body: some View {
         NavigationStack {
@@ -80,7 +82,7 @@ struct PaywallView: View {
                     // Prodotto / bottone
                     if let product = purchaseService.product(for: BrindooProduct.proMonthly) {
                         productCard(product)
-                    } else if purchaseService.isLoading {
+                    } else if purchaseService.isLoading || !didLoadProducts {
                         ProgressView()
                             .tint(.brindooCoral)
                             .padding(.vertical, BrindooSpacing.lg)
@@ -142,6 +144,7 @@ struct PaywallView: View {
             }
             .task {
                 await purchaseService.loadProducts()
+                didLoadProducts = true
                 subscriptionState = await purchaseService.proSubscriptionState()
             }
             .manageSubscriptionsSheet(isPresented: $showManageSubscriptions)

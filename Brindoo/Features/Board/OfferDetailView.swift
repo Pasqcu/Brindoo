@@ -313,11 +313,11 @@ struct OfferDetailView: View {
             BrindooButton(
                 "Elimina offerta",
                 style: .destructive,
-                size: .medium
+                size: .medium,
+                isDisabled: vm.hasConfirmedAgreements
             ) {
                 showDeleteConfirm = true
             }
-            .disabled(vm.hasConfirmedAgreements)
 
             if vm.hasConfirmedAgreements {
                 Text("Non eliminabile: ci sono eventi già concordati su questa offerta. Puoi metterla in pausa per toglierla dalla bacheca.")
